@@ -83,7 +83,7 @@ function enumValue(seed: ScenarioSeed, point: MeasurePoint): string {
 
 /**
  * 确定性遥测查询。样本锚定固定参考时间，缺失测点返回空数组。
- * 24h 内按 30 分钟采样，长于 72h 的区间按 6 小时采样。
+ * 72h 内按 30 分钟采样，更长区间按 2 小时采样，保证梯形积分不丢弃区间。
  */
 export function getPointSeries(
   seed: ScenarioSeed,
@@ -104,7 +104,7 @@ export function getPointSeries(
   if (start > end) return [];
 
   const spanHours = (end - start) / HOUR;
-  const stepMinutes = spanHours > 72 ? 360 : 30;
+  const stepMinutes = spanHours > 72 ? 120 : 30;
   const steps = timeSteps(start, end, stepMinutes);
 
   return steps.map((atMs) => ({

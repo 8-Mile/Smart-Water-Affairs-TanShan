@@ -24,7 +24,7 @@ async function expectNoOverflow(page: Page): Promise<void> {
 }
 
 async function openScenario(page: Page, label: string): Promise<void> {
-  await page.getByRole("button", { name: /^演示场景/ }).click();
+  await page.getByRole("button", { name: /^场景回放/ }).click();
   await page.getByRole("button", { name: label, exact: true }).click();
 }
 
@@ -70,7 +70,7 @@ test("S1 常态无异常，作业结束场景触发建议并可生成待确认�
     page.getByText("堆场 A 区作业结束后仍保留喷雾 · 运行计划核查（待确认）").first(),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: /^演示场景/ }).click();
+  await page.getByRole("button", { name: /^场景回放/ }).click();
   await page.getByRole("button", { name: "恢复初始场景", exact: true }).click();
   await expect(page.getByText("当前场景已恢复初始状态")).toBeVisible();
   await expect(
@@ -124,7 +124,7 @@ test("S2 供水压力异常关联设备、告警与工单草稿，模拟数据�
   await expect(page.locator(".drawer-body")).toContainText("末端压力");
   await page.keyboard.press("Escape");
 
-  await page.getByRole("button", { name: /^演示场景/ }).click();
+  await page.getByRole("button", { name: /^场景回放/ }).click();
   await page.getByRole("button", { name: "恢复初始场景", exact: true }).click();
   await openTab(page, "告警与工单");
   await expect(
@@ -154,7 +154,7 @@ test("S3 只读访客看到建议但无法切换场景或写入任务", async ({
   await page.goto("/process/spray");
 
   await expect(page.locator("#spray-suggest-idle-spray-A")).toBeVisible();
-  await page.getByRole("button", { name: /^演示场景/ }).click();
+  await page.getByRole("button", { name: /^场景回放/ }).click();
   await expect(
     page.getByRole("button", { name: "A 正常生产运行", exact: true }),
   ).toBeDisabled();

@@ -33,7 +33,7 @@ test("首页响应式重排且字体不会随大屏整体放大", async ({ page 
   await page.getByRole("button", { name: "菜单", exact: true }).click();
   await expect(page.locator(".sidebar nav > .nav-item, .sidebar nav > .nav-group")).toHaveCount(7);
   await page.getByRole("button", { name: "设备运维" }).click();
-  await page.locator("#primary-navigation").getByRole("link", { name: "设备与档案" }).click();
+  await page.locator("#primary-navigation").getByRole("link", { name: "设备台账" }).click();
   await expect(page.getByRole("link", { name: "档案与案例" })).toBeVisible();
   await page.getByRole("link", { name: "档案与案例" }).click();
   await expect(page).toHaveURL(/\/archives$/);
@@ -104,7 +104,7 @@ test("首页图表周期、角色权限和工艺档案入口可以实际使用",
   await expect(page.locator(".record-table tbody tr")).toHaveCount(2);
   await page.goto("/overview");
   await page.getByRole("button", { name: "设备运维" }).click();
-  await page.locator("#primary-navigation").getByRole("link", { name: "设备与档案" }).click();
+  await page.locator("#primary-navigation").getByRole("link", { name: "设备台账" }).click();
   await page.getByRole("link", { name: "档案与案例" }).click();
   await expect(page).toHaveURL(/\/archives$/);
   await expect(page.getByRole("heading", { name: "档案管理", exact: true })).toBeVisible();

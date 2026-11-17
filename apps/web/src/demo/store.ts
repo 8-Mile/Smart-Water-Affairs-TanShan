@@ -246,6 +246,9 @@ export const useDemoStore = defineStore("demo", () => {
     userState.value.assets = mergeById(userState.value.assets, previous.assets);
     userState.value.points = mergeById(userState.value.points, previous.points);
     userState.value.bindings = mergeById(userState.value.bindings, previous.bindings);
+    // 工单与审计跨场景延续，避免切换演示场景后已生成的工单“消失”；告警仍按场景隔离。
+    userState.value.workorders = mergeById(userState.value.workorders, previous.workorders);
+    userState.value.audits = mergeById(userState.value.audits, previous.audits);
     seedVersion.value = buildSeed(id).seedVersion;
     save();
   }
@@ -285,7 +288,7 @@ export const useDemoStore = defineStore("demo", () => {
     const published = { ...cloneDiagram(draft), version: previous.version + 1, status: "published" as const };
     diagrams.value = { ...diagrams.value, spray: { published, history: [...diagrams.value.spray.history, cloneDiagram(published)] } };
     persistDiagrams();
-    pushAudit(userState.value, role.value, "diagram:publish", "diagram", "diagram-spray", `发布射雾器组态 v${published.version}`, new Date().toISOString());
+    pushAudit(userState.value, role.value, "diagram:publish", "diagram", "diagram-spray", `发布射雾器组态 v${published.version}`, seed.value.referenceTime);
     save();
   }
   function discardSprayDraft(): void {
@@ -308,14 +311,14 @@ export const useDemoStore = defineStore("demo", () => {
     if (![hotspot.xPct, hotspot.yPct].every(value => Number.isFinite(value) && value >= 0 && value <= 1)) throw new Error('热点坐标越界');
     sceneHotspots.value = [...sceneHotspots.value.filter(item => item.id !== hotspot.id), hotspot];
     writeStorage(HOTSPOT_KEY, JSON.stringify(sceneHotspots.value));
-    pushAudit(userState.value, role.value, "scene:write", "hotspot", hotspot.id, `保存场景热点 ${hotspot.label ?? hotspot.assetId}`, new Date().toISOString());
+    pushAudit(userState.value, role.value, "scene:write", "hotspot", hotspot.id, `保存场景热点 ${hotspot.label ?? hotspot.assetId}`, seed.value.referenceTime);
     save();
   }
   function removeSceneHotspot(id: string): void {
     assertCan(role.value, "scene:write");
     sceneHotspots.value = sceneHotspots.value.filter(item => item.id !== id);
     writeStorage(HOTSPOT_KEY, JSON.stringify(sceneHotspots.value));
-    pushAudit(userState.value, role.value, "scene:write", "hotspot", id, '删除场景热点', new Date().toISOString());
+    pushAudit(userState.value, role.value, "scene:write", "hotspot", id, '删除场景热点', seed.value.referenceTime);
     save();
   }
   const documents = computed<DocumentRef[]>(() => {
@@ -574,7 +577,7 @@ export const useDemoStore = defineStore("demo", () => {
         ...(payload.recovery?{recoveryReview:{
           evidenceRef,note,metric:payload.recovery.metric.trim(),before:payload.recovery.before.trim(),
           after:payload.recovery.after.trim(),unit:payload.recovery.unit.trim(),
-          recordedAt:new Date().toISOString(),source:"USER_ENTRY" as const,
+          recordedAt:seed.value.referenceTime,source:"USER_ENTRY" as const,
           status:"reported-recovered" as const,reviewer:role.value,
         }}:{}),
       },
@@ -748,12 +751,12 @@ export const useDemoStore = defineStore("demo", () => {
     if (reason.length < 8 || reason.length > 300) throw new Error("请填写至少8字的审核意见及设备适用条件");
     const reviewed:DocumentRef={
       ...source,version:v,lineOrSection:sec,
-      reviewed:true,reviewedBy:role.value,reviewedAt:new Date().toISOString(),reviewNote:reason,
+      reviewed:true,reviewedBy:role.value,reviewedAt:seed.value.referenceTime,reviewNote:reason,
     };
     const next=clone(userState.value);
     next.documents=[...next.documents.filter(x=>x.id!==id),reviewed];
     pushAudit(next,role.value,"document:review","document",id,
-      `演示审核摘录 ${id}（${v} / ${sec}），不代表厂家或正式工程审核：${reason}`,new Date().toISOString());
+      `演示审核摘录 ${id}（${v} / ${sec}），不代表厂家或正式工程审核：${reason}`,seed.value.referenceTime);
     userState.value=next;save();
     return reviewed;
   }

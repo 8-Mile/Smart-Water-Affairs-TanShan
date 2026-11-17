@@ -77,6 +77,16 @@ const statusText: Record<AssetStatus, string> = {
   fault: "异常",
   unknown: "未知",
 };
+/** 泵组为工艺示意设备，状态由射雾器快照与末端压力推导，不冒充现场设备状态。 */
+const pumpState = computed<{ text: string; tone: "ok" | "alert" | "idle" }>(() => {
+  const fault = props.units.some(unit => unit.status === "fault");
+  const low = props.mainPressureMpa !== null && props.mainPressureMpa < 0.45;
+  if (fault) return { text: "设备异常", tone: "alert" };
+  if (low) return { text: "压力异常", tone: "alert" };
+  return props.units.some(unit => unit.status === "running")
+    ? { text: "随系统运行", tone: "ok" }
+    : { text: "待机", tone: "idle" };
+});
 const otherNodes = computed(() => props.nodes.filter(node => node.visible && node.symbolId !== 'fog_cannon' && !equipmentIds.has(node.id)));
 function connectionPath(line: ProcessConnection): string {
   const source = props.nodes.find(node => node.id === line.sourceNodeId);
@@ -207,6 +217,7 @@ function stopDrag(): void { dragging.value = null; }
       <g v-if="equipmentNodes['spray-tank']" class="node tank" data-node-id="spray-tank" :class="{ movable: editable }"
         :transform="equipmentTransform(equipmentNodes['spray-tank'])"
         @pointerdown="startDrag($event, equipmentNodes['spray-tank'])">
+        <text x="106" y="86" class="node-sub">示意</text>
         <text x="106" y="106" class="node-title">{{ equipmentNodes['spray-tank'].label }}</text>
         <rect x="172" y="92" width="46" height="16" rx="8" class="mock-chip" />
         <text x="195" y="103" class="mock-text">MOCK</text>
@@ -229,6 +240,8 @@ function stopDrag(): void { dragging.value = null; }
         <rect :x="LAYOUT.pumpBox.x" :y="LAYOUT.pumpBox.y" :width="LAYOUT.pumpBox.w" :height="LAYOUT.pumpBox.h" rx="14" class="pump-box" />
         <text x="372" y="112" class="node-title">加压泵组（定频）</text>
         <text x="372" y="126" class="node-sub">工艺示意 · 非现场资产</text>
+        <rect x="430" y="98" width="34" height="16" rx="8" class="mock-chip" />
+        <text x="447" y="109" class="mock-text">示意</text>
         <template v-for="(id, index) in ['spray-pump-1', 'spray-pump-2']" :key="id">
         <g v-if="equipmentNodes[id]" :data-node-id="id" :class="{ movable: editable }" :transform="equipmentTransform(equipmentNodes[id])"
           @pointerdown="startDrag($event, equipmentNodes[id])">
@@ -241,8 +254,8 @@ function stopDrag(): void { dragging.value = null; }
             preserveAspectRatio="xMidYMid meet"
           />
           <text x="380" :y="LAYOUT.pump.ys[index] + 44" class="pump-name">{{ equipmentNodes[id].label }}</text>
-          <circle cx="380" :cy="LAYOUT.pump.ys[index] + 62" r="3.6" class="status-dot ok" />
-          <text x="390" :y="LAYOUT.pump.ys[index] + 66" class="pump-status">运行</text>
+          <circle cx="380" :cy="LAYOUT.pump.ys[index] + 62" r="3.6" :class="['status-dot', pumpState.tone]" />
+          <text x="390" :y="LAYOUT.pump.ys[index] + 66" class="pump-status" :class="pumpState.tone">{{ pumpState.text }}</text>
         </g>
         </template>
       </g>
@@ -267,6 +280,7 @@ function stopDrag(): void { dragging.value = null; }
         :height="LAYOUT.gauge.h"
         preserveAspectRatio="xMidYMid meet"
       />
+      <text x="586" y="114" class="node-sub">示意读数</text>
       <text x="586" y="124" class="metric-label">{{ equipmentNodes['spray-pressure'].label }}</text>
       <text x="586" y="144" class="metric-value">
         {{ mainPressureMpa === null ? "缺数" : `${fmt(mainPressureMpa)} MPa` }}
@@ -287,6 +301,7 @@ function stopDrag(): void { dragging.value = null; }
       />
       <text x="676" y="296" class="metric-label">{{ equipmentNodes['spray-flow'].label }}</text>
       <text x="676" y="314" class="metric-value">{{ flowText() }}</text>
+      <text x="676" y="328" class="node-sub">示意读数</text>
 
       </g>
       <!-- 区域支管 -->
@@ -439,8 +454,20 @@ svg {
   font-size: 10.5px;
   fill: #25aa64;
 }
+.pump-status.alert {
+  fill: #e45252;
+}
+.pump-status.idle {
+  fill: #8ba0b2;
+}
 .status-dot.ok {
   fill: #25aa64;
+}
+.status-dot.alert {
+  fill: #e45252;
+}
+.status-dot.idle {
+  fill: #9aa9b5;
 }
 .pipe-halo {
   fill: none;

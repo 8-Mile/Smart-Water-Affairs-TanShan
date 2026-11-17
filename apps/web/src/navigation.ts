@@ -34,10 +34,10 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     id: "operations", label: "设备运维", permission: read,
     children: [
-      { label: "设备与档案", to: "/operations/assets", permission: read, aliases: ["/archives", "/operations/asset-workspace"] },
-      { label: "工单与巡检", to: "/operations/workorders", permission: read },
+      { label: "设备台账", to: "/operations/assets", permission: read, aliases: ["/archives", "/operations/asset-workspace"] },
+      { label: "工单任务", to: "/operations/workorders", permission: read },
       { label: "健康与能效", to: "/decision/health", permission: read },
-      { label: "工程底账", to: "/engineering/registry", permission: read },
+      { label: "工程核查与证据", to: "/engineering/registry", permission: read },
     ],
   },
   {
@@ -48,22 +48,22 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "各大机供水保障", to: "/water/machine-supply", permission: read },
       { label: "供需动态平衡", to: "/water/balance", permission: read,
         aliases: ["/water/dispatch","/decision/four-pre","/water/multi-source","/water/green-benefit"] },
-      { label: "雨污水处理与回用", to: "/water/port-chain", permission: read },
+      { label: "港口环保水业务链", to: "/water/port-chain", permission: read },
     ],
   },
   {
     id: "data", label: "分析中心", permission: read,
     children: [
-      { label: "报表与交接班", to: "/data/reports", permission: read },
-      { label: "AI 工作台与看板", to: "/data/ai-workspace", permission: read,
-        aliases: ["/data/my-dashboards"] },
-      { label: "知识与证据", to: "/decision/knowledge", permission: read },
+      { label: "常用报表", to: "/data/reports", permission: read },
+      { label: "AI 分析工作台", to: "/data/ai-workspace", permission: read },
+      { label: "我的看板", to: "/data/my-dashboards", permission: read },
+      { label: "证据知识与诊断", to: "/decision/knowledge", permission: read },
     ],
   },
   {
     id: "admin", label: "系统设置", permission: "admin:write",
     children: [
-      { label: "管理工作台", to: "/admin/roles", permission: "admin:write",
+      { label: "角色权限", to: "/admin/roles", permission: "admin:write",
         aliases: ["/admin/asset-config", "/admin/templates", "/admin/demo"] },
     ],
   },

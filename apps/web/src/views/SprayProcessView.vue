@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { RouterLink, useRouter } from "vue-router";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { NButton, NSelect, NTabPane, NTabs, useMessage } from "naive-ui";
 import Chart from "../Chart.vue";
 import SprayProcessScene from "../components/process/SprayProcessScene.vue";
@@ -28,11 +28,12 @@ import type {
 } from "../demo/spray";
 import { useDemoStore } from "../demo/store";
 import { useUiStore } from "../demo/ui";
-import type { AssetStatus, ScenarioId } from "../demo/types";
+import type { AssetStatus, ScenarioId, WorkOrder } from "../demo/types";
 
 const store = useDemoStore();
 const ui = useUiStore();
 const router = useRouter();
+const route = useRoute();
 const message = useMessage();
 
 const SUBSYSTEM = "spray";
@@ -62,6 +63,23 @@ const WORKORDER_STATUS_LABELS: Record<string, string> = {
   archived: "已归档",
   cancelled: "已取消",
 };
+/** 趋势统计口径：按测点类型给出单位、波动关注值与展示精度。 */
+const POINT_META = [
+  { keyword: "压力", label: "末端压力", unit: "MPa", threshold: 0.05, digits: 2 },
+  { keyword: "流量", label: "喷射流量", unit: "m³/h", threshold: 2, digits: 1 },
+  { keyword: "电流", label: "电流", unit: "A", threshold: 1, digits: 1 },
+] as const;
+function pointMeta(label: string, unit?: string) {
+  return (
+    POINT_META.find((meta) => label.includes(meta.keyword)) ?? {
+      keyword: "",
+      label,
+      unit: unit ?? "",
+      threshold: 1,
+      digits: 1,
+    }
+  );
+}
 const RANGE_HOURS: Record<string, number> = { "24h": 24, "7d": 168, "14d": 336 };
 const RANGE_OPTIONS = [
   { value: "24h", label: "近 24 小时" },
@@ -84,10 +102,45 @@ const TABS = [
   { value: "trend", label: "运行趋势" },
   { value: "usage", label: "用水分析" },
   { value: "records", label: "告警与工单" },
-  { value: "ai", label: "AI 辅助分析" },
+  { value: "ai", label: "AI 分析" },
 ];
+const TAB_VALUES = TABS.map((item) => item.value);
 
-const tab = ref("monitor");
+function tabFromQuery(): string {
+  const value = route.query.tab;
+  return typeof value === "string" && TAB_VALUES.includes(value) ? value : "monitor";
+}
+const tab = ref(tabFromQuery());
+
+/** 1366 高度下底部 Tab 面板可能完全在视口之外，切换后按需滚动到面板顶部。 */
+function scrollTabsIntoView(): void {
+  if (typeof window === "undefined") return;
+  const panel = document.querySelector<HTMLElement>(".tabs-panel");
+  if (!panel) return;
+  requestAnimationFrame(() => {
+    if (panel.getBoundingClientRect().top > window.innerHeight - 120) {
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+}
+function setTab(value: string): void {
+  if (!TAB_VALUES.includes(value)) return;
+  tab.value = value;
+  const query = { ...route.query };
+  if (value === "monitor") delete query.tab;
+  else query.tab = value;
+  void router.replace({ query });
+  void nextTick(scrollTabsIntoView);
+}
+watch(
+  () => route.query.tab,
+  () => {
+    tab.value = tabFromQuery();
+  },
+);
+onMounted(() => {
+  if (tab.value !== "monitor") void nextTick(scrollTabsIntoView);
+});
 const sceneOpen = ref(false);
 const range = ref("24h");
 const usageRange = ref("24h");
@@ -169,6 +222,10 @@ const snapshots = computed(() =>
   toSpraySnapshots(sprayAssets.value, latestNumber),
 );
 const summary = computed(() => summarizeSpray(snapshots.value));
+/** 表格与 KPI 共用同一份快照状态，避免“KPI 停机、表内运行”的口径冲突。 */
+const snapshotStatus = computed<Record<string, AssetStatus>>(() =>
+  Object.fromEntries(snapshots.value.map((item) => [item.assetId, item.status])),
+);
 const context = computed(() => buildSprayContext(store.scenarioId));
 const activeAlarms = computed(() =>
   store.alarms.filter(
@@ -183,6 +240,17 @@ const suggestions = computed(() =>
     alarms: activeAlarms.value,
   }),
 );
+/** 同一根因已被活动告警覆盖时不重复计入“待关注事件”。 */
+function suggestionCoveredByAlarm(item: SpraySuggestion): boolean {
+  return (
+    item.id === "pressure-low" &&
+    activeAlarms.value.some(
+      (alarm) =>
+        item.relatedAssetIds.includes(alarm.assetId) &&
+        (!alarm.pointId || alarm.pointId.includes("pressure")),
+    )
+  );
+}
 const actionableSuggestions = computed(() =>
   suggestions.value.filter((item) => item.level !== "info"),
 );
@@ -213,7 +281,7 @@ const dustUg = computed(() => {
 });
 const dustStateText = computed(() => {
   if (dustUg.value === null) return "缺数";
-  return dustUg.value < SPRAY_DEMO_RULES.dustWatchMgM3 * 1000 ? "达标" : "偏高";
+  return dustUg.value < SPRAY_DEMO_RULES.dustWatchMgM3 * 1000 ? "低于关注值" : "高于关注值";
 });
 const runningRate = computed(() =>
   sprayAssets.value.length
@@ -243,15 +311,24 @@ const events = computed<EventItem[]>(() => [
     tag: ALARM_LEVEL_LABELS[alarm.level] ?? "告警",
     assetId: alarm.assetId,
   })),
-  ...actionableSuggestions.value.map((item) => ({
-    id: item.id,
-    kind: "suggestion" as const,
-    title: item.title,
-    meta: item.needsConfirm ? "运行优化提醒 · 需人工确认" : "运行优化提醒",
-    tag: "待处理",
-    assetId: item.relatedAssetIds[0],
-    suggestion: item,
-  })),
+  ...actionableSuggestions.value
+    .filter((item) => !suggestionCoveredByAlarm(item))
+    .map((item) => {
+      const order = suggestionOrders.value[item.id];
+      return {
+        id: item.id,
+        kind: "suggestion" as const,
+        title: item.title,
+        meta: order
+          ? `${order.code} · 已生成工单，等待派单`
+          : item.needsConfirm
+            ? "运行优化提醒 · 需人工确认"
+            : "运行优化提醒",
+        tag: order ? "已派单" : "待处理",
+        assetId: item.relatedAssetIds[0],
+        suggestion: item,
+      };
+    }),
 ]);
 
 const systemStatus = computed(() => {
@@ -284,13 +361,42 @@ function ratedFlow(assetId: string): number | null {
   return typeof value === "number" ? value : null;
 }
 
+/**
+ * 计划用水口径：优先实测，缺测设备用额定流量补齐并显式标注，
+ * 避免“部分实测 + 部分缺失”被当成全量实测。
+ */
+const planBasis = computed(() => {
+  const running = snapshots.value.filter((item) => item.status === "running");
+  const flows: number[] = [];
+  let measured = 0;
+  let ratedFill = 0;
+  for (const item of running) {
+    if (item.flowM3h !== null) {
+      flows.push(item.flowM3h);
+      measured += 1;
+      continue;
+    }
+    const rated = ratedFlow(item.assetId);
+    if (rated !== null) {
+      flows.push(rated);
+      ratedFill += 1;
+    }
+  }
+  const total = running.length;
+  const basis: WaterBasis =
+    measured > 0 ? (ratedFill > 0 ? "rated" : "measured") : ratedFill > 0 ? "rated" : "none";
+  const label =
+    measured > 0
+      ? ratedFill > 0
+        ? `实测 ${measured}/${total} 台 + 额定补齐 ${ratedFill} 台`
+        : `实测 ${measured} 台`
+      : ratedFill > 0
+        ? `额定参数 ${ratedFill} 台`
+        : "无可用流量";
+  return { flows, basis, label, measured, ratedFill, total };
+});
 const planComparison = computed(() =>
-  compareSprayPlans(
-    snapshots.value
-      .filter((item) => item.status === "running")
-      .map((item) => item.flowM3h ?? ratedFlow(item.assetId)),
-    flowBasis.value,
-  ),
+  compareSprayPlans(planBasis.value.flows, planBasis.value.basis),
 );
 
 function usageRowsFor(hours: number) {
@@ -326,14 +432,63 @@ const workorders = computed(() =>
     .filter((order) => sprayAssetIds.value.has(order.assetId))
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
 );
+const openSprayOrders = computed(() =>
+  workorders.value.filter(
+    (order) => order.status !== "archived" && order.status !== "cancelled",
+  ),
+);
+const eventSummary = computed(() => {
+  const pendingSuggestions = actionableSuggestions.value.filter(
+    (item) => !suggestionOrders.value[item.id],
+  ).length;
+  const parts = [
+    activeAlarms.value.length ? `活动告警 ${activeAlarms.value.length} 条` : "",
+    pendingSuggestions ? `需确认建议 ${pendingSuggestions} 条` : "",
+    openSprayOrders.value.length ? `未闭环工单 ${openSprayOrders.value.length} 单` : "",
+  ].filter(Boolean);
+  return parts.length ? parts.join(" · ") : "无活动告警与需确认的运行建议";
+});
+/** 事件卡徽标 = 活动告警/未派单建议 + 未闭环射雾器工单（已派单建议不重复计数）。 */
+const eventBadge = computed(() => {
+  const alarms = events.value.filter((item) => item.kind === "alarm").length;
+  const pendingSuggestions = events.value.filter(
+    (item) => item.kind === "suggestion" && item.tag !== "已派单",
+  ).length;
+  return alarms + pendingSuggestions + openSprayOrders.value.length;
+});
+const sprayAlarms = computed(() =>
+  store.alarms
+    .filter((alarm) => alarm.subsystemId === SUBSYSTEM && alarm.status !== "closed")
+    .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt)),
+);
+
+function linkedOrder(suggestion: SpraySuggestion): WorkOrder | undefined {
+  const title = taskTitle(suggestion);
+  const assetId = suggestion.relatedAssetIds[0];
+  return store.workorders.find(
+    (order) =>
+      order.status !== "cancelled" &&
+      (order.title === title ||
+        (assetId !== undefined && order.assetId === assetId && order.symptom === suggestion.finding)),
+  );
+}
+/** 每条建议是否已生成工单，用于按钮置灰与事件“已派单”标记。 */
+const suggestionOrders = computed<Record<string, WorkOrder | undefined>>(() =>
+  Object.fromEntries(actionableSuggestions.value.map((item) => [item.id, linkedOrder(item)])),
+);
+function orderHref(order?: WorkOrder): string {
+  return order ? `/operations/workorders?workOrderId=${order.id}` : "/operations/workorders";
+}
+
+const sprayOrderIds = computed(() => new Set(workorders.value.map((order) => order.id)));
+const sprayAlarmIds = computed(() => new Set(sprayAlarms.value.map((alarm) => alarm.id)));
 const sprayAudits = computed(() =>
   store.audits
-    .filter(
-      (audit) =>
-        audit.objectType === "workOrder" ||
-        audit.objectType === "alarm" ||
-        audit.summary.includes("射雾"),
-    )
+    .filter((audit) => {
+      if (audit.objectType === "workOrder") return sprayOrderIds.value.has(audit.objectId);
+      if (audit.objectType === "alarm") return sprayAlarmIds.value.has(audit.objectId);
+      return audit.summary.includes("射雾");
+    })
     .slice(0, 8),
 );
 
@@ -390,11 +545,15 @@ const trendSeries = computed(() => {
     },
   ];
 });
+const trendMeta = computed(() =>
+  trendData.value ? pointMeta(trendData.value.point.label, trendData.value.point.unit) : null,
+);
 const trendStats = computed(() => {
   const values = (trendData.value?.values ?? []).filter(
     (value): value is number => value !== null,
   );
-  if (!values.length) return null;
+  const meta = trendMeta.value;
+  if (!values.length || !meta) return null;
   const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -404,8 +563,10 @@ const trendStats = computed(() => {
     min,
     max,
     spread,
-    stable: spread <= 0.05,
-    unit: trendData.value?.point.unit ?? "",
+    stable: spread <= meta.threshold,
+    threshold: meta.threshold,
+    digits: meta.digits,
+    unit: trendData.value?.point.unit || meta.unit,
   };
 });
 const trendRangeLabel = computed(
@@ -431,8 +592,24 @@ watch(
   { immediate: true },
 );
 
+const SHANGHAI_TIME = new Intl.DateTimeFormat("zh-CN", {
+  timeZone: "Asia/Shanghai",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+/** 种子时间多为 UTC ISO，展示统一换算到 Asia/Shanghai，避免比本地口径早 8 小时。 */
 function formatAt(value: string): string {
-  return value.slice(0, 16).replace("T", " ");
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const parts = Object.fromEntries(
+    SHANGHAI_TIME.formatToParts(date).map((part) => [part.type, part.value]),
+  );
+  const hour = parts.hour === "24" ? "00" : parts.hour;
+  return `${parts.year}-${parts.month}-${parts.day} ${hour}:${parts.minute}`;
 }
 function axisLabel(at: string, hours: number): string {
   const date = new Date(at);
@@ -507,30 +684,27 @@ function relatedAlarm(suggestion: SpraySuggestion) {
   );
 }
 
-function createTaskFromSuggestion(suggestion: SpraySuggestion): void {
+function createTaskFromSuggestion(suggestion: SpraySuggestion): string | null {
   if (!canCreateOrder.value) {
     message.error(
       `FORBIDDEN：角色「${roleNames[store.role]}」无 workorder:create 权限，不能生成任务草稿`,
     );
-    return;
+    return null;
   }
   const assetId = suggestion.relatedAssetIds[0] ?? sprayAssets.value[0]?.id;
   if (!assetId) {
     message.warning("缺少关联设备，未生成任务");
-    return;
+    return null;
   }
-  const title = taskTitle(suggestion);
-  const existing = store.workorders.find(
-    (order) => order.status !== "cancelled" && order.title === title,
-  );
+  const existing = linkedOrder(suggestion);
   if (existing) {
     message.info(`已存在任务 ${existing.code}，未重复创建`);
-    return;
+    return existing.code;
   }
   const alarm = suggestion.id === "pressure-low" ? relatedAlarm(suggestion) : undefined;
   try {
     const order = store.createWorkOrder({
-      title,
+      title: taskTitle(suggestion),
       assetId,
       source: alarm ? "alarm" : "manual",
       alarmId: alarm?.id,
@@ -544,8 +718,10 @@ function createTaskFromSuggestion(suggestion: SpraySuggestion): void {
     });
     const label = suggestion.id === "pressure-low" ? "检查工单草稿" : "待确认任务草稿";
     message.success(`已生成${label} ${order.code}（未派单）`);
+    return order.code;
   } catch (error) {
     message.error((error as Error).message);
+    return null;
   }
 }
 
@@ -673,7 +849,7 @@ function runAi(action: SprayAiAction): void {
                 comparison.diffPct === null ? "" : `（${comparison.diffPct.toFixed(1)}%）`
               }`
         }`,
-        `口径：${basisLabel.value}。${comparison.note}`,
+        `口径：${planBasis.value.label}。${comparison.note}`,
       ],
     };
     return;
@@ -688,22 +864,27 @@ function runAi(action: SprayAiAction): void {
     };
     return;
   }
-  const target = actionableSuggestions.value.find((item) => item.id === "pressure-low");
-  const assetId = target?.relatedAssetIds[0] ?? snapshots.value[0]?.assetId;
-  if (!target || !assetId) {
+  const target =
+    actionableSuggestions.value.find((item) => !suggestionOrders.value[item.id]) ??
+    actionableSuggestions.value[0];
+  if (!target) {
     aiResult.value = {
       title: "生成检查任务草稿",
-      lines: ["当前没有触发压力异常规则，未生成检查任务。"],
+      lines: ["当前没有可执行的运行建议，未生成任务草稿。"],
     };
     return;
   }
-  createTaskFromSuggestion(target);
+  const code = createTaskFromSuggestion(target);
   aiResult.value = {
-    title: "生成检查任务草稿",
-    lines: [
-      `已按规则「${target.title}」提交草稿，关联设备 ${snapshots.value[0]?.code ?? ""} 与活动告警。`,
-      "草稿不会自动派单，也不会下发任何设备控制指令。",
-    ],
+    title: `生成任务草稿：${target.title}`,
+    lines: code
+      ? [
+          `已按规则「${target.title}」生成草稿 ${code}，关联设备 ${
+            target.relatedAssetIds.map((id) => store.getAsset(id)?.code ?? id).join("、") || "无"
+          }。`,
+          "草稿不会自动派单，也不会下发任何设备控制指令。",
+        ]
+      : ["任务草稿未生成，请确认权限或稍后重试。"],
   };
 }
 </script>
@@ -735,7 +916,7 @@ function runAi(action: SprayAiAction): void {
           class="tab-pill"
           :class="{ active: tab === item.value }"
           :aria-selected="tab === item.value"
-          @click="tab = item.value"
+          @click="setTab(item.value)"
         >
           {{ item.label }}
         </button>
@@ -768,7 +949,7 @@ function runAi(action: SprayAiAction): void {
         :class="{ open: sceneOpen }"
         @click="sceneOpen = !sceneOpen"
       >
-        演示场景：{{ SCENARIO_NAMES[store.scenarioId] }}
+        场景回放：{{ SCENARIO_NAMES[store.scenarioId] }}
         <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.4 4.6 L6 8.2 L9.6 4.6" /></svg>
       </button>
     </header>
@@ -804,7 +985,7 @@ function runAi(action: SprayAiAction): void {
 
     <!-- 四张核心指标卡 -->
     <div class="kpi-grid">
-      <article class="kpi-card">
+      <article class="kpi-card" style="--i: 0">
         <span class="kpi-icon blue" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <rect x="3.5" y="6" width="12" height="12" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.7" />
@@ -818,12 +999,12 @@ function runAi(action: SprayAiAction): void {
             <strong class="kpi-value">{{ summary.runningCount }}<small>/{{ sprayAssets.length }} 台</small></strong>
             <span class="kpi-delta ok">运行率 {{ runningRate }}%</span>
           </div>
-          <p class="kpi-hint">停机 {{ stoppedCount }} 台 · 异常 {{ sprayAssets.filter((asset) => asset.status === "fault").length }} 台</p>
+          <p class="kpi-hint">停机 {{ stoppedCount }} 台（含计划停机） · 异常 {{ sprayAssets.filter((asset) => asset.status === "fault").length }} 台</p>
           <div class="kpi-bar"><i :style="{ width: `${runningRate}%` }"></i></div>
         </div>
       </article>
 
-      <article class="kpi-card">
+      <article class="kpi-card" style="--i: 1">
         <span class="kpi-icon teal" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="1.7" />
@@ -846,11 +1027,11 @@ function runAi(action: SprayAiAction): void {
               {{ summary.pressureMeanMpa === null ? "无有效样本" : summary.pressureMeanMpa < SPRAY_DEMO_RULES.pressureLowMpa ? "低于演示阈值" : "压力平稳" }}
             </span>
           </div>
-          <p class="kpi-hint">有效测点 {{ summary.pressureCovered }}/{{ summary.pressureTotal }} 台 · 采样 30 分钟</p>
+          <p class="kpi-hint">有效测点 {{ summary.pressureCovered }}/{{ summary.pressureTotal }} 台 · 含停机 {{ stoppedCount }} 台 · 采样 30 分钟</p>
         </div>
       </article>
 
-      <article class="kpi-card">
+      <article class="kpi-card" style="--i: 2">
         <span class="kpi-icon cyan" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <path d="M12 3.6 C12 3.6 6.4 10.2 6.4 14.4 a5.6 5.6 0 0 0 11.2 0 C17.6 10.2 12 3.6 12 3.6 Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
@@ -872,7 +1053,7 @@ function runAi(action: SprayAiAction): void {
         </div>
       </article>
 
-      <article class="kpi-card" :class="{ alert: events.length > 0 }">
+      <article class="kpi-card" style="--i: 3" :class="{ alert: events.length > 0 }">
         <span class="kpi-icon" :class="events.length ? 'red' : 'blue'" aria-hidden="true">
           <svg viewBox="0 0 24 24">
             <path d="M12 4.2 L20.4 18.4 a1.4 1.4 0 0 1 -1.2 2.1 H4.8 a1.4 1.4 0 0 1 -1.2 -2.1 Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
@@ -889,7 +1070,7 @@ function runAi(action: SprayAiAction): void {
             </span>
           </div>
           <p class="kpi-hint">
-            {{ events.length ? events.slice(0, 2).map((item) => item.title).join("；") : "无活动告警与需确认的运行建议" }}
+            {{ eventSummary }}
           </p>
         </div>
       </article>
@@ -913,8 +1094,8 @@ function runAi(action: SprayAiAction): void {
           </div>
           <div class="diagram-actions">
             <div v-if="!editing" class="diagram-switch" role="group" aria-label="工艺视图">
-              <NButton size="small" :type="diagramView === 'scene' ? 'primary' : 'default'" :aria-pressed="diagramView === 'scene'" @click="diagramView = 'scene'">工艺图</NButton>
-              <NButton size="small" :type="diagramView === 'scada' ? 'primary' : 'default'" :aria-pressed="diagramView === 'scada'" @click="diagramView = 'scada'">组态图</NButton>
+              <button type="button" class="tab-pill" :class="{ active: diagramView === 'scene' }" :aria-pressed="diagramView === 'scene'" @click="diagramView = 'scene'">工艺图</button>
+              <button type="button" class="tab-pill" :class="{ active: diagramView === 'scada' }" :aria-pressed="diagramView === 'scada'" @click="diagramView = 'scada'">组态图</button>
             </div>
             <span class="soft-tag">SCADA · {{ editing ? '编辑草稿' : `已发布 v${shownDiagram.version}` }}</span>
             <NButton v-if="can(store.role, 'binding:write') && !editing" size="small" secondary @click="beginEdit">编辑组态</NButton>
@@ -1003,9 +1184,9 @@ function runAi(action: SprayAiAction): void {
           <span class="status-item"><em>运行</em><strong class="ok">{{ summary.runningCount }} 台</strong></span>
           <span class="status-item"><em>停机</em><strong>{{ stoppedCount }} 台</strong></span>
           <span class="status-item wide">
-            <em>当前用水估算</em>
+            <em>近 24 小时累计用水估算</em>
             <strong>{{ usage24hTotal === null ? "缺数" : `${fmt(usage24hTotal, 0)} m³` }}</strong>
-            <small>（近 24 小时 · {{ basisLabel }}）</small>
+            <small>（{{ basisLabel }}）</small>
           </span>
           <span class="status-source">数据来源 MOCK / 规则计算</span>
         </div>
@@ -1048,7 +1229,7 @@ function runAi(action: SprayAiAction): void {
                 <span>粉尘监测</span>
                 <strong :class="{ missing: dustUg === null }">
                   {{ dustUg === null ? "缺数" : `${dustUg} μg/m³` }}
-                  <small v-if="dustUg !== null" class="state-tag" :class="dustStateText === '达标' ? 'running' : 'attention'">
+                  <small v-if="dustUg !== null" class="state-tag" :class="dustStateText === '低于关注值' ? 'running' : 'attention'">
                     {{ dustStateText }}
                   </small>
                 </strong>
@@ -1077,15 +1258,18 @@ function runAi(action: SprayAiAction): void {
           </p>
           <div class="suggest-list">
             <article
-              v-for="item in actionableSuggestions"
+              v-for="(item, index) in actionableSuggestions"
               :id="`spray-suggest-${item.id}`"
               :key="item.id"
               class="suggestion"
-              :class="item.level"
+              :class="[item.level, { linked: suggestionOrders[item.id] }]"
+              :style="{ '--i': Math.min(index, 12) }"
             >
               <div class="suggest-head">
                 <strong>{{ item.title }}</strong>
-                <span class="state-tag attention">{{ item.needsConfirm ? "需人工确认" : "提示" }}</span>
+                <span class="state-tag" :class="suggestionOrders[item.id] ? 'running' : 'attention'">
+                  {{ suggestionOrders[item.id] ? "已生成工单" : item.needsConfirm ? "需人工确认" : "提示" }}
+                </span>
               </div>
               <p class="suggest-line"><em>原因：</em>{{ item.finding }}</p>
               <p class="suggest-line"><em>运行建议：</em>{{ item.action }}</p>
@@ -1120,11 +1304,18 @@ function runAi(action: SprayAiAction): void {
                 <NButton
                   size="small"
                   type="primary"
-                  :disabled="!canCreateOrder"
+                  :disabled="!canCreateOrder || Boolean(suggestionOrders[item.id])"
                   @click="createTaskFromSuggestion(item)"
                 >
-                  创建检查任务
+                  {{ suggestionOrders[item.id] ? "已生成任务" : "创建检查任务" }}
                 </NButton>
+                <RouterLink
+                  v-if="suggestionOrders[item.id]"
+                  class="linked-order"
+                  :to="orderHref(suggestionOrders[item.id])"
+                >
+                  {{ suggestionOrders[item.id]?.code }} →
+                </RouterLink>
               </div>
             </article>
           </div>
@@ -1141,17 +1332,20 @@ function runAi(action: SprayAiAction): void {
               </span>
               <h3>异常事件与待办</h3>
             </div>
-            <span class="event-count" :class="{ active: events.length }">{{ events.length }}</span>
-            <RouterLink to="/operations/alarms" class="more-link">查看更多</RouterLink>
+            <span class="event-count" :class="{ active: eventBadge }">{{ eventBadge }}</span>
+            <button type="button" class="more-link" @click="setTab('records')">查看更多</button>
           </div>
 
           <ul v-if="events.length" class="event-list">
-            <li v-for="item in events.slice(0, 3)" :key="item.id">
+            <li v-for="(item, index) in events.slice(0, 3)" :key="item.id" :style="{ '--i': index }">
               <span class="event-dot" :class="item.kind"></span>
               <div class="event-main">
                 <div class="event-title">
                   <strong>{{ item.title }}</strong>
-                  <span class="state-tag" :class="item.kind === 'alarm' ? 'attention' : 'warn'">{{ item.tag }}</span>
+                  <span
+                    class="state-tag"
+                    :class="item.tag === '已派单' ? 'running' : item.kind === 'alarm' ? 'attention' : 'warn'"
+                  >{{ item.tag }}</span>
                 </div>
                 <small>{{ item.meta }}</small>
               </div>
@@ -1168,7 +1362,7 @@ function runAi(action: SprayAiAction): void {
           <p v-else class="empty">当前无活动告警与需确认的运行建议。</p>
 
           <div v-if="workorders.length" class="order-block">
-            <div v-for="order in workorders.slice(0, 2)" :key="order.id" class="order-line">
+            <div v-for="(order, index) in workorders.slice(0, 2)" :key="order.id" class="order-line" :style="{ '--i': index }">
               <span class="order-dot"></span>
               <div class="event-main">
                 <div class="event-title">
@@ -1177,7 +1371,7 @@ function runAi(action: SprayAiAction): void {
                 </div>
                 <small>{{ order.code }} · {{ formatAt(order.createdAt) }}</small>
               </div>
-              <RouterLink to="/operations/workorders" class="event-chevron" aria-label="查看工单">
+              <RouterLink :to="orderHref(order)" class="event-chevron" aria-label="查看工单">
                 <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.6 2.4 L8.2 6 L4.6 9.6" /></svg>
               </RouterLink>
             </div>
@@ -1188,10 +1382,10 @@ function runAi(action: SprayAiAction): void {
 
     <!-- 底部业务 Tab -->
     <section class="panel tabs-panel">
-      <NTabs v-model:value="tab" type="line" animated>
+      <NTabs :value="tab" type="line" @update:value="setTab">
         <NTabPane name="monitor" tab="设备监测">
           <p class="tab-note">
-            本系统在用设备 {{ assets.length }} 台；点击任意行打开同一设备详情抽屉，测点与趋势与台账共用一份数据。
+            射雾器 {{ sprayAssets.length }} 台，另有 {{ extraAssets.length }} 台其他设备（泵、仪表等）不在本表。点击任意行打开同一设备详情抽屉，测点与趋势与台账共用一份数据。
           </p>
           <div class="table-wrap">
             <table class="asset-table">
@@ -1209,8 +1403,9 @@ function runAi(action: SprayAiAction): void {
               </thead>
               <tbody>
                 <tr
-                  v-for="asset in assets"
+                  v-for="(asset, index) in sprayAssets"
                   :key="asset.id"
+                  :style="{ '--i': Math.min(index, 12) }"
                   tabindex="0"
                   @click="openAsset(asset.id)"
                   @keydown.enter="openAsset(asset.id)"
@@ -1219,8 +1414,17 @@ function runAi(action: SprayAiAction): void {
                   <td>{{ asset.name }}</td>
                   <td>{{ asset.area === "north" ? "北区（A）" : "南区（B）" }}</td>
                   <td>
-                    <span class="state-tag" :class="asset.status === 'running' ? 'running' : asset.status === 'fault' ? 'attention' : 'idle'">
-                      {{ STATUS_LABELS[asset.status] }}
+                    <span
+                      class="state-tag"
+                      :class="
+                        (snapshotStatus[asset.id] ?? asset.status) === 'running'
+                          ? 'running'
+                          : (snapshotStatus[asset.id] ?? asset.status) === 'fault'
+                            ? 'attention'
+                            : 'idle'
+                      "
+                    >
+                      {{ STATUS_LABELS[snapshotStatus[asset.id] ?? asset.status] }}
                     </span>
                   </td>
                   <td>
@@ -1276,17 +1480,21 @@ function runAi(action: SprayAiAction): void {
                 </p>
               </div>
               <aside class="trend-stats">
-                <h4>末端压力（{{ trendRangeLabel }}）</h4>
+                <h4>{{ trendData.point.label }}（{{ trendRangeLabel }}）</h4>
                 <template v-if="trendStats">
                   <dl>
-                    <div><dt>平均值</dt><dd>{{ trendStats.mean.toFixed(2) }} <small>{{ trendStats.unit }}</small></dd></div>
-                    <div><dt>最大值</dt><dd>{{ trendStats.max.toFixed(2) }} <small>{{ trendStats.unit }}</small></dd></div>
-                    <div><dt>最小值</dt><dd>{{ trendStats.min.toFixed(2) }} <small>{{ trendStats.unit }}</small></dd></div>
-                    <div><dt>波动范围</dt><dd>±{{ (trendStats.spread / 2).toFixed(2) }} <small>{{ trendStats.unit }}</small></dd></div>
+                    <div><dt>平均值</dt><dd>{{ trendStats.mean.toFixed(trendStats.digits) }} <small>{{ trendStats.unit }}</small></dd></div>
+                    <div><dt>最大值</dt><dd>{{ trendStats.max.toFixed(trendStats.digits) }} <small>{{ trendStats.unit }}</small></dd></div>
+                    <div><dt>最小值</dt><dd>{{ trendStats.min.toFixed(trendStats.digits) }} <small>{{ trendStats.unit }}</small></dd></div>
+                    <div><dt>波动范围</dt><dd>±{{ (trendStats.spread / 2).toFixed(trendStats.digits) }} <small>{{ trendStats.unit }}</small></dd></div>
                   </dl>
                   <p class="trend-verdict" :class="trendStats.stable ? 'ok' : 'warn'">
                     <span class="check">{{ trendStats.stable ? "✓" : "!" }}</span>
-                    {{ trendStats.stable ? "波动范围在演示阈值内，运行平稳" : "波动超过 ±0.05 MPa，建议核查供水与测点" }}
+                    {{
+                      trendStats.stable
+                        ? `波动范围在 ±${trendStats.threshold} ${trendStats.unit} 内，运行平稳`
+                        : `波动超过 ±${trendStats.threshold} ${trendStats.unit}，建议核查${trendMeta?.label ?? "该测点"}与供水工况`
+                    }}
                   </p>
                 </template>
                 <p v-else class="empty">所选区间无有效样本，无法计算统计值。</p>
@@ -1327,11 +1535,11 @@ function runAi(action: SprayAiAction): void {
                   <span>{{ row.code }}</span>
                   <span>{{ row.pointLabel }}</span>
                   <strong>{{ row.volumeM3 === null ? "缺数" : `${row.volumeM3.toFixed(0)} m³` }}</strong>
-                  <small>有效样本 {{ row.validSamples }} · {{ (row.validSamples * 0.5).toFixed(1) }} h</small>
+                  <small>有效样本 {{ row.validSamples }} · 跨度 {{ row.spanHours.toFixed(1) }} h</small>
                 </li>
               </ul>
               <p class="tab-note">
-                按 30 分钟有效样本梯形积分，采样间隔超过 2 小时不参与计算；数据来源 MOCK 模拟遥测。
+                按时序有效样本做梯形积分，采样间隔超过 2 小时不参与计算；数据来源 MOCK 模拟遥测。
               </p>
             </section>
           </div>
@@ -1355,21 +1563,21 @@ function runAi(action: SprayAiAction): void {
                     <td>{{ SPRAY_PLANS[0].deviceCount }} 台</td>
                     <td>{{ SPRAY_PLANS[0].hours }} h</td>
                     <td>{{ fmt(planComparison.current.volumeM3, 0) }} m³</td>
-                    <td>{{ basisLabel }}</td>
+                    <td>{{ planBasis.label }}</td>
                   </tr>
                   <tr>
                     <td>{{ SPRAY_PLANS[1].label }}</td>
                     <td>{{ SPRAY_PLANS[1].deviceCount }} 台</td>
                     <td>{{ SPRAY_PLANS[1].hours }} h</td>
                     <td>{{ fmt(planComparison.reduced.volumeM3, 0) }} m³</td>
-                    <td>{{ basisLabel }}</td>
+                    <td>{{ planBasis.label }}</td>
                   </tr>
                   <tr>
                     <td>{{ SPRAY_PLANS[2].label }}</td>
                     <td>{{ SPRAY_PLANS[2].deviceCount }} 台</td>
                     <td>{{ SPRAY_PLANS[2].hours }} h</td>
                     <td>{{ fmt(planComparison.off.volumeM3, 0) }} m³</td>
-                    <td>{{ basisLabel }}</td>
+                    <td>{{ planBasis.label }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -1381,7 +1589,7 @@ function runAi(action: SprayAiAction): void {
               </strong>
               <span v-if="planComparison.diffPct !== null">（{{ planComparison.diffPct.toFixed(1) }}%）</span>
             </p>
-            <p class="tab-note">{{ planComparison.note }} 计划时长为演示参数。</p>
+            <p class="tab-note">{{ planComparison.note }} 计划时长为演示参数；现行计划按 8 h/日折算，与 24 小时实测累计口径不同。</p>
           </section>
         </NTabPane>
 
@@ -1392,11 +1600,11 @@ function runAi(action: SprayAiAction): void {
                 <h4>本系统告警</h4>
                 <RouterLink to="/operations/alarms">全部告警 →</RouterLink>
               </div>
-              <ul v-if="activeAlarms.length" class="record-list">
-                <li v-for="alarm in activeAlarms" :key="alarm.id">
+              <ul v-if="sprayAlarms.length" class="record-list">
+                <li v-for="(alarm, index) in sprayAlarms" :key="alarm.id" :style="{ '--i': Math.min(index, 12) }">
                   <div class="record-head">
-                    <span class="state-tag" :class="alarm.level === 'critical' ? 'attention' : 'warn'">
-                      {{ ALARM_LEVEL_LABELS[alarm.level] }}
+                    <span class="state-tag" :class="alarm.status === 'active' ? (alarm.level === 'critical' ? 'attention' : 'warn') : 'idle'">
+                      {{ ALARM_LEVEL_LABELS[alarm.level] }} · {{ ALARM_STATUS_LABELS[alarm.status] }}
                     </span>
                     <strong>{{ alarm.title }}</strong>
                     <small>{{ formatAt(alarm.occurredAt) }}</small>
@@ -1417,7 +1625,7 @@ function runAi(action: SprayAiAction): void {
                 <RouterLink to="/operations/workorders">全部工单 →</RouterLink>
               </div>
               <ul v-if="workorders.length" class="record-list">
-                <li v-for="order in workorders" :key="order.id">
+                <li v-for="(order, index) in workorders" :key="order.id" :style="{ '--i': Math.min(index, 12) }">
                   <div class="record-head">
                     <span class="state-tag idle">{{ WORKORDER_STATUS_LABELS[order.status] ?? order.status }}</span>
                     <strong>{{ order.title }}</strong>
@@ -1443,7 +1651,7 @@ function runAi(action: SprayAiAction): void {
               <span class="caption">仅记录 DEMO 内操作，不含真实控制指令</span>
             </div>
             <ul v-if="sprayAudits.length" class="audit-list">
-              <li v-for="audit in sprayAudits" :key="audit.id">
+              <li v-for="(audit, index) in sprayAudits" :key="audit.id" :style="{ '--i': Math.min(index, 12) }">
                 <span class="audit-at">{{ formatAt(audit.at) }}</span>
                 <span class="audit-role">{{ roleNames[audit.actorRole] }}</span>
                 <strong>{{ audit.summary }}</strong>
@@ -1454,7 +1662,7 @@ function runAi(action: SprayAiAction): void {
           </section>
         </NTabPane>
 
-        <NTabPane name="ai" tab="AI 辅助分析">
+        <NTabPane name="ai" tab="AI 分析">
           <div class="ai-grid">
             <section class="mini-panel">
               <h4>本地规则可执行的射雾器问题</h4>
@@ -1504,13 +1712,13 @@ function runAi(action: SprayAiAction): void {
 </template>
 
 <style scoped>
-.spray-v3-evidence{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:10px 14px;background:linear-gradient(100deg,#fdfaf1,#f0f8fb);border:1px solid #e8deca;border-radius:10px}
-.spray-v3-evidence>div{display:grid;gap:5px;flex:1;min-width:220px}
-.spray-v3-evidence strong{font-size:11px;color:#9f8156}
-.spray-v3-evidence span{font-size:11px;color:#889dae;line-height:1.65}
-.spray-v3-evidence nav{display:flex;flex-wrap:wrap;gap:7px}
-.spray-v3-evidence a{font-size:11px;color:#2a7ca2;padding:6px 9px;text-decoration:none;border:1px solid #c9e2ee;border-radius:6px;background:#fff}
-.spray-v3-evidence a:hover{background:#e5f4fa}
+.spray-v3-evidence{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:7px 14px;background:var(--spray-soft);border:1px solid var(--spray-line);border-radius:10px}
+.spray-v3-evidence>div{display:flex;align-items:baseline;gap:8px;flex:1;min-width:220px}
+.spray-v3-evidence strong{font-size:11px;font-weight:700;color:var(--spray-primary);white-space:nowrap}
+.spray-v3-evidence span{font-size:11px;color:var(--spray-text);line-height:1.55}
+.spray-v3-evidence nav{display:flex;flex-wrap:wrap;gap:6px}
+.spray-v3-evidence a{font-size:10.5px;color:var(--spray-primary);padding:3px 9px;text-decoration:none;border:1px solid var(--spray-line);border-radius:999px;background:#fff}
+.spray-v3-evidence a:hover{background:var(--spray-soft);border-color:#bcd9ee}
 
 .spray-view {
   --spray-bg: #eaf4ff;
@@ -1519,12 +1727,27 @@ function runAi(action: SprayAiAction): void {
   --spray-soft: #eff7ff;
   --spray-title: #173553;
   --spray-text: #6b8199;
+  --spray-text-weak: #8fa4b6;
   --spray-line: #dceaf7;
+  --spray-line-soft: #edf4fa;
+  --spray-chip: #f4f9fe;
   --spray-ok: #25aa64;
+  --spray-ok-bg: #e9f8f0;
   --spray-alert: #e45252;
+  --spray-alert-bg: #fdeceb;
   --spray-warn: #e8a33e;
+  --spray-warn-bg: #fdf6e8;
   --spray-radius: 12px;
   --spray-gap: 12px;
+  /* 交互动效 token：商务克制，只动 transform / opacity */
+  --mo-dur-fast: 120ms;
+  --mo-dur-base: 200ms;
+  --mo-dur-slow: 320ms;
+  --mo-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --mo-lift: 2px;
+  --mo-slide: 8px;
+  --mo-stagger: 50ms;
+  --mo-stagger-row: 28ms;
   display: flex;
   flex-direction: column;
   gap: var(--spray-gap);
@@ -1600,15 +1823,23 @@ function runAi(action: SprayAiAction): void {
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: #4f6b85;
+  color: var(--spray-text);
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition:
+    background var(--mo-dur-fast) var(--mo-ease),
+    color var(--mo-dur-fast) var(--mo-ease),
+    transform var(--mo-dur-fast) var(--mo-ease),
+    box-shadow var(--mo-dur-fast) var(--mo-ease);
 }
 .tab-pill:hover {
-  background: #eaf4ff;
+  background: var(--spray-soft);
   color: var(--spray-primary);
+  transform: translateY(calc(var(--mo-lift) * -0.5));
+}
+.tab-pill:active {
+  transform: scale(0.985);
 }
 .tab-pill.active {
   background: var(--spray-primary);
@@ -1662,6 +1893,10 @@ function runAi(action: SprayAiAction): void {
   background: #ffffff;
   color: var(--spray-primary);
   cursor: pointer;
+  transition:
+    border-color var(--mo-dur-fast) var(--mo-ease),
+    background var(--mo-dur-fast) var(--mo-ease),
+    transform var(--mo-dur-fast) var(--mo-ease);
 }
 .ai-trigger svg {
   width: 17px;
@@ -1670,6 +1905,10 @@ function runAi(action: SprayAiAction): void {
 .ai-trigger:hover:not(:disabled) {
   border-color: #9fcdf5;
   background: #f2f9ff;
+  transform: translateY(calc(var(--mo-lift) * -1));
+}
+.ai-trigger:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .ai-trigger:disabled {
   color: #b8c7d3;
@@ -1688,11 +1927,21 @@ function runAi(action: SprayAiAction): void {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    border-color var(--mo-dur-fast) var(--mo-ease),
+    color var(--mo-dur-fast) var(--mo-ease),
+    transform var(--mo-dur-fast) var(--mo-ease);
 }
 .scene-trigger:hover,
 .scene-trigger.open {
   border-color: #9fcdf5;
   color: var(--spray-primary);
+}
+.scene-trigger:hover {
+  transform: translateY(calc(var(--mo-lift) * -1));
+}
+.scene-trigger:active {
+  transform: scale(0.985);
 }
 .scene-trigger svg {
   width: 12px;
@@ -1710,18 +1959,18 @@ function runAi(action: SprayAiAction): void {
   gap: 8px;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px dashed #b7d9ea;
-  background: #f4fafd;
+  border: 1px dashed var(--spray-line);
+  background: var(--spray-chip);
 }
 .scene-label {
   font-size: 12px;
-  color: #5b7b91;
+  color: var(--spray-text);
   font-weight: 600;
 }
 .scene-current {
   margin-left: auto;
   font-size: 11px;
-  color: #8ba0b2;
+  color: var(--spray-text-weak);
 }
 
 /* KPI */
@@ -1807,7 +2056,7 @@ function runAi(action: SprayAiAction): void {
 }
 .kpi-value.missing {
   font-size: 21px;
-  color: #9aacbc;
+  color: var(--spray-text-weak);
 }
 .kpi-delta {
   font-size: 11px;
@@ -1827,7 +2076,7 @@ function runAi(action: SprayAiAction): void {
   margin: 0;
   font-size: 11px;
   line-height: 1.45;
-  color: #8ba0b2;
+  color: var(--spray-text-weak);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1836,7 +2085,7 @@ function runAi(action: SprayAiAction): void {
   height: 4px;
   margin-top: 3px;
   border-radius: 999px;
-  background: #e9f2fb;
+  background: var(--spray-line-soft);
   overflow: hidden;
 }
 .kpi-bar i {
@@ -1900,17 +2149,18 @@ function runAi(action: SprayAiAction): void {
 .panel-sub {
   margin: 2px 0 0;
   font-size: 11px;
-  color: #8ba0b2;
+  color: var(--spray-text-weak);
 }
 .soft-tag {
   display: inline-flex;
   align-items: center;
   padding: 1px 7px;
   border-radius: 999px;
-  border: 1px solid #d8e9f7;
-  background: #f4faff;
-  color: #6690b0;
+  border: 1px solid var(--spray-line);
+  background: var(--spray-chip);
+  color: var(--spray-text);
   font-size: 10.5px;
+  line-height: 17px;
   white-space: nowrap;
 }
 .canvas-eyebrow {
@@ -1925,34 +2175,35 @@ function runAi(action: SprayAiAction): void {
 }
 .extra-label {
   font-size: 11px;
-  color: #7c93a5;
+  color: var(--spray-text);
 }
 .extra-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 7px 2px 9px;
+  padding: 2px 9px;
   border-radius: 999px;
-  border: 1px solid #cfe4f0;
+  border: 1px solid var(--spray-line);
   background: #fff;
-  color: #2a4660;
+  color: var(--spray-title);
   font-size: 11px;
+  line-height: 17px;
   font-weight: 600;
   cursor: pointer;
 }
 .extra-chip:hover,
 .extra-chip:focus-visible {
-  border-color: #8fbdd4;
+  border-color: #a9cfea;
   outline: none;
 }
 .mock-flag {
-  padding: 0 4px;
-  border-radius: 4px;
+  padding: 0 5px;
+  border-radius: 999px;
   font-size: 9px;
-  line-height: 14px;
+  line-height: 15px;
   font-weight: 400;
-  color: #a06a1f;
-  background: #fdf1da;
+  color: var(--spray-warn);
+  background: var(--spray-warn-bg);
   border: 1px solid #f0d6a4;
 }
 .scada-status {
@@ -1962,7 +2213,7 @@ function runAi(action: SprayAiAction): void {
   gap: 4px 18px;
   margin-top: auto;
   padding-top: 8px;
-  border-top: 1px solid #e8f2fa;
+  border-top: 1px solid var(--spray-line-soft);
   font-size: 11px;
 }
 .status-item {
@@ -1972,7 +2223,7 @@ function runAi(action: SprayAiAction): void {
 }
 .status-item em {
   font-style: normal;
-  color: #8ba0b2;
+  color: var(--spray-text-weak);
 }
 .status-item strong {
   color: var(--spray-title);
@@ -1982,11 +2233,11 @@ function runAi(action: SprayAiAction): void {
   color: var(--spray-ok);
 }
 .status-item.wide small {
-  color: #a0b2c0;
+  color: var(--spray-text-weak);
 }
 .status-source {
   margin-left: auto;
-  color: #a0b2c0;
+  color: var(--spray-text-weak);
   font-size: 10.5px;
 }
 
@@ -2036,7 +2287,7 @@ function runAi(action: SprayAiAction): void {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 7px;
+  border-radius: 8px;
   color: var(--spray-primary);
   background: var(--spray-soft);
   flex-shrink: 0;
@@ -2047,7 +2298,7 @@ function runAi(action: SprayAiAction): void {
 }
 .side-head h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--spray-title);
   font-weight: 700;
 }
@@ -2064,8 +2315,8 @@ function runAi(action: SprayAiAction): void {
   gap: 2px;
   padding: 6px 10px;
   border-radius: 8px;
-  background: #f8fbfe;
-  border: 1px solid #e9f2fa;
+  background: var(--spray-chip);
+  border: 1px solid var(--spray-line-soft);
   min-width: 0;
 }
 .env-row {
@@ -2096,24 +2347,24 @@ function runAi(action: SprayAiAction): void {
   font-size: 10px;
   line-height: 17px;
   white-space: nowrap;
-  background: #eef4f8;
-  color: #7c93a5;
+  background: var(--spray-line-soft);
+  color: var(--spray-text);
 }
 .state-tag.running {
-  background: #e4f7ed;
-  color: #1a8f5c;
+  background: var(--spray-ok-bg);
+  color: var(--spray-ok);
 }
 .state-tag.idle {
-  background: #eef4f8;
-  color: #7c93a5;
+  background: var(--spray-line-soft);
+  color: var(--spray-text);
 }
 .state-tag.attention {
-  background: #fdecea;
-  color: #c05045;
+  background: var(--spray-alert-bg);
+  color: var(--spray-alert);
 }
 .state-tag.warn {
-  background: #fdf3e2;
-  color: #a06a1f;
+  background: var(--spray-warn-bg);
+  color: var(--spray-warn);
 }
 
 .suggest-list {
@@ -2126,13 +2377,15 @@ function runAi(action: SprayAiAction): void {
 }
 .suggestion {
   padding: 9px 10px;
-  border-radius: 9px;
-  border: 1px solid #d8ecda;
-  background: #f6fdf9;
+  border-radius: 8px;
+  border: 1px solid var(--spray-line);
+  border-left: 3px solid var(--spray-primary);
+  background: var(--spray-soft);
 }
 .suggestion.action {
-  border-color: #f3d9c2;
-  background: #fffaf5;
+  border-color: #f0d9b0;
+  border-left-color: var(--spray-warn);
+  background: var(--spray-warn-bg);
 }
 .suggest-head {
   display: flex;
@@ -2149,7 +2402,7 @@ function runAi(action: SprayAiAction): void {
   margin: 5px 0 0;
   font-size: 11px;
   line-height: 1.55;
-  color: #5f788d;
+  color: var(--spray-text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -2158,12 +2411,12 @@ function runAi(action: SprayAiAction): void {
 .suggest-line em {
   font-style: normal;
   font-weight: 600;
-  color: #43607a;
+  color: var(--spray-title);
 }
 .suggest-evidence {
   margin-top: 7px;
   padding: 7px 8px;
-  border-radius: 7px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.8);
   border: 1px dashed #dbe9f4;
 }
@@ -2179,17 +2432,19 @@ function runAi(action: SprayAiAction): void {
   line-height: 1.5;
 }
 .suggest-evidence dt {
-  color: #96a9b9;
+  color: var(--spray-text-weak);
 }
 .suggest-evidence dd {
   margin: 0;
-  color: #43607a;
+  color: var(--spray-title);
 }
 .suggest-evidence dd span {
   display: block;
 }
 .suggest-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-top: 9px;
 }
@@ -2197,7 +2452,7 @@ function runAi(action: SprayAiAction): void {
   margin: 4px 0;
   font-size: 11.5px;
   line-height: 1.6;
-  color: #96a9b9;
+  color: var(--spray-text-weak);
 }
 .side-card > .empty {
   margin: auto 0;
@@ -2205,7 +2460,7 @@ function runAi(action: SprayAiAction): void {
   font-size: 12px;
 }
 .empty small {
-  color: #aebfcd;
+  color: var(--spray-text-weak);
 }
 
 .event-count {
@@ -2216,14 +2471,14 @@ function runAi(action: SprayAiAction): void {
   height: 18px;
   padding: 0 5px;
   border-radius: 9px;
-  background: #eef4f8;
-  color: #7c93a5;
+  background: var(--spray-line-soft);
+  color: var(--spray-text);
   font-size: 10.5px;
   font-weight: 700;
 }
 .event-count.active {
-  background: #fdecea;
-  color: #c05045;
+  background: var(--spray-alert-bg);
+  color: var(--spray-alert);
 }
 .more-link {
   margin-left: auto;
@@ -2246,8 +2501,8 @@ function runAi(action: SprayAiAction): void {
   gap: 8px;
   padding: 6px 7px;
   border-radius: 8px;
-  background: #f9fcfe;
-  border: 1px solid #edf5fa;
+  background: var(--spray-chip);
+  border: 1px solid var(--spray-line-soft);
 }
 .event-dot,
 .order-dot {
@@ -2274,7 +2529,7 @@ function runAi(action: SprayAiAction): void {
 }
 .event-title strong {
   font-size: 11.5px;
-  color: #24445c;
+  color: var(--spray-title);
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2284,7 +2539,7 @@ function runAi(action: SprayAiAction): void {
   display: block;
   margin-top: 2px;
   font-size: 10px;
-  color: #96a9b9;
+  color: var(--spray-text-weak);
 }
 .event-chevron {
   display: inline-flex;
@@ -2296,12 +2551,12 @@ function runAi(action: SprayAiAction): void {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #8fb1c8;
+  color: var(--spray-text-weak);
   cursor: pointer;
   text-decoration: none;
 }
 .event-chevron:hover {
-  background: #eaf4fc;
+  background: var(--spray-soft);
   color: var(--spray-primary);
 }
 .event-chevron svg {
@@ -2316,7 +2571,7 @@ function runAi(action: SprayAiAction): void {
 .order-block {
   margin-top: 7px;
   padding-top: 7px;
-  border-top: 1px dashed #e2edf4;
+  border-top: 1px dashed var(--spray-line);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2336,7 +2591,7 @@ function runAi(action: SprayAiAction): void {
   margin: 0 0 8px;
   font-size: 11.5px;
   line-height: 1.6;
-  color: #8ba0b2;
+  color: var(--spray-text-weak);
 }
 .table-wrap {
   width: 100%;
@@ -2353,7 +2608,7 @@ function runAi(action: SprayAiAction): void {
 .plan-table th,
 .plan-table td {
   padding: 7px 8px;
-  border-bottom: 1px solid #eef4f8;
+  border-bottom: 1px solid var(--spray-line-soft);
   text-align: left;
   white-space: nowrap;
 }
@@ -2361,14 +2616,14 @@ function runAi(action: SprayAiAction): void {
 .plan-table th {
   font-size: 11px;
   font-weight: 600;
-  color: #7c93a5;
-  background: #f7fbfe;
+  color: var(--spray-text);
+  background: var(--spray-chip);
 }
 .asset-table tbody tr {
   cursor: pointer;
 }
 .asset-table tbody tr:hover {
-  background: #f3fafe;
+  background: var(--spray-soft);
 }
 .trend-controls {
   display: flex;
@@ -2397,13 +2652,13 @@ function runAi(action: SprayAiAction): void {
 }
 .caption {
   font-size: 10.5px;
-  color: #96a9b9;
+  color: var(--spray-text-weak);
 }
 .trend-stats {
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1px solid #e4eff8;
-  background: #f9fcff;
+  border: 1px solid var(--spray-line-soft);
+  background: var(--spray-chip);
   min-width: 0;
 }
 .trend-stats h4 {
@@ -2420,11 +2675,11 @@ function runAi(action: SprayAiAction): void {
   justify-content: space-between;
   gap: 8px;
   padding: 5px 0;
-  border-bottom: 1px dashed #e9f2fa;
+  border-bottom: 1px dashed var(--spray-line-soft);
 }
 .trend-stats dt {
   font-size: 11.5px;
-  color: #8ba0b2;
+  color: var(--spray-text-weak);
 }
 .trend-stats dd {
   margin: 0;
@@ -2435,7 +2690,7 @@ function runAi(action: SprayAiAction): void {
 .trend-stats dd small {
   font-size: 10.5px;
   font-weight: 400;
-  color: #8ba0b2;
+  color: var(--spray-text-weak);
 }
 .trend-verdict {
   display: flex;
@@ -2448,11 +2703,11 @@ function runAi(action: SprayAiAction): void {
   line-height: 1.5;
 }
 .trend-verdict.ok {
-  background: #eaf9f1;
-  color: #1a8f5c;
+  background: var(--spray-ok-bg);
+  color: var(--spray-ok);
 }
 .trend-verdict.warn {
-  background: #fdf3e2;
+  background: var(--spray-warn-bg);
   color: #a06a1f;
 }
 .trend-verdict .check {
@@ -2472,7 +2727,7 @@ function runAi(action: SprayAiAction): void {
   margin: 8px 0 0;
   font-size: 10px;
   line-height: 1.5;
-  color: #a0b2c0;
+  color: var(--spray-text-weak);
 }
 .usage-grid {
   display: grid;
@@ -2483,8 +2738,8 @@ function runAi(action: SprayAiAction): void {
 .mini-panel {
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1px solid #e4eff8;
-  background: #fbfdff;
+  border: 1px solid var(--spray-line-soft);
+  background: #ffffff;
   min-width: 0;
 }
 .mini-panel h4 {
@@ -2508,7 +2763,7 @@ function runAi(action: SprayAiAction): void {
   margin-left: 4px;
   font-size: 12px;
   font-weight: 400;
-  color: #8ba0b2;
+  color: var(--spray-text-weak);
 }
 .usage-list {
   margin: 6px 0;
@@ -2521,18 +2776,18 @@ function runAi(action: SprayAiAction): void {
   gap: 8px;
   align-items: baseline;
   padding: 4px 0;
-  border-top: 1px solid #eef4f8;
+  border-top: 1px solid var(--spray-line-soft);
   font-size: 11.5px;
-  color: #43607a;
+  color: var(--spray-title);
 }
 .usage-list small {
   font-size: 10px;
-  color: #96a9b9;
+  color: var(--spray-text-weak);
 }
 .usage-diff {
   margin: 8px 0 4px;
   font-size: 12.5px;
-  color: #24445c;
+  color: var(--spray-title);
 }
 .usage-diff strong {
   color: var(--spray-ok);
@@ -2552,7 +2807,7 @@ function runAi(action: SprayAiAction): void {
 }
 .record-list li {
   padding: 8px 0;
-  border-bottom: 1px solid #eef4f8;
+  border-bottom: 1px solid var(--spray-line-soft);
 }
 .record-head {
   display: flex;
@@ -2563,14 +2818,14 @@ function runAi(action: SprayAiAction): void {
   color: var(--spray-title);
 }
 .record-head small {
-  color: #96a9b9;
+  color: var(--spray-text-weak);
   font-size: 10.5px;
 }
 .record-list p {
   margin: 4px 0;
   font-size: 11.5px;
   line-height: 1.6;
-  color: #5d7387;
+  color: var(--spray-text);
 }
 .record-foot {
   display: flex;
@@ -2578,7 +2833,7 @@ function runAi(action: SprayAiAction): void {
   justify-content: space-between;
   gap: 8px;
   font-size: 10.5px;
-  color: #96a9b9;
+  color: var(--spray-text-weak);
 }
 .audit-panel {
   margin-top: 12px;
@@ -2594,18 +2849,18 @@ function runAi(action: SprayAiAction): void {
   gap: 8px;
   align-items: baseline;
   padding: 5px 0;
-  border-top: 1px solid #eef4f8;
+  border-top: 1px solid var(--spray-line-soft);
   font-size: 11.5px;
-  color: #43607a;
+  color: var(--spray-title);
 }
 .audit-at,
 .audit-role {
-  color: #96a9b9;
+  color: var(--spray-text-weak);
   font-size: 10.5px;
 }
 .audit-list small {
   font-size: 10px;
-  color: #a0b2c0;
+  color: var(--spray-text-weak);
 }
 .ai-grid {
   display: grid;
@@ -2632,7 +2887,177 @@ function runAi(action: SprayAiAction): void {
   gap: 4px;
   font-size: 11.5px;
   line-height: 1.6;
-  color: #43607a;
+  color: var(--spray-title);
+}
+
+/* 页内 Naive 按钮统一为 8px 圆角、12px 半粗体，与顶部 Tab 胶囊同一语言 */
+.spray-view :deep(.n-button) {
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.spray-view :deep(.n-button.n-button--tiny-type) {
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.spray-view :deep(.n-button:not(.n-button--primary-type):not(.n-button--error-type):not(.n-button--quaternary-type):not(.n-button--disabled)) {
+  border-color: var(--spray-line);
+  color: var(--spray-title);
+  --n-border: 1px solid var(--spray-line);
+  --n-border-hover: 1px solid #a9cfea;
+  --n-border-pressed: 1px solid var(--spray-primary);
+  --n-text-color: var(--spray-title);
+  --n-text-color-hover: var(--spray-primary);
+}
+
+/* ===== 交互动效（商务克制：只动 transform / opacity） ===== */
+@keyframes spray-rise {
+  from { opacity: 0; transform: translateY(var(--mo-slide)); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes spray-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes spray-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes spray-pulse {
+  0% { transform: scale(0.6); opacity: 0.85; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+/* 页面入场：KPI 交错上浮，主体面板随后落定 */
+.kpi-card {
+  animation: spray-rise var(--mo-dur-slow) var(--mo-ease) both;
+  animation-delay: calc(var(--i, 0) * var(--mo-stagger));
+}
+.scada-panel { animation: spray-rise var(--mo-dur-slow) var(--mo-ease) 120ms both; }
+.side-card { animation: spray-rise var(--mo-dur-slow) var(--mo-ease) both; }
+.side-card:nth-child(1) { animation-delay: 170ms; }
+.side-card:nth-child(2) { animation-delay: 220ms; }
+.side-card:nth-child(3) { animation-delay: 270ms; }
+.tabs-panel {
+  scroll-margin-top: 84px;
+  animation: spray-rise var(--mo-dur-slow) var(--mo-ease) 300ms both;
+}
+
+/* Tab 切换：NTabPane 默认按需挂载，每次切换重新播放淡入 */
+.tabs-panel :deep(.n-tab-pane) {
+  animation: spray-fade-up var(--mo-dur-base) var(--mo-ease) both;
+}
+
+/* 事件 / 建议列表逐行错峰（最多 12 行） */
+.event-list li,
+.order-line,
+.suggestion {
+  animation: spray-row-in var(--mo-dur-base) var(--mo-ease) both;
+  animation-delay: calc(var(--i, 0) * var(--mo-stagger-row));
+}
+
+/* 行悬停与已生成工单态 */
+.event-list li,
+.order-line,
+.suggestion,
+.record-list li,
+.asset-table tbody tr {
+  transition:
+    transform var(--mo-dur-fast) var(--mo-ease),
+    box-shadow var(--mo-dur-fast) var(--mo-ease),
+    background-color var(--mo-dur-fast) var(--mo-ease),
+    border-color var(--mo-dur-fast) var(--mo-ease);
+}
+.event-list li:hover,
+.order-line:hover,
+.suggestion:hover,
+.record-list li:hover {
+  transform: translateY(calc(var(--mo-lift) * -0.5));
+  box-shadow: 0 6px 16px -10px rgba(37, 134, 244, 0.32);
+}
+.suggestion.linked {
+  border-color: #c8ecd9;
+  border-left-color: var(--spray-ok);
+  background: var(--spray-ok-bg);
+}
+.asset-table tbody tr:hover {
+  transform: translateY(calc(var(--mo-lift) * -0.5));
+}
+
+/* 按钮：悬停上浮、按压缩放 */
+.spray-view :deep(.n-button) {
+  transition:
+    transform var(--mo-dur-fast) var(--mo-ease),
+    box-shadow var(--mo-dur-fast) var(--mo-ease),
+    background-color var(--mo-dur-fast) var(--mo-ease);
+}
+.spray-view :deep(.n-button:hover:not(.n-button--disabled)) {
+  transform: translateY(calc(var(--mo-lift) * -1));
+}
+.spray-view :deep(.n-button:active:not(.n-button--disabled)) {
+  transform: scale(0.985);
+}
+
+/* 状态指示脉冲（仅告警/关注态循环） */
+.status-inline i {
+  position: relative;
+}
+.status-inline.warn i::after,
+.status-inline.alert i::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  animation: spray-pulse 1.8s ease-out infinite;
+}
+
+.more-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.more-link:hover {
+  color: #1a6fd0;
+}
+.linked-order {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--spray-ok);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kpi-card,
+  .scada-panel,
+  .side-card,
+  .tabs-panel,
+  .tabs-panel :deep(.n-tab-pane),
+  .event-list li,
+  .order-line,
+  .suggestion,
+  .status-inline.warn i::after,
+  .status-inline.alert i::after {
+    animation: none !important;
+  }
+  .spray-view *,
+  .spray-view *::before,
+  .spray-view *::after {
+    transition-duration: 1ms !important;
+  }
+  .kpi-card,
+  .scada-panel,
+  .side-card,
+  .tabs-panel,
+  .suggestion {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 @media (max-width: 1500px) {
@@ -2701,7 +3126,6 @@ function runAi(action: SprayAiAction): void {
   }
 }
 @media (max-width: 760px) {
-  .diagram-workspace { --diagram-height: max(240px, calc(100dvh - 480px)); }
   .scada-panel .panel-head { flex-wrap: wrap; }
   .diagram-sidebar, .diagram-properties { width: 100%; min-width: 0; }
   .side-stack { grid-template-columns: minmax(0,1fr); }
@@ -2711,24 +3135,25 @@ function runAi(action: SprayAiAction): void {
 .diagram-switch { display:flex; gap:4px; }
 .diagram-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .diagram-workspace {
-  --diagram-height: max(300px, calc(100dvh - 350px));
-  flex: 1 0 var(--diagram-height);
+  --diagram-height: auto;
+  flex: 0 0 auto;
   min-width: 0;
   display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  background: #f6fbff;
+  grid-template-rows: auto;
+  background: var(--spray-soft);
   border-radius: 8px;
 }
-.diagram-workspace.editing { display:grid; grid-template-rows: minmax(var(--diagram-height), 1fr); grid-template-columns:180px minmax(0,1fr) 220px; gap:12px; align-items:start; margin:12px 0; }
+.diagram-workspace.editing { display:grid; grid-template-rows: auto; grid-template-columns:180px minmax(0,1fr) 220px; gap:12px; align-items:start; margin:12px 0; }
 .diagram-editor { display:contents; }
 .diagram-workspace.editing :deep(.spray-canvas) { grid-column:2; grid-row:1; align-self:stretch; }
 .diagram-properties { grid-column:3; grid-row:1; }
 .diagram-sidebar:first-child { grid-column:1; grid-row:1; }
-.diagram-sidebar { display:flex; flex-direction:column; gap:7px; width:180px; max-height:300px; overflow:auto; padding:12px; border:1px solid #d3e6f6; border-radius:10px; background:#f7fbff; color:#173553; }
-.diagram-sidebar button,.diagram-sidebar input,.diagram-sidebar select { padding:5px 7px; border:1px solid #c9dded; border-radius:6px; background:white; color:#173553; }
+.diagram-sidebar { display:flex; flex-direction:column; gap:7px; width:180px; max-height:300px; overflow:auto; padding:12px; border:1px solid var(--spray-line); border-radius:var(--spray-radius); background:var(--spray-soft); color:var(--spray-title); }
+.diagram-sidebar button,.diagram-sidebar input,.diagram-sidebar select { padding:5px 7px; border:1px solid var(--spray-line); border-radius:6px; background:#fff; color:var(--spray-title); font-size:12px; }
 .diagram-sidebar button { cursor:pointer; text-align:left; }
+.diagram-sidebar button:hover { border-color:#a9cfea; color:var(--spray-primary); }
 .diagram-sidebar label { display:flex; flex-direction:column; gap:3px; font-size:12px; }
 .diagram-sidebar label:has(input[type=checkbox]) { flex-direction:row; align-items:center; }
 .diagram-properties { width:220px; }
-@media(max-width:1100px) { .diagram-workspace.editing { grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows: var(--diagram-height) auto; } .diagram-workspace.editing :deep(.spray-canvas) { grid-column:1 / -1; grid-row:1; } .diagram-sidebar:first-child { grid-column:1; grid-row:2; } .diagram-properties { grid-column:2; grid-row:2; } }
+@media(max-width:1100px) { .diagram-workspace.editing { grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows: auto auto; } .diagram-workspace.editing :deep(.spray-canvas) { grid-column:1 / -1; grid-row:1; } .diagram-sidebar:first-child { grid-column:1; grid-row:2; } .diagram-properties { grid-column:2; grid-row:2; } }
 </style>

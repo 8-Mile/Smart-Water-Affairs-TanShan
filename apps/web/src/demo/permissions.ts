@@ -100,10 +100,12 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Action>> = {
     "emergency:create",
     "emergency:handle",
     "emergency:review",
+    "workorder:create",
     "workorder:accept",
     "alarm:close",
     "dashboard:edit:self",
     "template:publish",
+    "scenario:write",
     "ai:ask",
   ]),
   duty: new Set<Action>([

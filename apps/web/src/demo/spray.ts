@@ -435,6 +435,8 @@ export function sumRunningFlow(snapshots: SprayAssetSnapshot[]): SprayFlowSummar
 export interface IntegratedUsage {
   volumeM3: number | null;
   validSamples: number;
+  /** 有效样本首末时刻的跨度（小时）；不足 2 个样本时为 0。 */
+  spanHours: number;
   method: "trapezoid";
   note: string;
 }
@@ -449,10 +451,12 @@ export function integrateFlowSamples(samples: TelemetrySample[]): IntegratedUsag
     return {
       volumeM3: null,
       validSamples: valid.length,
+      spanHours: 0,
       method: "trapezoid",
       note: "有效样本不足 2 个，无法按时间积分。",
     };
   }
+  const spanHours = (valid[valid.length - 1].at - valid[0].at) / 3_600_000;
   let volume = 0;
   for (let index = 1; index < valid.length; index += 1) {
     const prev = valid[index - 1];
@@ -464,6 +468,7 @@ export function integrateFlowSamples(samples: TelemetrySample[]): IntegratedUsag
   return {
     volumeM3: volume,
     validSamples: valid.length,
+    spanHours,
     method: "trapezoid",
     note: "按有效采样点做梯形积分，采样间隔超过 2 小时的区间不参与计算。",
   };

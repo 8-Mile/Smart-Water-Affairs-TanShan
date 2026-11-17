@@ -16,10 +16,10 @@ test("V35兼容：七个业务导航分组可访问港口业务、设备和原�
   await page.getByRole("link",{name:"运行处置"}).click();
   await expect(page.locator(".event-center")).toBeVisible();
   await page.getByRole("button",{name:"水资源管理"}).click();
-  await expect(page.locator("#primary-navigation").getByRole("link",{name:"雨污水处理与回用"})).toBeVisible();
+  await expect(page.locator("#primary-navigation").getByRole("link",{name:"港口环保水业务链"})).toBeVisible();
   await page.getByRole("button",{name:"设备运维"}).click();
-  await expect(page.locator("#primary-navigation").getByRole("link",{name:"设备与档案"})).toBeVisible();
-  await page.locator("#primary-navigation").getByRole("link",{name:"设备与档案"}).click();
+  await expect(page.locator("#primary-navigation").getByRole("link",{name:"设备台账"})).toBeVisible();
+  await page.locator("#primary-navigation").getByRole("link",{name:"设备台账"}).click();
   await page.getByRole("link",{name:"档案与案例"}).click();
   await expect(page).toHaveURL(/\/archives$/);
   await expect(page.getByRole("heading",{name:"档案管理",exact:true})).toBeVisible();
