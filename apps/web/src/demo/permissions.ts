@@ -15,6 +15,7 @@ export type Action =
   | "workorder:handle"
   | "workorder:accept"
   | "alarm:ack"
+  | "alarm:close"
   | "dashboard:edit:self"
   | "template:publish"
   | "knowledge:save"
@@ -65,6 +66,7 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Action>> = {
     "workorder:handle",
     "workorder:accept",
     "alarm:ack",
+    "alarm:close",
     "dashboard:edit:self",
     "template:publish",
     "scenario:write",
@@ -90,6 +92,7 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Action>> = {
     "unattended:execute",
     "unattended:confirm",
     "workorder:accept",
+    "alarm:close",
     "dashboard:edit:self",
     "template:publish",
     "ai:ask",

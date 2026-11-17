@@ -728,7 +728,7 @@ function onShowUpdate(value: boolean): void {
         </div>
 
         <div v-if="justAccepted" class="accept-notice">
-          已归档并写入设备履历。验收仅代表流程确认，不代表设备物理状态已恢复，系统不会自动修改健康分或历史监测数据。
+          已归档并写入设备履历。验收仅代表流程确认，不代表设备物理状态已恢复；关联告警不会自动关闭，须在原告警流程独立核查。系统不会自动修改健康分或历史监测数据。
         </div>
 
         <p class="notice">

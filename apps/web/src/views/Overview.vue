@@ -265,7 +265,7 @@ function elapsed(at: string) {
         </RouterLink></div>
       </section>
       <section class="glass panel-box work-panel">
-        <header><h2><Icon name="clipboard" />协同处置进展</h2><RouterLink to="/operations/workorders">查看全部 <span>›</span></RouterLink></header>
+        <header><h2><Icon name="clipboard" />协同处置进展</h2><RouterLink to="/operations/events?focus=tasks">岗位待办 <span>›</span></RouterLink></header>
         <div class="summary-list"><RouterLink v-for="row in counts" :key="row.title" :to="row.to" class="work-row"><span class="work-icon"><Icon :name="row.icon" /></span><b>{{ row.title }}</b><strong>{{ row.value }} <small>项</small></strong><span class="work-note">（{{ row.note }}）</span></RouterLink></div>
       </section>
     </div>

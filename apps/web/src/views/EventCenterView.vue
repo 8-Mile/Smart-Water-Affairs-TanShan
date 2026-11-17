@@ -5,6 +5,7 @@ import {NButton,NInput,NSelect,NTag} from "naive-ui";
 import {useDemoStore} from "../demo/store";
 import {useUnattendedStore} from "../demo/unattendedStore";
 import {useUiStore} from "../demo/ui";
+import RoleActionQueue from "../components/RoleActionQueue.vue";
 import {buildEventHub,filterHubEvents,type EventHubFilter,type HubEvent,type EventOrigin} from "../demo/eventHub";
 
 const DutyPanel=defineAsyncComponent(()=>import("./UnattendedView.vue"));
@@ -110,8 +111,9 @@ function timestamp(v:string){
    </div>
    <NTag size="small" type="warning">DEMO · 非现场24小时监护</NTag>
   </div>
+  <RoleActionQueue />
   <div class="hub-stats" aria-label="当前事件概况">
-   <div><span>待处理事件</span><strong>{{ visibleSummary.open }}</strong><small>生产告警与值守事件分别计数</small></div>
+   <div><span>未闭环事件</span><strong>{{ visibleSummary.open }}</strong><small>含已确认未关闭；独立于岗位可办理数</small></div>
    <div><span>告警与业务提醒</span><strong>{{ visibleSummary.alarms }}</strong><small>含业务提醒</small></div>
    <div><span>值守事件</span><strong>{{ visibleSummary.duty }}</strong><small>仅已产生的巡查事件</small></div>
    <div><span>涉及设备</span><strong>{{ visibleSummary.assetCount }}</strong><small>按设备去重展示，不合并业务事件</small></div>

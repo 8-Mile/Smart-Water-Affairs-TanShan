@@ -640,17 +640,9 @@ export function transitionWorkOrder(
     if (!next.maintenance.some((item) => item.id === maintenance.id)) {
       next.maintenance = [...next.maintenance, maintenance];
     }
-    const linkedAlarms = mergeById(seed.alarms, state.alarms).filter(
-      (item) => item.id === order.alarmId || item.workOrderId === order.id,
-    );
-    if (linkedAlarms.length > 0) {
-      next.alarms = [
-        ...next.alarms.filter(
-          (item) => !linkedAlarms.some((linked) => linked.id === item.id),
-        ),
-        ...linkedAlarms.map((item) => ({ ...item, status: "closed" as const })),
-      ];
-    }
+    // Crucial separation: work order acceptance records maintenance, but does
+    // not prove physical alarm recovery. Alarm closure is a separate human,
+    // evidence-annotated command with its own role and audit.
   }
 
   if (action === "reject") {

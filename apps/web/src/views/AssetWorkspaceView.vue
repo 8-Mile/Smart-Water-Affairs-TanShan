@@ -333,6 +333,7 @@ const text=(v:string|number|undefined|null)=>v===undefined||v===null||v===""?"�
          <NButton v-if="alarmLink(alarm).exists" size="tiny" secondary @click="openOrder(alarmLink(alarm).id)">原关联工单</NButton>
          <NTag v-else-if="alarmLink(alarm).orphaned" type="error" size="tiny">工单引用失效 · 禁止重复建单</NTag>
          <NButton v-else-if="alarm.status!=='closed'" size="tiny" type="primary" :disabled="!canCreate" @click="makeAlarmOrder(alarm)">创建核查工单草稿</NButton>
+         <RouterLink v-if="alarm.status==='acknowledged'" :to="{path:'/operations/events',query:{tab:'alarms',alarmId:alarm.id}}">人工复核关闭（原告警流程）</RouterLink>
         </div>
        </article>
       </div>

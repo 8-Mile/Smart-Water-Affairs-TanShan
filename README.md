@@ -2,6 +2,14 @@
 
 京唐港区 51、52 号泊位智慧水务单机演示。前端为 Vue 3 + TypeScript + Vite + Pinia + Naive UI + ECharts，所有业务数据由本地种子与浏览器 `localStorage` 驱动，不请求 `/api`，启动 Vite 即可完整演示。
 
+## V3.8 岗位待办与告警独立闭环（2026-11-17）
+
+事件中心增加基于角色和权限的可办理动作与数据关联缺口提示。首页协同处置入口直达
+http://localhost:5174/operations/events?focus=tasks ；不增加侧栏菜单、不复制任务表。
+修复工单验收自动关闭关联告警的错误耦合；独立告警须值班员确认、管理者补充核查依据并记录审计才能关闭。
+仅属于DEMO人工核查，不构成正式报警复归或现场设备验收。
+完整说明：docs/product/v38-role-action-and-independent-alarm-closure.md。
+
 ## V3.7 设备统一工作台（2026-11-17）
 
 原系统新增单设备连续操作页：http://localhost:5174/operations/asset-workspace?assetId=asset-p002。

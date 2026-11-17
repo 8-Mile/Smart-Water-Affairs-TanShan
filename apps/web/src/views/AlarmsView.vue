@@ -77,7 +77,7 @@ const criticalActive = computed(
   () =>
     store.alarms.filter(
       (alarm) =>
-        alarm.kind === "production" && alarm.level === "critical" && alarm.status === "active",
+        alarm.kind === "production" && alarm.level === "critical" && alarm.status !== "closed",
     ).length,
 );
 const linkedCount = computed(
@@ -166,6 +166,21 @@ const timelineTypeLabels: Record<string, string> = {
   config: "配置",
 };
 
+const canCloseWithReview = computed(() => can(store.role, "alarm:close"));
+const closureEvidenceRef = ref("");
+const closureNote = ref("");
+const closureError = ref("");
+const closureBlocked = computed(() => {
+  const alarm = selectedAlarm.value;
+  if (!alarm || alarm.status !== "acknowledged") return "先由值班人员确认告警。";
+  if (!canCloseWithReview.value) return "当前角色无权关闭告警，需管理者复核。";
+  if (alarm.workOrderId) {
+    if (!linkedWorkOrder.value) return "原关联工单不存在，禁止绕过工单引用。";
+    if (linkedWorkOrder.value.assetId !== alarm.assetId) return "工单与告警设备不一致，需先人工核查。";
+    if (linkedWorkOrder.value.status !== "archived") return "工单未验收归档，暂不能关闭告警。";
+  }
+  return "";
+});
 const canAck = computed(() => can(store.role, "alarm:ack"));
 const canCreateOrder = computed(() => can(store.role, "workorder:create"));
 const ackDeny = computed(
@@ -238,6 +253,29 @@ function closeAlarm(): void {
 function onShowUpdate(value: boolean): void {
   if (!value) closeAlarm();
 }
+
+function confirmClosure(): void {
+  const alarm = selectedAlarm.value;
+  if (!alarm || !canCloseWithReview.value) return;
+  closureError.value = "";
+  try {
+    store.closeAlarmWithReview(alarm.id, {
+      evidenceRef: closureEvidenceRef.value,
+      note: closureNote.value,
+    });
+    closureEvidenceRef.value = "";
+    closureNote.value = "";
+    message.success("已记录人工核查并关闭模拟告警；不构成现场设备恢复证明。");
+  } catch (error) {
+    closureError.value = (error as Error).message;
+    message.error(closureError.value);
+  }
+}
+watch(selectedAlarmId, () => {
+  closureEvidenceRef.value = "";
+  closureNote.value = "";
+  closureError.value = "";
+});
 
 function acknowledge(): void {
   const alarm = selectedAlarm.value;
@@ -332,9 +370,9 @@ function onPriorityChange(value: string): void {
         <small class="stat-hint">成本 / 保养类提醒，非设备故障</small>
       </div>
       <div class="stat-card critical">
-        <span>严重级生产告警</span>
+        <span>未闭环严重生产告警</span>
         <strong>{{ criticalActive }}<small>条</small></strong>
-        <small class="stat-hint">critical 级别且未关闭</small>
+        <small class="stat-hint">含已确认但未关闭</small>
       </div>
       <div class="stat-card linked">
         <span>已关联工单</span>
@@ -605,6 +643,18 @@ function onPriorityChange(value: string): void {
             </div>
           </template>
 
+          <section v-if="selectedAlarm.status === 'acknowledged'" class="manual-closure">
+            <h3 class="section-title">人工核查关闭 · 独立于工单验收</h3>
+            <p class="closure-note">工单已归档不代表告警已解除。必须另行核查原始原因与复测依据，以下记录仅为本地演示审核，不表示真实SCADA自动恢复。</p>
+            <p v-if="closureBlocked" class="closure-blocked">{{ closureBlocked }}</p>
+            <template v-else>
+              <NInput v-model:value="closureEvidenceRef" size="small" placeholder="现场复测或核查依据编号（人工录入，必填）"/>
+              <NInput v-model:value="closureNote" type="textarea" :rows="2" placeholder="人工核查情况与关闭理由（必填，不得仅凭工单归档）"/>
+              <p v-if="closureError" role="alert" class="error-text">{{ closureError }}</p>
+              <NButton type="primary" size="small" @click="confirmClosure">确认人工核查并关闭模拟告警</NButton>
+            </template>
+          </section>
+
           <h3 class="section-title">时间线（设备履历派生）</h3>
           <div v-if="alarmTimeline.length" class="timeline-list">
             <div v-for="event in alarmTimeline" :key="event.id" class="timeline-item">
@@ -654,6 +704,10 @@ function onPriorityChange(value: string): void {
 </template>
 
 <style scoped>
+.manual-closure{display:grid;gap:10px;background:#f7fbfd;border:1px solid #cde3ed;padding:12px;border-radius:8px;margin:14px 0}
+.manual-closure .section-title{margin:0}
+.closure-note{font-size:12px;color:#778f9f;line-height:1.65;margin:0}
+.closure-blocked{font-size:12px;background:#fff8eb;padding:10px;color:#936c33;border-radius:6px;margin:0}
 .alarms-page {
   display: flex;
   flex-direction: column;

@@ -502,6 +502,7 @@ export const useDemoStore = defineStore("demo", () => {
     assertCan(role.value, "alarm:ack");
     const alarm = alarms.value.find((item) => item.id === id);
     if (!alarm) throw new Error(`告警 ${id} 不存在`);
+    if (alarm.status !== "active") throw new Error("该告警不是活动状态，不可重复确认或复活。");
     const next = clone(userState.value);
     next.alarms = [
       ...next.alarms.filter((item) => item.id !== id),
@@ -514,6 +515,50 @@ export const useDemoStore = defineStore("demo", () => {
       "alarm",
       id,
       `确认告警 ${alarm.code}：${alarm.title}`,
+      seed.value.referenceTime,
+    );
+    userState.value = next;
+    save();
+    return next;
+  }
+
+  /**
+   * A work order can be archived without proving alarm recovery.
+   * Only a separate manager/admin action may close a previously acknowledged
+   * simulated alarm, with explicit manual evidence reference and audit note.
+   */
+  function closeAlarmWithReview(
+    id: string,
+    payload: { evidenceRef: string; note: string },
+  ): UserState {
+    assertCan(role.value, "alarm:close");
+    const alarm = alarms.value.find((item) => item.id === id);
+    if (!alarm) throw new Error("原始告警不存在，不能关闭。");
+    if (alarm.status !== "acknowledged") {
+      throw new Error("请先由值班人员确认告警，已关闭告警不可重复操作。");
+    }
+    const evidenceRef = payload.evidenceRef.trim();
+    const note = payload.note.trim();
+    if (evidenceRef.length < 3 || note.length < 5) {
+      throw new Error("请输入核查依据编号（至少3字）和核查情况（至少5字）。");
+    }
+    if (evidenceRef.length > 160 || note.length > 800) {
+      throw new Error("核查编号或说明过长，请整理为简明的有效引用与情况描述。");
+    }
+    if (alarm.workOrderId) {
+      const related = workorders.value.find((item) => item.id === alarm.workOrderId);
+      if (!related) throw new Error("原关联工单不存在，不允许绕过失效引用关闭告警。");
+      if (related.assetId !== alarm.assetId) throw new Error("原工单关联的设备不一致，禁止关闭。");
+      if (related.status !== "archived") throw new Error("原关联工单未验收归档，不能关闭告警。");
+    }
+    const next = clone(userState.value);
+    next.alarms = [
+      ...next.alarms.filter((item) => item.id !== id),
+      { ...alarm, status: "closed" as const },
+    ];
+    pushAudit(
+      next, role.value, "alarm:close", "alarm", id,
+      "人工核查关闭告警（DEMO，非现场恢复认证）：依据 "+evidenceRef+"；情况 "+note,
       seed.value.referenceTime,
     );
     userState.value = next;
@@ -815,6 +860,7 @@ export const useDemoStore = defineStore("demo", () => {
     createWorkOrder,
     workOrderAction,
     ackAlarm,
+    closeAlarmWithReview,
     recordAgentRun,
     saveDashboard,
     deleteDashboard,

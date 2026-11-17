@@ -789,3 +789,47 @@ test("T-20 雨次数据同源一致：rainEvents、ledger 与图表生成共用�
     rain.rainEvents.slice(-3).map((event) => event.id),
   );
 });
+
+test("V38-A01 关联工单验收不再自动关闭生产告警，保留人工告警核查",()=>{
+ const store=freshStore();
+ store.setRole("engineer");
+ store.workOrderAction("wo-2026-014","complete",{
+  by:"运维人员（模拟）",result:{cause:"联轴器对中偏差",measures:"检查并完成模拟复测"},
+ });
+ store.setRole("manager");
+ store.workOrderAction("wo-2026-014","accept",{by:"管理者（模拟）"});
+ assert.equal(store.workorders.find(o=>o.id==="wo-2026-014")?.status,"archived");
+ assert.equal(store.alarms.find(a=>a.id==="ALM-P002-01")?.status,"active");
+ assert.ok(store.maintenance.some(x=>x.workOrderId==="wo-2026-014"));
+});
+test("V38-A02 告警必须经过值班确认和管理者独立核查才能关闭，全部记录审计",()=>{
+ const store=freshStore();
+ store.setRole("manager");
+ assert.throws(()=>store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"MOCK-复测-001",note:"模拟现场核查记录"}),/请先/);
+ store.setRole("duty");
+ store.ackAlarm("ALM-P002-01");
+ assert.throws(()=>store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"MOCK-复测-001",note:"模拟现场核查记录"}),/无权/);
+ store.setRole("manager");
+ assert.throws(()=>store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"MOCK-复测-001",note:"模拟现场核查记录"}),/未验收归档/);
+ store.setRole("engineer");
+ store.workOrderAction("wo-2026-014","complete",{
+  by:"运维人员（模拟）",result:{cause:"模拟维修",measures:"完成复测"},
+ });
+ store.setRole("manager");
+ store.workOrderAction("wo-2026-014","accept",{by:"管理者（模拟）"});
+ assert.throws(()=>store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"",note:""}),/请输入/);
+ store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"MOCK-复测-001",note:"复测模拟记录已人工核查"});
+ assert.equal(store.alarms.find(a=>a.id==="ALM-P002-01")?.status,"closed");
+ assert.ok(store.userState.audits.some(a=>a.action==="alarm:close"&&a.objectId==="ALM-P002-01"&&a.summary?.includes("MOCK-复测-001")));
+ assert.throws(()=>store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"MOCK-复测-001",note:"再次关闭"}),/请先/);
+});
+test("V38-A03 只读/值班角色不能关闭告警且重复确认已关闭告警被阻断",()=>{
+ const store=freshStore();
+ for(const role of ["viewer","engineer","water","duty"] as const){
+  store.setRole(role);
+  assert.equal(can(role,"alarm:close"),false);
+ }
+ store.setRole("duty");
+ store.ackAlarm("ALM-P002-01");
+ assert.throws(()=>store.ackAlarm("ALM-P002-01"),/不可重复确认/);
+});
