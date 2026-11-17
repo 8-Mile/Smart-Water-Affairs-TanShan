@@ -4,6 +4,7 @@ import { RouterLink, RouterView, useRoute } from "vue-router";
 import { NTag } from "naive-ui";
 import AppHeader from "./components/layout/AppHeader.vue";
 import AppSidebar from "./components/layout/AppSidebar.vue";
+import {useDemoTour} from "./demo/demoTour";
 import { roleNames } from "./demo/permissions";
 import { SCENARIO_NAMES } from "./demo/scenarioLabels";
 import { useDemoStore } from "./demo/store";
@@ -13,9 +14,11 @@ import { navGroupLabel, navTitle } from "./navigation";
 // 懒加载全局抽屉：路由首屏不加载AI解析器与设备趋势图依赖。
 const GlobalAiDrawer = defineAsyncComponent(() => import("./components/GlobalAiDrawer.vue"));
 const AssetDrawer = defineAsyncComponent(() => import("./components/AssetDrawer.vue"));
+const DemoTourDock = defineAsyncComponent(() => import("./components/DemoTourDock.vue"));
 
 const store = useDemoStore();
 const ui = useUiStore();
+const demoTour = useDemoTour();
 const route = useRoute();
 const navOpen = ref(false);
 
@@ -66,5 +69,19 @@ const groupLabel = computed(() =>
     <AssetDrawer v-if="ui.drawerAssetId" />
 
     <GlobalAiDrawer v-if="ui.aiOpen" />
+    <DemoTourDock v-if="demoTour.record || demoTour.launcherOpen" />
+    <button v-if="!demoTour.record && !demoTour.launcherOpen" type="button"
+      class="tour-mobile-launcher" @click="demoTour.launcherOpen=true">演示路线</button>
   </div>
 </template>
+<style scoped>
+.tour-mobile-launcher{display:none}
+@media(max-width:900px){
+  .tour-mobile-launcher{
+    display:block;position:fixed;z-index:3500;right:12px;bottom:14px;
+    border:1px solid #90c9df;background:#eefaff;color:#24769a;
+    font-size:11px;border-radius:9px;padding:10px 13px;
+    box-shadow:0 4px 16px #163e5455;cursor:pointer
+  }
+}
+</style>

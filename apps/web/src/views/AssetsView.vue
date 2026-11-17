@@ -1767,7 +1767,7 @@ watch(
 }
 @media (max-width: 640px) {
   .assets-page .tree-panel {
-    max-height: 270px;
+    max-height: 190px;
     overflow-y: auto;
     overscroll-behavior: contain;
   }

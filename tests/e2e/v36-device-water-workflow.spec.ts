@@ -87,6 +87,8 @@ test("V36-UI05 调蓄到四预只传雨量，人工确认后重新计算",async(
 test("V36-UI06 小屏设备目录不再把操作区挤出整屏，仍可内部滚动",async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto("/operations/assets?assetId=asset-p002");
+ await page.locator(".assets-page .tree-panel").waitFor({state:"visible"});
+ await page.locator(".assets-page .main-panel").waitFor({state:"visible"});
  const measures=await page.evaluate(()=>{
   const tree=document.querySelector(".assets-page .tree-panel")?.getBoundingClientRect();
   const main=document.querySelector(".assets-page .main-panel")?.getBoundingClientRect();

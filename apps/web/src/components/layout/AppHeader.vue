@@ -7,6 +7,7 @@ import LiveClock from "../overview/LiveClock.vue";
 import { can, roleNames } from "../../demo/permissions";
 import { SCENARIO_NAMES } from "../../demo/scenarioLabels";
 import { useDemoStore } from "../../demo/store";
+import {useDemoTour} from "../../demo/demoTour";
 import { useUiStore } from "../../demo/ui";
 import type { AiContext } from "../../demo/ui";
 import type { Role } from "../../demo/types";
@@ -16,6 +17,7 @@ defineProps<{ navOpen: boolean }>();
 const emit = defineEmits<{ toggleNav: [] }>();
 
 const store = useDemoStore();
+const demoTour=useDemoTour();
 const ui = useUiStore();
 const route = useRoute();
 const router = useRouter();
@@ -99,7 +101,8 @@ function askAi(): void {
       <strong>唐山港京唐港区智慧水务平台</strong>
     </RouterLink>
     <span class="overview-subtitle">港区智慧水务一体化管理</span>
-    <span class="overview-scene">模拟场景 · {{ SCENARIO_NAMES[store.scenarioId] }}</span>
+    <button type="button" class="overview-scene overview-demo-launch" aria-label="演示路线"
+      @click="demoTour.launcherOpen=true">演示路线 · {{ SCENARIO_NAMES[store.scenarioId] }} <span aria-hidden="true">⌄</span></button>
     <div class="overview-topbar-spacer" />
 
     <div class="search-box overview-search" @focusout="onSearchBlur">
@@ -160,6 +163,9 @@ function askAi(): void {
 </template>
 
 <style scoped>
+.overview-demo-launch{border:1px solid #a4d0e2;cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:#f3fbff;color:#317a9b;border-radius:6px;padding:5px 8px;font-weight:700}
+.overview-demo-launch:hover{border-color:#6ab4d2;background:#e4f6fd}
+.overview-demo-launch:focus-visible{outline:2px solid #247ba8;outline-offset:2px}
 .overview-search { flex:0 1 230px; min-width:130px; max-width:260px; }
 .overview-search :deep(.n-input) { border-radius:16px; background:#ffffffe6; box-shadow:0 1px 4px #2f7fc23d,inset 0 0 0 1px #a9d3f7; }
 .overview-search :deep(.n-input .n-input__border),
