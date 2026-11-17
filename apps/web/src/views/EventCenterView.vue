@@ -37,19 +37,38 @@ const originOptions=[
  {label:"生产与业务告警",value:"alarm"},
  {label:"智能巡查",value:"duty"},
 ];
-const filtered=computed(()=>filterHubEvents(index.value.events,state.value,origin.value,keyword.value));
+const assetScope=computed(()=>typeof route.query.assetId==="string"&&demo.getAsset(route.query.assetId)?route.query.assetId:"");
+const scopedAsset=computed(()=>assetScope.value?demo.getAsset(assetScope.value):undefined);
+const visibleSummary=computed(()=>{
+ const rows=index.value.events.filter(e=>!assetScope.value||e.assetId===assetScope.value);
+ const active=rows.filter(e=>e.active);
+ return {
+  open:active.length,
+  alarms:active.filter(e=>e.origin==="alarm").length,
+  duty:active.filter(e=>e.origin==="duty").length,
+  assetCount:new Set(active.map(e=>e.assetId)).size,
+ };
+});
+const filtered=computed(()=>filterHubEvents(index.value.events,state.value,origin.value,keyword.value)
+ .filter(e=>!assetScope.value||e.assetId===assetScope.value));
 const selected=computed(()=>filtered.value.find(x=>x.ref===selectedRef.value)??filtered.value[0]??null);
 const related=computed(()=>selected.value?
  index.value.events.filter(x=>x.assetId===selected.value?.assetId&&x.ref!==selected.value?.ref):[]);
 watch(()=>route.query.eventRef,refValue=>{
  if(typeof refValue==="string")selectedRef.value=refValue;
 });
+function clearAssetScope(){
+ const query={...route.query};
+ delete query.assetId;
+ void router.replace({path:route.path,query});
+}
 function select(e:HubEvent){
  selectedRef.value=e.ref;
  void router.replace({path:route.path,query:{...route.query,tab:"queue",eventRef:e.ref}});
 }
 function changeTab(next:WorkTab){
  const query:Record<string,string>={tab:next};
+ if(assetScope.value)query.assetId=assetScope.value;
  const e=selected.value;
  if(e&&next==="alarms"&&e.origin==="alarm")query.alarmId=e.originalId;
  if(e&&next==="duty"&&e.origin==="duty")query.eventId=e.originalId;
@@ -88,10 +107,10 @@ function timestamp(v:string){
    <NTag size="small" type="warning">DEMO · 非现场24小时监护</NTag>
   </div>
   <div class="hub-stats" aria-label="当前事件概况">
-   <div><span>待处理事件</span><strong>{{ index.open }}</strong><small>生产告警与值守事件分别计数</small></div>
-   <div><span>告警与业务提醒</span><strong>{{ index.alarms }}</strong><small>含业务提醒</small></div>
-   <div><span>值守事件</span><strong>{{ index.duty }}</strong><small>仅已产生的巡查事件</small></div>
-   <div><span>涉及设备</span><strong>{{ index.assetCount }}</strong><small>按设备去重展示，不合并业务事件</small></div>
+   <div><span>待处理事件</span><strong>{{ visibleSummary.open }}</strong><small>生产告警与值守事件分别计数</small></div>
+   <div><span>告警与业务提醒</span><strong>{{ visibleSummary.alarms }}</strong><small>含业务提醒</small></div>
+   <div><span>值守事件</span><strong>{{ visibleSummary.duty }}</strong><small>仅已产生的巡查事件</small></div>
+   <div><span>涉及设备</span><strong>{{ visibleSummary.assetCount }}</strong><small>按设备去重展示，不合并业务事件</small></div>
   </div>
   <nav class="hub-tabs" aria-label="运行中心工作区">
    <button v-for="t in tabs" :key="t.value" type="button"
@@ -100,6 +119,11 @@ function timestamp(v:string){
   </nav>
 
   <template v-if="tab==='queue'">
+   <div v-if="scopedAsset" class="hub-scope">
+    <strong>当前设备：{{ scopedAsset.code }} · {{ scopedAsset.name }}</strong>
+    <span>仅展示当前设备关联的告警和值守记录，不自动判定共同根因</span>
+    <NButton size="tiny" secondary @click="clearAssetScope">查看全部事件</NButton>
+   </div>
    <div class="hub-filter">
     <NSelect v-model:value="state" :options="stateOptions" size="small" aria-label="处理状态筛选"/>
     <NSelect v-model:value="origin" :options="originOptions" size="small" aria-label="事件来源筛选"/>
@@ -203,4 +227,6 @@ function timestamp(v:string){
 .hub-empty{padding:22px;font-size:12px;color:#8aa4b4}
 @media(max-width:1000px){.hub-columns{grid-template-columns:1fr}.hub-items{max-height:350px}}
 @media(max-width:720px){.hub-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.hub-filter{grid-template-columns:1fr}.hub-tabs button{min-width:120px}}
+.hub-scope{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#eef8fc;border:1px solid #cde7f2;padding:9px 12px;border-radius:7px;font-size:11px}
+.hub-scope strong{color:#236a8c}.hub-scope span{color:#7c9bad;flex:1}
 </style>

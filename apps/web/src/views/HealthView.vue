@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { NButton, NSelect, NTag, useMessage } from "naive-ui";
 import PumpEnergyOptimizer from "../components/PumpEnergyOptimizer.vue";
+import AssetJourney from "../components/AssetJourney.vue";
 import { can } from "../demo/permissions";
 import { useDemoStore } from "../demo/store";
 import { useUiStore } from "../demo/ui";
@@ -30,6 +31,7 @@ const CHART_HEIGHT = 260;
 const PAD = { left: 48, right: 16, top: 18, bottom: 34 };
 
 const route = useRoute();
+const router = useRouter();
 const store = useDemoStore();
 const ui = useUiStore();
 const message = useMessage();
@@ -80,6 +82,10 @@ watch(
     if (typeof value === "string" && store.getAsset(value)) selectedId.value = value;
   },
 );
+watch(selectedId, id=>{
+ if(!id || route.query.assetId===id)return;
+ void router.replace({path:route.path,query:{...route.query,assetId:id}});
+});
 watch(
   () => store.assets.map((item) => item.id).join("|"),
   () => {
@@ -647,6 +653,7 @@ function adviceList(items: AdviceItem[] | undefined): AdviceItem[] {
 
 <template>
   <section class="health-page">
+    <AssetJourney v-if="asset" :asset-id="asset.id" />
     <nav class="health-work-tabs" aria-label="健康能效业务切换">
       <button type="button" :class="{selected:activeTab==='health'}" @click="activeTab='health'">设备健康诊断</button>
       <button type="button" :class="{selected:activeTab==='energy'}" @click="activeTab='energy'">泵组能效匹配与运行优化</button>

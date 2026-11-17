@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import WorkspaceNav from "../components/WorkspaceNav.vue";
+import {RouterLink} from "vue-router";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { NButton, NCheckbox, NInputNumber, NTag, useMessage } from "naive-ui";
@@ -230,7 +231,14 @@ function exportCsv():void{
       <section v-if="drafts.length" class="panel">
         <div class="section-head"><div><h3>待审核供水建议草稿</h3><p>本地MOCK记录，不是执行调度令，也不写入实际运行水量账本。</p></div><NButton size="small" secondary @click="showDrafts=!showDrafts">{{ showDrafts?"收起草稿":"查看草稿（"+drafts.length+"）" }}</NButton></div>
         <div v-if="showDrafts" class="draft-list">
-          <div v-for="draft in drafts.slice(0,10)" :key="draft.id" class="draft"><strong>{{ draft.id }} · {{ draft.name }}</strong><small>{{ new Date(draft.createdAt).toLocaleString('zh-CN',{hour12:false}) }} · {{ draft.createdBy }} · 待审核</small><span>需水 {{ n(draft.result.suppliedM3) }}m³ / 节约 {{ money(draft.result.savingVsTapYuan) }} / 仅供演示</span></div>
+          <div v-for="draft in drafts.slice(0,10)" :key="draft.id" class="draft">
+              <strong>{{ draft.id }} · {{ draft.name }}</strong>
+              <small>{{ new Date(draft.createdAt).toLocaleString('zh-CN',{hour12:false}) }} · {{ draft.createdBy }} · 待审核</small>
+              <span>需水 {{ n(draft.result.suppliedM3) }}m³ / 节约 {{ money(draft.result.savingVsTapYuan) }} / 仅供演示</span>
+              <RouterLink class="draft-handoff" :to="{path:'/water/green-benefit',query:{supplyDraftId:draft.id}}">
+                按此编号核算成本 →
+              </RouterLink>
+            </div>
         </div>
       </section>
       <p class="footer-note">演示说明：未接真实水质检验、管线、泵组、电价水价、生产调度与独立库存计量。计算仅在已配置的静态可用水量和路径约束下分配；不执行水泵、阀门及工艺参数控制。</p>
@@ -293,4 +301,6 @@ function exportCsv():void{
 @media(max-width:1250px){.main-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.source-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:750px){.source-parameters{grid-template-columns:1fr 1fr}.route-grid{grid-template-columns:1fr 1fr}.water-header{flex-direction:column;align-items:flex-start}.source-grid{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:530px){.metrics,.route-grid,.source-parameters{grid-template-columns:1fr}.demand-parameters{grid-template-columns:1fr 1fr}.source-figures{gap:9px}.config-actions{flex-wrap:wrap}.scenario-actions{display:grid;grid-template-columns:1fr}}
+.draft-handoff{display:inline-flex;align-items:center;border:1px solid #abd4e5;background:#e9f7fc;border-radius:6px;padding:6px 9px;font-weight:700;color:#277e9e;text-decoration:none;font-size:11px}
+.draft-handoff:hover{background:#dbf1fb}
 </style>

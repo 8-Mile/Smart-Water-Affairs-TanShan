@@ -10,6 +10,18 @@ import type { RainRunParams, RainRunResult } from "../demo/water";
 
 const route = useRoute();
 const store = useDemoStore();
+const incomingRain=computed(()=>{
+ if(route.query.source!=="dispatch")return null;
+ const raw=route.query.rainMm;
+ if(typeof raw!=="string"||!raw.trim())return null;
+ const n=Number(raw);
+ return Number.isFinite(n)&&n>=0&&n<=500?n:null;
+});
+function importRainFromDispatch(){
+ if(incomingRain.value===null)return;
+ form.rainMm=incomingRain.value;
+ recalculate();
+}
 
 const queryRain = computed(() => {
   const id = route.query.rainEventId;
@@ -150,6 +162,13 @@ watch([queryRain, region], ([event, area]) => {
 <template>
   <section class="four-pre">
     <WorkspaceNav label="调蓄与四预" :items="[{name:'调蓄方案',to:'/water/dispatch'},{name:'风险预演',to:'/decision/four-pre'}]" />
+    <div v-if="route.query.source==='dispatch'" class="rain-handoff" aria-label="调蓄参数传递">
+      <div><strong>来自调蓄方案的降雨量</strong>
+       <p v-if="incomingRain!==null">{{ incomingRain }} mm · 仅共享降雨输入，四预分区、汇水面积与水池参数仍独立。</p>
+       <p v-else>传入雨量无效，请返回调蓄页面确认。</p>
+      </div>
+      <NButton size="small" type="primary" :disabled="incomingRain===null" @click="importRainFromDispatch">确认采用此雨量并重算</NButton>
+    </div>
     <div class="four-pre-grid">
       <aside class="panel param-panel">
         <div class="panel-head">
@@ -559,4 +578,6 @@ watch([queryRain, region], ([event, area]) => {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.rain-handoff{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;border:1px solid #bcdfea;background:#f0f9fd;border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.rain-handoff strong{font-size:12px;color:#2f7391}.rain-handoff p{color:#809faf;font-size:11px;line-height:1.6;margin:5px 0 0}
 </style>

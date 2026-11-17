@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { computed, reactive, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, RouterLink } from "vue-router";
 import { NButton, NCheckbox, NInputNumber, NTag, useMessage } from "naive-ui";
 import { useDemoStore } from "../demo/store";
 import { DISPATCH_DRAFT_KEY, readDrafts, saveDispatchDraft, type DispatchDraft } from "../demo/proposalDrafts";
@@ -136,6 +136,13 @@ function exportCsv(): void {
       </div>
     </div>
 
+    <div class="water-handoff">
+      <div><strong>继续做雨洪风险预演</strong>
+        <p>只传递当前选定的降雨量 {{ num(applied.rainMm) }} mm；预演的汇水面积、池容和出流能力独立，不推断为同一座池。</p></div>
+      <RouterLink :to="{path:'/decision/four-pre',query:{source:'dispatch',rainMm:String(applied.rainMm)}}">
+        将降雨量带入四预预演 →
+      </RouterLink>
+    </div>
     <section class="rain-select" aria-label="降雨情景">
       <div><strong>选择预报降雨情景</strong><span>演示数据，改变雨量后自动重新计算</span></div>
       <div class="rain-actions">
@@ -280,4 +287,7 @@ function exportCsv(): void {
 .details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px}.detail-card{background:#f7fafc;border:1px solid #e4edf3;padding:12px;border-radius:8px}.detail-card strong{font-size:12px}.detail-card p{font-size:11px;color:#7b94a5;line-height:1.65;margin-bottom:0}
 .field-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.field-grid label{min-width:0;display:grid;gap:6px}.field-grid label span{font-size:11px;color:#607f94}.field-grid :deep(.n-input-number){width:100%}.constraint-block{background:#f8fbfd;border:1px solid #e0edf4;border-radius:9px;padding:14px;margin-top:14px}.constraint-head{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:13px}.constraint-head strong{font-size:12px}.form-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:17px}.form-actions span{margin-right:auto;font-size:11px;color:#bf8b3e}.error-msg{font-size:12px;color:#b74d4d;margin-top:12px}.draft-list{display:grid;gap:8px}.draft{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px;background:#f6fafc;border-radius:7px;font-size:12px}.draft small{color:#92a5b4}.draft span{color:#63849a}.empty{font-size:12px;color:#899fac;padding:16px}.disclaimer{font-size:11px;color:#8da4b3;line-height:1.8;margin:0}
 @media(max-width:1250px){.result-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.field-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:780px){.details{grid-template-columns:1fr}.field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dispatch-intro{align-items:flex-start;flex-direction:column}}@media(max-width:520px){.metrics,.field-grid{grid-template-columns:1fr}.rain-actions{display:grid;grid-template-columns:1fr 1fr}.chart-wrap{min-height:155px}.chart-legend{gap:8px}.form-actions{flex-wrap:wrap}}
+.water-handoff{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#f2fafd;border:1px solid #d3e8f2;padding:12px 14px;border-radius:8px}
+.water-handoff strong{font-size:12px;color:#306f8c}.water-handoff p{color:#7897a8;font-size:11px;margin:5px 0 0;line-height:1.55}
+.water-handoff a{border:1px solid #a9d5e6;background:#fff;border-radius:6px;padding:8px 12px;font-size:11px;color:#267d9e;text-decoration:none;font-weight:700}
 </style>

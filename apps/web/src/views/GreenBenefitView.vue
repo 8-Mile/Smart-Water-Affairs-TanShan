@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import WorkspaceNav from "../components/WorkspaceNav.vue";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
+import {useRoute} from "vue-router";
 import { NButton, NCheckbox, NInputNumber, NTag, useMessage } from "naive-ui";
 import { useDemoStore } from "../demo/store";
 import { can } from "../demo/permissions";
-import { readDrafts, MULTI_SOURCE_DRAFT_KEY, type SupplyDraft } from "../demo/proposalDrafts";
+import { readDrafts, MULTI_SOURCE_DRAFT_KEY, resolveSupplyDraft, type SupplyDraft } from "../demo/proposalDrafts";
 import {
   cloneGreenBenefit, evaluateGreenBenefit, readGreenDrafts, saveGreenBenefitDraft,
   GREEN_SOURCE_LABELS,
@@ -13,6 +14,13 @@ import {
 import {cloneMultiSource,type WaterSourceId} from "../demo/multisource";
 
 const store=useDemoStore();
+const route=useRoute();
+const selectedSupplyId=computed(()=>typeof route.query.supplyDraftId==="string"?route.query.supplyDraftId:"");
+const incomingDraftStatus=computed(()=>{
+ if(!selectedSupplyId.value)return "";
+ try{return resolveSupplyDraft(localStorage,selectedSupplyId.value).id;}
+ catch(error){return (error as Error).message;}
+});
 const message=useMessage();
 const editable=reactive<GreenBenefitInputs>(cloneGreenBenefit());
 const applied=ref<GreenBenefitInputs>(cloneGreenBenefit());
@@ -68,21 +76,23 @@ function preset(kind:"normal"|"quality"|"shortage"|"loss"):void{
 }
 function loadExistingSupplyDraft():void{
   supplyDrafts.value=readDrafts<SupplyDraft>(MULTI_SOURCE_DRAFT_KEY,localStorage);
-  const latest=supplyDrafts.value[0];
-  if(!latest){message.warning("当前浏览器没有已保存的三水源供水草稿，请先在多水源页面明确保存。");return;}
   try{
+    const original=resolveSupplyDraft(localStorage,selectedSupplyId.value||undefined);
     const fresh=cloneGreenBenefit();
-    // 从ref里读到的是Vue响应式代理，structuredClone(proxy)会抛异常。
-    fresh.water=cloneMultiSource(latest.inputs);
-    fresh.sourceDraftId=latest.id;
+    // 原始草稿仅传入供水条件；费用必须经过本模型重新计算。
+    fresh.water=cloneMultiSource(original.inputs);
+    fresh.sourceDraftId=original.id;
     evaluateGreenBenefit(fresh);
     setValues(fresh);
     recalculate();
-    message.success("已按草稿 "+latest.id+" 的供水条件重新计算成本；未直接套用旧节约结论");
+    message.success("已按草稿 "+original.id+" 的供水条件重新核算；未复制旧节约数字");
   }catch(err){
-    message.error("原供水草稿参数无法用于本次核算："+(err as Error).message);
+    message.error("供水草稿不可用于成本核算："+(err as Error).message);
   }
 }
+watch(()=>route.query.supplyDraftId,()=>{ // do not silently apply an unconfirmed cross-workflow input
+  supplyDrafts.value=readDrafts<SupplyDraft>(MULTI_SOURCE_DRAFT_KEY,localStorage);
+});
 function save():void{
   if(dirty.value)return;
   try{
@@ -191,10 +201,16 @@ const signedValue=computed(()=>result.value.netDeltaYuan===null?"暂不可比":c
     </div>
 
     <section class="panel settings">
+      <div v-if="selectedSupplyId" class="incoming-draft" aria-label="指定供水方案传递">
+        <div><strong>来自水源分配的指定方案：{{ selectedSupplyId }}</strong>
+          <p>{{ incomingDraftStatus===selectedSupplyId?"草稿已找到；需人工确认导入，成本费用将在本页重新核算。":incomingDraftStatus }}</p>
+          <p>MOCK草稿，不代表现场实际供水；切换页面不会自动覆盖当前成本参数。</p></div>
+        <NButton type="primary" size="small" :disabled="incomingDraftStatus!==selectedSupplyId" @click="loadExistingSupplyDraft()">确认导入此编号并重新核算</NButton>
+      </div>
       <div class="section-head">
         <div><h3>核算边界与模型输入</h3><p>专业配置默认折叠；修改后需重新计算，防止用旧结果保存新参数。</p></div>
         <div class="action-row">
-          <NButton size="small" secondary @click="loadExistingSupplyDraft">载入最近供水草稿</NButton>
+          <NButton size="small" secondary @click="loadExistingSupplyDraft()">{{ selectedSupplyId?"导入指定供水草稿":"载入最近供水草稿" }}</NButton>
           <NButton size="small" secondary @click="showParameters=!showParameters">{{ showParameters?'收起':'调整成本与供水条件' }}</NButton>
         </div>
       </div>
@@ -350,4 +366,6 @@ const signedValue=computed(()=>result.value.netDeltaYuan===null?"暂不可比":c
 @media(max-width:1300px){.two-col{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.editable-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.basic-context,.evidence-strip{grid-template-columns:1fr 1fr}}
 @media(max-width:670px){.green-hero{flex-direction:column;align-items:flex-start}.metrics,.common-inputs,.basic-context,.evidence-strip{grid-template-columns:1fr}.editable-grid{grid-template-columns:1fr}}
+.incoming-draft{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;border:1px solid #b9dce9;background:#f0f9fd;border-radius:8px;padding:11px 13px;margin-bottom:12px;color:#40758c}
+.incoming-draft strong{font-size:12px}.incoming-draft p{margin:5px 0 0;font-size:11px;color:#7d9eaf;line-height:1.5}
 </style>

@@ -13,6 +13,7 @@ import {
   useMessage,
 } from "naive-ui";
 import WorkOrderDrawer from "../components/WorkOrderDrawer.vue";
+import AssetJourney from "../components/AssetJourney.vue";
 import { can, roleNames } from "../demo/permissions";
 import { useDemoStore } from "../demo/store";
 import type { InspectionRecord } from "../demo/types";
@@ -52,11 +53,13 @@ const kpiStatuses: { status: keyof typeof workOrderStatusLabels; label: string; 
 ];
 
 function countStatus(status: keyof typeof workOrderStatusLabels): number {
-  return store.workorders.filter((order) => order.status === status).length;
+  return store.workorders.filter(order=>order.status===status
+    &&(assetFilter.value==="all"||order.assetId===assetFilter.value)).length;
 }
 
 const cancelledCount = computed(
-  () => store.workorders.filter((order) => order.status === "cancelled").length,
+  () => store.workorders.filter(order=>order.status==="cancelled"
+    &&(assetFilter.value==="all"||order.assetId===assetFilter.value)).length,
 );
 
 const statusFilter = ref("all");
@@ -66,8 +69,9 @@ watch(() => route.query.status, value => {
 const sourceFilter = ref("all");
 const assetFilter = ref("all");
 watch(() => route.query.assetId, value => {
-  assetFilter.value = typeof value === "string" && store.getAsset(value) ? value : "all";
-}, { immediate: true });
+  const id=typeof value==="string"&&store.getAsset(value)?value:"all";
+  assetFilter.value=id;
+}, { immediate: true, flush:"post" });
 
 const statusOptions = [
   { label: "全部状态", value: "all" },
@@ -92,7 +96,7 @@ function toggleStatus(status: keyof typeof workOrderStatusLabels): void {
 function resetFilters(): void {
   statusFilter.value = "all";
   sourceFilter.value = "all";
-  assetFilter.value = "all";
+  onAssetFilter("all");
 }
 
 const filteredOrders = computed(() =>
@@ -137,7 +141,7 @@ const tab = ref("workorders");
 watch(
   () => route.query.tab,
   (value) => {
-    if (value === "inspections") tab.value = "inspections";
+    tab.value = value === "inspections" ? "inspections" : "workorders";
   },
   { immediate: true },
 );
@@ -161,6 +165,7 @@ const createDeny = computed(
 
 const inspectionRows = computed(() =>
   store.inspections
+    .filter(record=>assetFilter.value==="all"||record.assetId===assetFilter.value)
     .slice()
     .sort((a, b) => Date.parse(b.inspectedAt) - Date.parse(a.inspectedAt)),
 );
@@ -176,7 +181,13 @@ function abnormalItems(record: InspectionRecord): InspectionRecord["items"] {
 
 const showInspectionForm = ref(false);
 const inspectionFormError = ref("");
-const inspectionAssetId = ref(store.assets[0]?.id ?? "");
+const inspectionAssetId = ref(
+ typeof route.query.assetId==="string" && store.getAsset(route.query.assetId)
+ ? route.query.assetId : store.assets[0]?.id ?? ""
+);
+watch(()=>route.query.assetId,id=>{
+ if(typeof id==="string"&&store.getAsset(id))inspectionAssetId.value=id;
+});
 const inspectionAt = ref<number | null>(Date.parse(store.seed.referenceTime));
 const inspectionResult = ref<"normal" | "abnormal">("normal");
 const inspectionNote = ref("");
@@ -332,7 +343,13 @@ function onSourceFilter(value: string): void {
 }
 
 function onAssetFilter(value: string): void {
-  assetFilter.value = value;
+  const next=value!=="all"&&store.getAsset(value)?value:"all";
+  assetFilter.value=next;
+  if(next!=="all")inspectionAssetId.value=next;
+  const query={...route.query};
+  if(next==="all")delete query.assetId;
+  else query.assetId=next;
+  void router.replace({path:route.path,query});
 }
 
 function onInspectionAssetChange(value: string): void {
@@ -350,6 +367,7 @@ function onInspectionResultChange(value: string): void {
 
 <template>
   <section class="workorders-page">
+    <AssetJourney v-if="assetFilter!=='all'" :asset-id="assetFilter" />
     <div v-if="returnTo" class="order-return">
       <router-link :to="returnTo">返回上一个业务核查页面</router-link>
       <span>可在工单证据区查看原始核查数据并回到对应池体</span>
@@ -377,7 +395,7 @@ function onInspectionResultChange(value: string): void {
 
     <section class="panel">
       <NTabs :value="tab" type="line" size="small" animated @update:value="changeTab">
-        <NTabPane name="workorders" :tab="`工单（${store.workorders.length}）`">
+        <NTabPane name="workorders" :tab="`工单（${assetFilter==='all'?store.workorders.length:store.workorders.filter(o=>o.assetId===assetFilter).length}）`">
           <div class="filter-bar">
             <span class="filter-label">筛选</span>
             <NSelect
@@ -449,11 +467,12 @@ function onInspectionResultChange(value: string): void {
           <p v-else class="empty">当前筛选条件下没有工单。可调整状态 / 来源 / 设备筛选或重置条件。</p>
         </NTabPane>
 
-        <NTabPane name="inspections" :tab="`巡检记录（${store.inspections.length}）`">
+        <NTabPane name="inspections" :tab="`巡检记录（${inspectionRows.length}）`">
           <div class="tab-head">
             <div>
               <h3>巡检记录</h3>
               <p class="hint">点击记录展开检查项；异常项可一键生成工单草稿，不会自动派单。</p>
+              <p v-if="assetFilter!=='all'" class="hint">当前仅展示 {{ assetLabel(assetFilter) }} 的巡检记录；新增巡检默认关联此设备。</p>
             </div>
             <NButton
               type="primary"

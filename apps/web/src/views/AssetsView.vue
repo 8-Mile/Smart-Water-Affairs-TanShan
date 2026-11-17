@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import WorkspaceNav from "../components/WorkspaceNav.vue";
+import AssetJourney from "../components/AssetJourney.vue";
 import { computed, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import {
@@ -677,6 +678,7 @@ watch(
 
 <template>
   <div class="assets-page">
+    <AssetJourney v-if="selectedAssetId" :asset-id="selectedAssetId" />
     <WorkspaceNav label="设备与档案" :items="[{name:'设备台账与履历',to:'/operations/assets'},{name:'档案与案例',to:'/archives'}]" />
     <aside class="panel tree-panel">
       <div class="panel-head compact">
@@ -1210,6 +1212,11 @@ watch(
 </template>
 
 <style scoped>
+.assets-page > .asset-journey,
+.assets-page > .workspace-nav {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
 .assets-page {
   display: grid;
   grid-template-columns: minmax(198px, 22fr) minmax(0, 50fr) minmax(258px, 28fr);
@@ -1756,6 +1763,13 @@ watch(
   .tree-panel,
   .right-panel {
     max-height: none;
+  }
+}
+@media (max-width: 640px) {
+  .assets-page .tree-panel {
+    max-height: 270px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 }
 </style>

@@ -7,7 +7,7 @@ import { assertCan } from "./permissions";
 import type { Role } from "./types";
 import type { DispatchAssessment, DispatchInputs, DispatchKind } from "./dispatch";
 import type { MultiSourceInputs, WaterSupplyResult } from "./multisource";
-import { cloneMultiSource } from "./multisource";
+import { cloneMultiSource, evaluateMultiSource } from "./multisource";
 
 export const DISPATCH_DRAFT_KEY = "tanggang-water-dispatch-drafts-v1";
 export const MULTI_SOURCE_DRAFT_KEY = "tanggang-multisource-drafts-v1";
@@ -91,4 +91,25 @@ export function saveSupplyDraft(
     },
   };
   return persistOne(MULTI_SOURCE_DRAFT_KEY, draft, storage);
+}
+
+/**
+ * Resolve one selected supply draft for cost comparison. Never silently fall back
+ * to an unrelated "latest" draft when a particular ID was requested.
+ * Reevaluate recorded inputs rather than trusting stored outcome figures.
+ */
+export function resolveSupplyDraft(
+ storage:DraftStorage,requestedId?:string,
+):SupplyDraft {
+ const drafts=readDrafts<SupplyDraft>(MULTI_SOURCE_DRAFT_KEY,storage);
+ const draft=requestedId ? drafts.find(x=>x?.id===requestedId) : drafts[0];
+ if(!draft)throw new Error(requestedId
+  ?"所选供水草稿不可用或已被清理，不能改用其他草稿。":"当前浏览器没有已保存的供水草稿。");
+ if(draft.state!=="draft"||draft.source!=="MOCK"||!draft.inputs)
+  throw new Error("供水草稿结构或来源无效，禁止导入成本核算。");
+ const inputs=cloneMultiSource(draft.inputs);
+ const fresh=evaluateMultiSource(inputs);
+ if(!fresh.feasible||fresh.unmetM3>1e-6)
+  throw new Error("所选供水草稿条件已不满足完整供水要求，请先重新核验。");
+ return {...draft,inputs};
 }
