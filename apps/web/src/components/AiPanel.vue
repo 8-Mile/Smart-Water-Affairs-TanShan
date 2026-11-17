@@ -1673,6 +1673,13 @@ watch(
           <strong>{{ queryAnswer.title }}</strong>
           <span v-for="line in queryAnswer.lines" :key="line">{{ line }}</span>
         </div>
+        <div v-if="/(中水|自来水|循环水|雨水|水资源|回用水)/.test(parsed.prompt)" class="created-actions">
+          <NButton size="small" secondary @click="goRoute('/water/ledger')">核对原始水量账本</NButton>
+          <NButton size="small" type="primary"
+            @click="goRoute('/data/ai-workspace?mode=water&prompt='+encodeURIComponent(parsed.prompt))">
+            基于账本生成受控A2UI图表并保存
+          </NButton>
+        </div>
         <div v-if="parsed.topic === 'spray-check'" class="created-actions">
           <NButton
             size="small"

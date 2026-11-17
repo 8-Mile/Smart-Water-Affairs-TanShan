@@ -32,6 +32,8 @@ import { useDemoStore } from "../demo/store";
 import { useUiStore } from "../demo/ui";
 import type { Dashboard } from "../demo/types";
 import { formatDateTime } from "../demo/workorderMeta";
+import {composeWaterLedgerSurface} from "../demo/waterSurface";
+import {createWaterAnalysisReport} from "../demo/waterAnalysisReport";
 
 const route = useRoute();
 const router = useRouter();
@@ -46,6 +48,34 @@ const aiPrompt = ref("最近三次降雨南北储量对比，折线图，并显�
 const dashboardId = ref("");
 const dashboardName = ref("降雨储量分析看板");
 const savedVersion = ref<number | null>(null);
+const waterMode=ref(route.query.mode==="water");
+function generateWater(chartType:"line"|"bar"=params.value.chartType,prompt=aiPrompt.value):void{
+ const composed=composeWaterLedgerSurface(store.seed.ledger,chartType,prompt);
+ if(composed.rejected){errors.value=composed.errors;return;}
+ const result=applyMessages(null,composed.messages,store.role);
+ if(result.rejected||!result.surface){errors.value=result.errors;return;}
+ if(!waterMode.value){dashboardId.value="";savedVersion.value=null;}
+ waterMode.value=true;
+ surface.value=result.surface;params.value.chartType=chartType;
+ dashboardName.value="水资源分类用量分析（按月账本）";
+ errors.value=[];pushNotice("生成水资源月度口径图表，循环水与日粒度缺数明确标识");
+}
+function generateReportDraft():void{
+ if(!activeDashboard.value||!waterMode.value){
+  setError("INVALID_MESSAGE","请先生成水资源图表并保存看板版本");
+  return;
+ }
+ try{
+  const report=createWaterAnalysisReport(localStorage,{
+   dashboard:activeDashboard.value,scenarioId:store.scenarioId,actor:store.role,
+   now:new Date().toISOString(),
+  });
+  void router.push({path:"/data/reports",query:{
+   analysisId:report.id,returnTo:"/data/ai-workspace?mode=water&dashboard="+activeDashboard.value.id,
+  }});
+ }catch(e){setError("INVALID_MESSAGE",(e as Error).message);}
+}
+
 
 const canEdit = computed(() => can(store.role, "dashboard:edit:self"));
 const canAskAi = computed(() => can(store.role, "ai:ask"));
@@ -157,6 +187,7 @@ function restoreDashboard(id: string): boolean {
     return false;
   }
   surface.value = result.surface;
+  waterMode.value=dashboard.widgets.some(w=>w.id==="water-ledger-chart");
   dashboardId.value = dashboard.id;
   dashboardName.value = dashboard.name;
   savedVersion.value = dashboard.version;
@@ -184,7 +215,8 @@ onMounted(() => {
     if (!restoreDashboard(queryId)) generateRain({}, "回退生成南北储量对比");
     return;
   }
-  generateRain(typeof route.query.rainEventIds === "string" ? { rangeCount: 1 } : {}, "生成南北储量对比");
+  if(route.query.mode==="water")generateWater("bar",typeof route.query.prompt==="string"?route.query.prompt:"水资源分类月度账本");
+  else generateRain(typeof route.query.rainEventIds === "string" ? { rangeCount: 1 } : {}, "生成南北储量对比");
   consumePrompt();
 });
 function consumePrompt(): void {
@@ -196,9 +228,13 @@ function consumePrompt(): void {
   void router.replace({ query });
 }
 watch(() => route.query.prompt, consumePrompt);
+watch(()=>route.query.mode,(mode)=>{
+ if(mode==="water"&&!waterMode.value)generateWater("bar","水资源分类月度账本");
+});
 
 function changeChartType(value: string): void {
   if (value !== "line" && value !== "bar") return;
+  if(waterMode.value){generateWater(value);return;}
   generateRain(
     { chartType: value },
     `修改图型为${value === "line" ? "折线" : "柱状"}`,
@@ -231,6 +267,11 @@ function runPrompt(): void {
       "FORBIDDEN_ACTION",
       `角色「${roleNames[store.role]}」无权使用 AI 指令生成（需要 ai:ask）`,
     );
+    return;
+  }
+  if(/水资源|自来水|中水|雨水|循环水|回用水|三类水/.test(text)&&
+    !/调蓄|四预|停泵|启动/.test(text)){
+    generateWater(/折线|line/i.test(text)?"line":/柱状|bar/i.test(text)?"bar":params.value.chartType,text);
     return;
   }
   if (editCanvasFromPrompt(text)) return;
@@ -804,6 +845,7 @@ function buildLibraryComponent(name: A2uiComponentName): A2uiComponent | null {
         <div>
           <h2>{{ dashboardName }}</h2>
           <p>{{ surfaceSummary }}</p>
+          <p v-if="waterMode" class="hint">按月水量账本（MOCK）· 自来水进项 / 中水外供 / 雨水入池分开统计；循环水独立计量缺失</p>
         </div>
         <div class="canvas-meta">
           <NTag size="small" :bordered="false">{{ widgetCount }} 个组件</NTag>
@@ -840,10 +882,11 @@ function buildLibraryComponent(name: A2uiComponentName): A2uiComponent | null {
         />
         <div class="row">
           <NButton type="primary" size="small" @click="runPrompt">生成图表</NButton>
-          <NButton size="small" secondary @click="generateRain({}, '重新生成南北储量对比')">
+          <NButton size="small" secondary @click="waterMode?generateWater('bar','水资源分类月度账本'):generateRain({}, '重新生成南北储量对比')">
             复位生成
           </NButton>
         </div>
+        <NButton size="small" secondary @click="generateWater('bar','水资源分类月度账本')">切换到水资源账本图表</NButton>
         <p class="hint">
           本地规则解析，不调用大模型；请求用电量 / 电耗 / 能耗会因缺少 kW 测点被拒绝。
         </p>
@@ -859,14 +902,14 @@ function buildLibraryComponent(name: A2uiComponentName): A2uiComponent | null {
           :options="chartTypeOptions"
           @update:value="changeChartType"
         />
-        <label class="field-label">时间范围</label>
-        <NSelect
+        <label v-if="!waterMode" class="field-label">时间范围</label>
+        <NSelect v-if="!waterMode"
           size="small"
           :value="params.rangeCount"
           :options="rangeOptions"
           @update:value="changeRange"
         />
-        <NButton
+        <NButton v-if="!waterMode"
           size="small"
           :type="params.showAverage ? 'primary' : 'default'"
           :secondary="!params.showAverage"
@@ -875,8 +918,9 @@ function buildLibraryComponent(name: A2uiComponentName): A2uiComponent | null {
           {{ params.showAverage ? "移除平均值" : "增加平均值" }}
         </NButton>
         <p class="hint">
-          当前：{{ params.chartType === "bar" ? "柱状" : "折线" }} · 最近
-          {{ params.rangeCount }} 次 · {{ params.showAverage ? "含平均值" : "不含平均值" }}
+          <template v-if="waterMode">当前：{{params.chartType==="bar"?"柱状":"折线"}} · 按月账本独立口径，未提供真实每日趋势。</template>
+          <template v-else>当前：{{ params.chartType === "bar" ? "柱状" : "折线" }} · 最近
+          {{ params.rangeCount }} 次 · {{ params.showAverage ? "含平均值" : "不含平均值" }}</template>
         </p>
               <NSelect v-model:value="selectedComponentId" placeholder="选择组件"
           :options="canvasComponents.map(item => ({ value: item.id, label: String(item.props?.title ?? item.props?.label ?? item.component) }))" class="component-select" />
@@ -897,6 +941,10 @@ function buildLibraryComponent(name: A2uiComponentName): A2uiComponent | null {
             保存看板
           </NButton>
           <NButton size="small" secondary @click="goDashboards">我的看板</NButton>
+        </div>
+        <div v-if="waterMode" class="row">
+          <NButton size="small" type="primary" secondary :disabled="!activeDashboard || !canEdit" @click="generateReportDraft">生成待审水资源报告草稿</NButton>
+          <span class="hint">先保存受控图表再形成报告，可追溯看板版本</span>
         </div>
         <p class="hint">
           {{

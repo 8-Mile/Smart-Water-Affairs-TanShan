@@ -19,7 +19,7 @@ export function saveFlowDraft<T>(storage:StorageWrite,key:string,data:T,now=Date
  catch { /* 容量或隐私模式禁用时，保持当前页面操作可用。 */ }
 }
 const RETURN_ROUTES=new Set([
- "/overview","/operations/events","/operations/alarms","/operations/workorders",
+ "/overview","/operations/role-workspace","/operations/emergency","/operations/events","/operations/alarms","/operations/workorders",
  "/operations/assets","/operations/asset-workspace",
  "/water/overview","/water/ledger","/water/rainfall","/water/port-chain",
  "/water/machine-supply","/water/balance","/water/dispatch","/water/multi-source",

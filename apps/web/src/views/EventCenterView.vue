@@ -119,6 +119,12 @@ function openOrderWorkspace(e:HubEvent){
   workOrderId:e.workOrderId,returnTo:"/operations/events?tab=queue&eventRef="+encodeURIComponent(e.ref),
  }});
 }
+function openEmergency(e:HubEvent){
+ void router.push({path:"/operations/emergency",query:{
+  ...(e.origin==="alarm"?{alarmId:e.originalId}:{}),
+  returnTo:route.fullPath,
+ }});
+}
 function openAsset(e:HubEvent){ if(demo.getAsset(e.assetId))ui.openAsset(e.assetId); }
 function goAssetWorkspace(e:HubEvent){
  if(!demo.getAsset(e.assetId))return;
@@ -205,6 +211,7 @@ function timestamp(v:string){
         <NButton size="small" quaternary :disabled="!selected.workOrderId||selected.isMissingWorkOrder" @click="openOrderWorkspace(selected)">完整工单页面</NButton>
         <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="goAssetWorkspace(selected)">设备工作台</NButton>
         <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="openAsset(selected)">快速设备详情</NButton>
+        <NButton size="small" secondary @click="openEmergency(selected)">发起应急协同（草稿）</NButton>
         <NButton size="small" quaternary @click="changeTab('correlation')">查看协同核查</NButton>
        </div>
        <div class="hub-closure" aria-label="当前事件的下一步处理">

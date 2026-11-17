@@ -107,6 +107,11 @@ export interface Alarm {
   occurredAt: string;
   status: "active" | "acknowledged" | "closed";
   workOrderId?: string;
+  recoveryReview?: {
+    evidenceRef:string;note:string;metric:string;before:string;after:string;
+    unit:string;recordedAt:string;source:"USER_ENTRY";status:"reported-recovered";
+    reviewer:Role;
+  };
 }
 
 export interface InspectionRecord {

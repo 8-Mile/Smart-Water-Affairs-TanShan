@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { RouterLink, useRoute } from "vue-router";
 import { NButton, NInput, NTag, useMessage } from "naive-ui";
 import { can } from "../demo/permissions";
 import { readHandoverReports, reviewHandoverReport, type HandoverReport } from "../demo/handover";
 import { useDemoStore } from "../demo/store";
+import {readWaterAnalysisReports,reviewWaterAnalysisReport,type WaterAnalysisReport} from "../demo/waterAnalysisReport";
 import { summarizeLedger, toCsv } from "../demo/water";
 import type { WorkOrderStatus } from "../demo/types";
 import {
@@ -16,6 +17,34 @@ import {
 const store = useDemoStore();
 const route = useRoute();
 const message = useMessage();
+const analyses=ref<WaterAnalysisReport[]>(readWaterAnalysisReports(localStorage,store.scenarioId));
+const analysisId=ref(typeof route.query.analysisId==="string"?route.query.analysisId:analyses.value.at(-1)?.id??"");
+const selectedAnalysis=computed(()=>analyses.value.find(a=>a.id===analysisId.value));
+const analysisReviewNote=ref("");
+const canReviewAnalysis=computed(()=>can(store.role,"handover:review"));
+function refreshAnalysis(){
+ analyses.value=readWaterAnalysisReports(localStorage,store.scenarioId);
+ const requested=typeof route.query.analysisId==="string"?route.query.analysisId:"";
+ if(requested&&analyses.value.some(x=>x.id===requested))analysisId.value=requested;
+ else if(!analyses.value.some(x=>x.id===analysisId.value))analysisId.value=analyses.value.at(-1)?.id??"";
+}
+watch(()=>store.scenarioId,refreshAnalysis);
+watch(()=>route.query.analysisId,refreshAnalysis);
+function reviewAnalysis(){
+ if(!selectedAnalysis.value)return;
+ try{
+  reviewWaterAnalysisReport(localStorage,selectedAnalysis.value.id,store.role,analysisReviewNote.value,new Date().toISOString());
+  refreshAnalysis();analysisReviewNote.value="";
+  message.success("已记录本地分析报告审核，不代表生产系统正式审批");
+ }catch(e){message.error((e as Error).message);}
+}
+function exportAnalysis(){
+ const report=selectedAnalysis.value;if(!report)return;
+ const url=URL.createObjectURL(new Blob([report.body],{type:"text/markdown;charset=utf-8"}));
+ const anchor=document.createElement("a");anchor.href=url;anchor.download=report.id+"-MOCK-水资源分析.md";
+ document.body.appendChild(anchor);anchor.click();anchor.remove();URL.revokeObjectURL(url);
+}
+
 const handovers = ref<HandoverReport[]>(readHandoverReports(localStorage));
 const handoverId = ref(typeof route.query.handoverId === "string"
   ? route.query.handoverId : handovers.value[0]?.id ?? "");
@@ -355,6 +384,38 @@ const missingIndicators = [
       <NTag size="small" :bordered="false" type="info">本地 Mock · 不接后端</NTag>
     </div>
 
+    <section id="water-analysis-report" class="panel analysis-report" aria-label="水资源分析报告审核">
+      <div class="panel-head">
+       <div><h2>AI 水资源分析报告草稿</h2>
+        <p>从用户已保存的受控A2UI水量图表生成，保留来源账本周期、看板版本和缺数说明；审核只用于本地DEMO。</p></div>
+       <NTag size="small" type="info">MOCK / 人工复核</NTag>
+      </div>
+      <div v-if="analyses.length" class="analysis-list">
+       <button v-for="a in [...analyses].reverse()" :key="a.id" type="button"
+        :class="{selected:a.id===analysisId}" @click="analysisId=a.id">
+         <b>{{a.id}}</b><span>{{a.title}}</span><small>{{a.status==='reviewed'?'内部已审核':'待审核'}} · {{a.createdAt.slice(0,16).replace('T',' ')}}</small>
+       </button>
+      </div>
+      <template v-if="selectedAnalysis">
+       <div class="analysis-ref"><strong>{{selectedAnalysis.id}} · {{selectedAnalysis.status==='reviewed'?'已审核':'待审核'}}</strong>
+        <RouterLink :to="{path:'/data/ai-workspace',query:{mode:'water',dashboard:selectedAnalysis.dashboardId,returnTo:route.fullPath}}">
+          返回原看板 v{{selectedAnalysis.dashboardVersion}} →
+        </RouterLink>
+       </div>
+       <p class="handover-muted">账本周期：{{selectedAnalysis.periods.join('、')}} · 仅MOCK周期数据，禁止将其称为实测近30天逐日数据。</p>
+       <pre class="analysis-body">{{selectedAnalysis.body}}</pre>
+       <div class="analysis-actions">
+        <NButton size="small" secondary @click="exportAnalysis">导出带口径声明的草稿</NButton>
+        <template v-if="selectedAnalysis.status==='pending_review'">
+         <NInput v-model:value="analysisReviewNote" type="textarea" :rows="2" placeholder="审核依据和缺数限制（至少6字）"/>
+         <NButton size="small" type="primary" :disabled="!canReviewAnalysis" @click="reviewAnalysis">人工审核并归档DEMO草稿</NButton>
+        </template>
+        <p v-else class="handover-muted">复核：{{selectedAnalysis.reviewNote}} · {{selectedAnalysis.reviewedAt}}</p>
+       </div>
+      </template>
+      <p v-else class="handover-muted">暂无水资源分析报告。可在 AI 分析工作台生成水量图表、保存看板，再生成待审草稿。</p>
+      <RouterLink class="analysis-enter" to="/data/ai-workspace?mode=water">进入水资源 A2UI 分析工作台 →</RouterLink>
+    </section>
     <section class="panel handover-panel" aria-label="AI交接班报告">
       <div class="panel-head handover-head">
         <div><h2>交接班报告 · AI多步骤办事</h2>
@@ -490,6 +551,16 @@ const missingIndicators = [
 </template>
 
 <style scoped>
+.analysis-report{display:grid;gap:13px}
+.analysis-list{display:flex;flex-wrap:wrap;gap:7px;max-height:170px;overflow:auto}
+.analysis-list button{border:1px solid #d5e8f1;border-radius:7px;background:#fafcff;cursor:pointer;display:grid;text-align:left;gap:4px;padding:9px 11px;font-size:12px;color:#34627e}
+.analysis-list button.selected{border-color:#66b3d7;background:#e7f6ff}.analysis-list small{color:#879da9}
+.analysis-ref{display:flex;justify-content:space-between;gap:9px;align-items:center;flex-wrap:wrap;font-size:13px}
+.analysis-ref a,.analysis-enter{color:#147ba6;font-size:12px}
+.analysis-body{white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow-y:auto;line-height:1.8;padding:12px;background:#f7fbff;border:1px solid #dcecf4;border-radius:7px;font-size:12px}
+.analysis-actions{display:grid;gap:9px;justify-items:start}
+.analysis-actions .n-input{width:100%}
+
 /* 本地交班报告保留在既有常用报表，默认先看状态与遗留风险 */
 .handover-panel{padding:19px}
 .handover-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}

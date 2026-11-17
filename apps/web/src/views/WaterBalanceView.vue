@@ -1,13 +1,60 @@
 <script setup lang="ts">
 import {computed,reactive,ref,watch} from "vue";
 import {RouterLink,useRoute} from "vue-router";
-import {NButton,NInputNumber,NTag,NCheckbox} from "naive-ui";
+import {NButton,NInputNumber,NTag,NCheckbox,NInput,NSelect,useMessage} from "naive-ui";
 import {assessIntegratedBalance,DEFAULT_INTEGRATED_BALANCE,type IntegratedBalanceInput} from "../demo/integratedBalance";
 import {useDemoStore} from "../demo/store";
+import {can,roleNames} from "../demo/permissions";
+import {createBalanceCase,readBalanceCases,advanceBalanceCase,type BalanceAction,type BalanceCase} from "../demo/balanceWorkflow";
 import {readFlowDraft,saveFlowDraft} from "../demo/userJourney";
 type NumericKey={ [K in keyof IntegratedBalanceInput]:IntegratedBalanceInput[K] extends number?K:never }[keyof IntegratedBalanceInput];
 const route=useRoute();
 const store=useDemoStore();
+const message=useMessage();
+const cases=ref<BalanceCase[]>(readBalanceCases(localStorage,store.scenarioId));
+const selectedCaseId=ref(cases.value.at(-1)?.id??"");
+const selectedCase=computed(()=>cases.value.find(c=>c.id===selectedCaseId.value));
+const canPropose=computed(()=>can(store.role,"water:proposal"));
+const canReview=computed(()=>store.role==="manager"||store.role==="admin");
+const workflowForm=reactive({
+ purpose:"评估降雨下污染水池暂存、处理和回用约束",
+ basis:"当前仅采用本地MOCK模型参数，现场实测待核",
+ note:"",owner:"",approvalRef:"",followUpRef:"",
+ outcome:"improved" as "improved"|"unresolved"|"unchanged",
+});
+const conservative=computed(()=>{
+ try{return assessIntegratedBalance({...model,qualityAccepted:false,reusePathAssumed:false});}
+ catch{return null;}
+});
+function refreshCases(){
+ cases.value=readBalanceCases(localStorage,store.scenarioId);
+ if(!cases.value.some(c=>c.id===selectedCaseId.value))selectedCaseId.value=cases.value.at(-1)?.id??"";
+}
+function createCase(){
+ try{
+  const created=createBalanceCase(localStorage,{
+   scenarioId:store.scenarioId,actor:store.role,candidate:{...model},
+   purpose:workflowForm.purpose,basis:workflowForm.basis,now:new Date().toISOString(),
+  });
+  refreshCases();selectedCaseId.value=created.id;
+  message.success("已保存独立模拟方案草稿；输入和结果均随编号保留");
+ }catch(error){message.error((error as Error).message);}
+}
+function advanceCase(action:BalanceAction){
+ const item=selectedCase.value;if(!item)return;
+ try{
+  advanceBalanceCase(localStorage,item.id,action,store.role,{
+   note:workflowForm.note,owner:workflowForm.owner,approvalRef:workflowForm.approvalRef,
+   followUpRef:workflowForm.followUpRef,observed:{...model},outcome:workflowForm.outcome,
+  },new Date().toISOString());
+  refreshCases();workflowForm.note="";
+  message.success("已记录人工业务操作；未下发工控或真实调度命令");
+ }catch(error){message.error((error as Error).message);}
+}
+const caseStatus:Record<string,string>={
+ draft:"模拟草稿",submitted:"待管理复核",adopted:"内部拟采纳·待跟踪",tracking:"已补录跟踪",closed:"复盘归档",rejected:"不采纳",
+};
+watch(()=>store.scenarioId,refreshCases);
 const flowKey=()=>"water-balance:"+store.scenarioId;
 function validState(value:unknown):value is IntegratedBalanceInput{
  if(!value||typeof value!=="object")return false;
@@ -114,6 +161,54 @@ function scenario(id:"normal"|"rain"|"shortage"){
     <p class="muted">以上“假设”只用于敏感性试算，并非已核实工程关系。流量及需水量统一折算到 {{model.periodHours}} 小时时段。</p>
    </section>
   </div>
+  <section class="balance-panel balance-workflow" aria-label="水务方案比选与人工跟踪">
+   <h3>降雨调蓄分析 · 方案比选与人工闭环</h3>
+   <p class="muted">按同一模型输入比较情景，不冒充真实处理能力、管线连通或水质放行。修改上方输入后再保存独立版本；只有管理岗位可人工拟采纳。</p>
+   <div class="compare-grid">
+    <div><span>默认情景（MOCK）</span><strong>{{format(assessIntegratedBalance(DEFAULT_INTEGRATED_BALANCE).pollutionOverflowM3)}} m³</strong><small>默认假设暂存超限量</small></div>
+    <div><span>当前试算（MOCK）</span><strong>{{format(output?.pollutionOverflowM3)}} m³</strong><small>处理 {{format(output?.processedM3)}} / 回用 {{format(output?.actualReuseM3)}} m³</small></div>
+    <div><span>保守情景（不计合格回用）</span><strong>{{format(conservative?.pollutionOverflowM3)}} m³</strong><small>水质/路径未确认时不得计算合格回用</small></div>
+   </div>
+   <div class="workflow-grid">
+    <section class="workflow-form">
+     <h4>1. 保存分析快照</h4>
+     <label>分析目的<NInput v-model:value="workflowForm.purpose" size="small" /></label>
+     <label>输入参数来源 / 待核依据<NInput v-model:value="workflowForm.basis" size="small" /></label>
+     <NButton type="primary" size="small" :disabled="!canPropose||!output" @click="createCase">保存当前试算为独立草稿</NButton>
+     <p class="muted">不同编号各自保留输入、结果、操作时间线；后续修改上方表单不改写已存快照。</p>
+    </section>
+    <section class="workflow-form">
+     <h4>2. 审核与跟踪</h4>
+     <label>已保存方案
+      <NSelect :value="selectedCaseId" :options="cases.map(c=>({label:c.id+' · '+caseStatus[c.status],value:c.id}))"
+       size="small" placeholder="先保存分析快照" @update:value="v=>selectedCaseId=v"/>
+     </label>
+     <template v-if="selectedCase">
+      <NTag size="small" type="info">{{caseStatus[selectedCase.status]}}</NTag>
+      <p class="muted">原始草稿：{{selectedCase.createdBy}} · 暂存超限 {{format(selectedCase.candidateResult.pollutionOverflowM3)}} m³ · 大机缺口 {{format(selectedCase.candidateResult.machineShortageM3)}} m³</p>
+      <label v-if="selectedCase.status==='submitted'">内部研判依据编号<NInput v-model:value="workflowForm.approvalRef" placeholder="编号必填，不代表正式调度许可" size="small" /></label>
+      <label v-if="selectedCase.status==='submitted'">跟踪责任人<NInput v-model:value="workflowForm.owner" placeholder="填写实际负责角色/人员" size="small" /></label>
+      <label v-if="selectedCase.status==='adopted'||selectedCase.status==='tracking'">跟踪/复盘证据编号<NInput v-model:value="workflowForm.followUpRef" size="small" placeholder="现场记录引用，人工录入" /></label>
+      <label v-if="selectedCase.status==='tracking'">复盘结果<NSelect v-model:value="workflowForm.outcome" size="small"
+       :options="[{label:'较原方案改善（需证据）',value:'improved'},{label:'风险未解决',value:'unresolved'},{label:'无明显变化',value:'unchanged'}]"/></label>
+      <label v-if="selectedCase.status!=='closed'&&selectedCase.status!=='rejected'">当前操作说明<NInput v-model:value="workflowForm.note" type="textarea" :rows="2" placeholder="依据、限制、后续安排，不能仅填已处理" /></label>
+      <div class="case-actions">
+       <NButton v-if="selectedCase.status==='draft'" size="small" type="primary" :disabled="!canPropose" @click="advanceCase('submit')">提交人工研判</NButton>
+       <NButton v-if="selectedCase.status==='submitted'" size="small" type="primary" :disabled="!canReview" @click="advanceCase('adopt')">拟采纳并指定跟踪</NButton>
+       <NButton v-if="selectedCase.status==='submitted'" size="small" :disabled="!canReview" @click="advanceCase('reject')">不采纳</NButton>
+       <NButton v-if="selectedCase.status==='adopted'" size="small" type="primary" :disabled="!canPropose||!output" @click="advanceCase('track')">按当前参数补录复核结果</NButton>
+       <NButton v-if="selectedCase.status==='tracking'" size="small" type="primary" :disabled="!canReview" @click="advanceCase('close')">提交人工复盘归档</NButton>
+      </div>
+     </template>
+     <p v-else class="muted">尚无独立方案，先保存左侧的模拟试算。</p>
+    </section>
+   </div>
+   <details v-if="selectedCase" class="workflow-history" open>
+    <summary>方案操作记录（{{selectedCase.history.length}}）</summary>
+    <p v-if="selectedCase.tracking">复测模型：暂存超限 {{format(selectedCase.tracking.result.pollutionOverflowM3)}} m³；依据 {{selectedCase.tracking.evidenceRef}}。人工输入，不代表自动实测。</p>
+    <ol><li v-for="(item,i) in selectedCase.history" :key="i">{{item.at}} · {{roleNames[item.by]}} · {{item.action}}：{{item.detail}}</li></ol>
+   </details>
+  </section>
   <section class="balance-panel">
    <h3>专业分析与原系统联动</h3>
    <div class="links">
@@ -129,6 +224,20 @@ function scenario(id:"normal"|"rain"|"shortage"){
 
 <style scoped>
 .balance-page{display:grid;gap:11px;padding-bottom:20px;color:#234c64}
+.balance-workflow{display:grid;gap:12px}
+.compare-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.compare-grid>div{padding:11px;border:1px solid #d7e9f0;background:#eef8fc;border-radius:7px;display:grid;gap:5px}
+.compare-grid span,.compare-grid small{color:#64879d;font-size:11px}
+.compare-grid strong{font-size:19px;color:#227a9b}
+.workflow-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.workflow-form{border:1px solid #e0edf3;border-radius:8px;padding:12px;display:grid;align-content:start;gap:9px}
+.workflow-form h4{margin:0;font-size:13px}
+.workflow-form label{display:grid;gap:5px;font-size:12px;color:#486b81}
+.case-actions{display:flex;gap:7px;flex-wrap:wrap}
+.workflow-history{font-size:12px;color:#456e85}
+.workflow-history ol{padding-left:24px;line-height:1.8;overflow-wrap:anywhere}
+@media(max-width:750px){.workflow-grid{grid-template-columns:1fr}.compare-grid{grid-template-columns:1fr}}
+
 .flow-saved{font-size:11px;color:#527b91;align-self:center}
 .balance-header,.balance-panel,.balance-stats>div{background:#f9fcff;border:1px solid #d0e3ee;border-radius:11px;box-shadow:0 3px 10px #265c7a0b}
 .balance-header{display:flex;justify-content:space-between;align-items:start;padding:12px 17px;gap:12px}

@@ -818,7 +818,10 @@ test("V38-A02 告警必须经过值班确认和管理者独立核查才能关闭
  store.setRole("manager");
  store.workOrderAction("wo-2026-014","accept",{by:"管理者（模拟）"});
  assert.throws(()=>store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"",note:""}),/请输入/);
- store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"MOCK-复测-001",note:"复测模拟记录已人工核查"});
+ assert.throws(()=>store.closeAlarmWithReview("ALM-P002-01",
+  {evidenceRef:"MOCK-复测-001",note:"复测模拟记录已人工核查"}),/必须提供同一指标/);
+ store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"MOCK-复测-001",note:"复测模拟记录已人工核查",
+  recovery:{metric:"振动速度",before:"4.2",after:"2.5",unit:"mm/s",status:"reported-recovered"}});
  assert.equal(store.alarms.find(a=>a.id==="ALM-P002-01")?.status,"closed");
  assert.ok(store.userState.audits.some(a=>a.action==="alarm:close"&&a.objectId==="ALM-P002-01"&&a.summary?.includes("MOCK-复测-001")));
  assert.throws(()=>store.closeAlarmWithReview("ALM-P002-01",{evidenceRef:"MOCK-复测-001",note:"再次关闭"}),/请先/);

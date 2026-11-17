@@ -29,6 +29,9 @@ export type Action =
   | "water:proposal"
   | "unattended:execute"
   | "unattended:confirm"
+  | "emergency:create"
+  | "emergency:handle"
+  | "emergency:review"
   | "scenario:write"
   | "audit:read"
   | "admin:write"
@@ -56,6 +59,9 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Action>> = {
     "water:proposal",
     "unattended:execute",
     "unattended:confirm",
+    "emergency:create",
+    "emergency:handle",
+    "emergency:review",
     "asset:create",
     "point:add",
     "binding:write",
@@ -91,6 +97,9 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Action>> = {
     "water:proposal",
     "unattended:execute",
     "unattended:confirm",
+    "emergency:create",
+    "emergency:handle",
+    "emergency:review",
     "workorder:accept",
     "alarm:close",
     "dashboard:edit:self",
@@ -108,6 +117,8 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Action>> = {
     "water:proposal",
     "unattended:execute",
     "unattended:confirm",
+    "emergency:create",
+    "emergency:handle",
     "workorder:create",
     "alarm:ack",
     "dashboard:edit:self",
@@ -119,6 +130,7 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Action>> = {
     "knowledge:save",
     "energy:proposal",
     "point:add",
+    "emergency:handle",
     "workorder:handle",
     "document:attach",
     "dashboard:edit:self",
@@ -128,6 +140,7 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Action>> = {
     "process:read",
     "engineering:submit",
     "water:proposal",
+    "emergency:handle",
     "workorder:create",
     "dashboard:edit:self",
     "ai:ask",

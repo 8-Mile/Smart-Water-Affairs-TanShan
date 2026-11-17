@@ -170,6 +170,13 @@ const canCloseWithReview = computed(() => can(store.role, "alarm:close"));
 const closureEvidenceRef = ref("");
 const closureNote = ref("");
 const closureError = ref("");
+const recovery = reactive({
+ metric:"",before:"",after:"",unit:"",status:"unresolved" as "reported-recovered"|"unresolved",
+});
+const recoveryLabels=[
+ {label:"现场复核后确认异常解除",value:"reported-recovered"},
+ {label:"仍异常或证据不足（禁止关闭）",value:"unresolved"},
+];
 const closureBlocked = computed(() => {
   const alarm = selectedAlarm.value;
   if (!alarm || alarm.status !== "acknowledged") return "先由值班人员确认告警。";
@@ -262,6 +269,7 @@ function confirmClosure(): void {
     store.closeAlarmWithReview(alarm.id, {
       evidenceRef: closureEvidenceRef.value,
       note: closureNote.value,
+      recovery:{...recovery},
     });
     closureEvidenceRef.value = "";
     closureNote.value = "";
@@ -275,6 +283,7 @@ watch(selectedAlarmId, () => {
   closureEvidenceRef.value = "";
   closureNote.value = "";
   closureError.value = "";
+  Object.assign(recovery,{metric:"",before:"",after:"",unit:"",status:"unresolved"});
 });
 
 function acknowledge(): void {
@@ -648,13 +657,32 @@ function onPriorityChange(value: string): void {
             <p class="closure-note">工单已归档不代表告警已解除。必须另行核查原始原因与复测依据，以下记录仅为本地演示审核，不表示真实SCADA自动恢复。</p>
             <p v-if="closureBlocked" class="closure-blocked">{{ closureBlocked }}</p>
             <template v-else>
-              <NInput v-model:value="closureEvidenceRef" size="small" placeholder="现场复测或核查依据编号（人工录入，必填）"/>
-              <NInput v-model:value="closureNote" type="textarea" :rows="2" placeholder="人工核查情况与关闭理由（必填，不得仅凭工单归档）"/>
+              <p class="closure-note">按人工录入的同一指标对比处理前后情况。这里不会自动判断测点恢复，必须由有权限的复核人员确认。</p>
+              <NInput v-model:value="recovery.metric" size="small" placeholder="复核指标（如出口压力 / 振动）"/>
+              <div class="recovery-fields">
+                <NInput v-model:value="recovery.before" size="small" placeholder="处理前记录值"/>
+                <NInput v-model:value="recovery.after" size="small" placeholder="处理后复测值"/>
+                <NInput v-model:value="recovery.unit" size="small" placeholder="单位（如 MPa）"/>
+              </div>
+              <NSelect v-model:value="recovery.status" size="small" :options="recoveryLabels"/>
+              <NInput v-model:value="closureEvidenceRef" size="small" placeholder="复测记录编号 / 附件引用（必填）"/>
+              <NInput v-model:value="closureNote" type="textarea" :rows="2" placeholder="复核人员判断和依据说明（必填）"/>
               <p v-if="closureError" role="alert" class="error-text">{{ closureError }}</p>
-              <NButton type="primary" size="small" @click="confirmClosure">确认人工核查并关闭模拟告警</NButton>
+              <NButton type="primary" size="small"
+                :disabled="recovery.status!=='reported-recovered'"
+                @click="confirmClosure">确认人工核查并关闭模拟告警</NButton>
             </template>
           </section>
 
+          <section v-if="selectedAlarm.recoveryReview" class="manual-closure">
+            <h3 class="section-title">已记录的恢复复核（人工录入）</h3>
+            <p>{{selectedAlarm.recoveryReview.metric}}：
+              {{selectedAlarm.recoveryReview.before}} → {{selectedAlarm.recoveryReview.after}}
+              {{selectedAlarm.recoveryReview.unit}}</p>
+            <p>依据：{{selectedAlarm.recoveryReview.evidenceRef}} · {{selectedAlarm.recoveryReview.note}}</p>
+            <p>复核角色：{{roleNames[selectedAlarm.recoveryReview.reviewer]}} ·
+              {{formatDateTime(selectedAlarm.recoveryReview.recordedAt)}} · USER_ENTRY</p>
+          </section>
           <h3 class="section-title">时间线（设备履历派生）</h3>
           <div v-if="alarmTimeline.length" class="timeline-list">
             <div v-for="event in alarmTimeline" :key="event.id" class="timeline-item">
@@ -704,6 +732,9 @@ function onPriorityChange(value: string): void {
 </template>
 
 <style scoped>
+.recovery-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+@media(max-width:530px){.recovery-fields{grid-template-columns:1fr}}
+
 .manual-closure{display:grid;gap:10px;background:#f7fbfd;border:1px solid #cde3ed;padding:12px;border-radius:8px;margin:14px 0}
 .manual-closure .section-title{margin:0}
 .closure-note{font-size:12px;color:#778f9f;line-height:1.65;margin:0}

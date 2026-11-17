@@ -27,6 +27,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: "综合总览", permission: read },
   },
   {
+    path: "/operations/role-workspace",
+    name: "role-workspace",
+    component: () => import("./views/RoleWorkspaceView.vue"),
+    meta: {title:"岗位工作台",permission:read,hideGlobalHeading:true},
+  },
+  {
+    path: "/operations/emergency",
+    name: "emergency",
+    component: () => import("./views/EmergencyView.vue"),
+    meta: {title:"应急协同",permission:read,hideGlobalHeading:true},
+  },
+  {
     path: "/operations/events",
     name: "event-center",
     component: () => import("./views/EventCenterView.vue"),

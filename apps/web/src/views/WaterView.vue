@@ -1,21 +1,59 @@
 <script setup lang="ts">
 import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { rainStorage } from "../demo/water";
-import { computed, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import { NButton, NDataTable, NSelect, NTag } from "naive-ui";
+import { NButton, NDataTable, NInput, NSelect, NTag, useMessage } from "naive-ui";
 import type { DataTableColumns } from "naive-ui";
 import Chart from "../Chart.vue";
 import { useDemoStore } from "../demo/store";
 import { summarizeLedger, toCsv } from "../demo/water";
 import { classifyWaterAccounting, waterAccountingSnapshot } from "../demo/waterAccounting";
 import type { LedgerEntry } from "../demo/types";
+import {can} from "../demo/permissions";
+import {submitWaterTrace,reviewWaterTrace,readWaterTraces,type WaterTraceRecord} from "../demo/waterTrace";
 
 type WaterMode = "overview" | "ledger" | "rainfall";
 
 const route = useRoute();
 const router = useRouter();
 const store = useDemoStore();
+const message=useMessage();
+const selectedEntryId=ref(typeof route.query.entryId==="string"?route.query.entryId:"");
+const traceRows=ref<WaterTraceRecord[]>(readWaterTraces(localStorage,store.scenarioId));
+const selectedEntry=computed(()=>ledgerEntries.value.find(x=>x.id===selectedEntryId.value)??null);
+const selectedTrace=computed(()=>traceRows.value.find(x=>x.entryId===selectedEntryId.value));
+const canRegister=computed(()=>can(store.role,"engineering:submit"));
+const canReview=computed(()=>can(store.role,"engineering:review"));
+const traceInput=reactive({pointLabel:"",destination:"",evidenceRef:"",note:"",reviewNote:""});
+function refreshTraces(){traceRows.value=readWaterTraces(localStorage,store.scenarioId);}
+function chooseLedger(entry:LedgerEntry){
+ selectedEntryId.value=entry.id;
+ const query={...route.query,entryId:entry.id};
+ void router.replace({path:route.path,query});
+}
+function submitTrace(){
+ const item=selectedEntry.value;if(!item)return;
+ try{
+  submitWaterTrace(localStorage,{
+   scenarioId:store.scenarioId,entryId:item.id,actor:store.role,now:new Date().toISOString(),...traceInput,
+  });
+  refreshTraces();message.success("映射登记已提交待审（用户录入），未标记现场核实");
+ }catch(e){message.error((e as Error).message);}
+}
+function reviewTrace(approved:boolean){
+ const item=selectedTrace.value;if(!item)return;
+ try{
+  reviewWaterTrace(localStorage,item.id,store.role,approved,traceInput.reviewNote,new Date().toISOString());
+  refreshTraces();traceInput.reviewNote="";
+  message.success("已记录内部审核；未自动确认物理管线连通");
+ }catch(e){message.error((e as Error).message);}
+}
+watch(()=>store.scenarioId,refreshTraces);
+watch(()=>route.query.entryId,(id)=>{selectedEntryId.value=typeof id==="string"?id:"";});
+const traceLabel=(entry:LedgerEntry)=>classifyWaterAccounting(entry);
+const rowProps=(row:LedgerTableRow)=>({onClick:()=>chooseLedger(row),style:"cursor:pointer"});
+
 
 const mode = computed<WaterMode>(() => {
   if (route.path === "/water/ledger") return "ledger";
@@ -68,6 +106,15 @@ const circulationVolume = computed(() => accounting.value.circulatingM3);
 /* ------------------------------ 账本 ------------------------------ */
 
 const sourceFilter = ref("all");
+watch(()=>route.query.source,value=>{
+ sourceFilter.value=typeof value==="string"&&value.trim()?value:"all";
+},{immediate:true});
+function changeLedgerSource(value:string){
+ sourceFilter.value=value;
+ const query={...route.query};if(value==="all")delete query.source;else query.source=value;
+ delete query.entryId;selectedEntryId.value="";
+ void router.replace({path:route.path,query});
+}
 const directionFilter = ref("all");
 const periodFrom = ref("all");
 const periodTo = ref("all");
@@ -76,7 +123,7 @@ const sourceOptions = computed(() => {
   const types = [...new Set(ledgerEntries.value.map((entry) => entry.sourceType))];
   return [
     { label: "全部来源", value: "all" },
-    ...types.map((type) => ({ label: type, value: type })),
+    ...[...new Set([...types,"循环水"])].map((type) => ({ label: type, value: type })),
   ];
 });
 
@@ -271,26 +318,26 @@ function goAiWorkspace(): void {
     <!-- 水资源总览 -->
     <template v-if="mode === 'overview'">
       <div class="stat-grid">
-        <div class="stat-card storage">
+        <RouterLink class="stat-card storage water-drill" to="/water/ledger?source=自来水&returnTo=/water/overview">
           <span>自来水补水量</span>
           <strong>{{ formatVolume(tapIn) }}<small>m³</small></strong>
-          <small class="stat-hint">自然月账本进项 · 非实时仪表</small>
-        </div>
-        <div class="stat-card rain">
+          <small class="stat-hint">自然月账本进项 · 点击核查明细</small>
+        </RouterLink>
+        <RouterLink class="stat-card rain water-drill" to="/water/ledger?source=中水&returnTo=/water/overview">
           <span>中水实际外供量</span>
           <strong>{{ formatVolume(reuseOut) }}<small>m³</small></strong>
-          <small class="stat-hint">MOCK 回用水外供 · 不代表新增取水</small>
-        </div>
-        <div class="stat-card reuse">
+          <small class="stat-hint">MOCK 外供 · 点击核查 · 不代表末端消耗</small>
+        </RouterLink>
+        <RouterLink class="stat-card reuse water-drill" to="/water/ledger?source=循环水&returnTo=/water/overview">
           <span>循环水循环量</span>
           <strong>{{ formatVolume(circulationVolume) }}<small>m³</small></strong>
-          <small class="stat-hint">缺少洗车台及其他循环回路计量 · 不以雨水进项代替</small>
-        </div>
-        <div class="stat-card supply">
+          <small class="stat-hint">缺少洗车台及其他循环回路计量 · 点击核查缺数环节</small>
+        </RouterLink>
+        <RouterLink class="stat-card supply water-drill" to="/water/ledger?source=雨水&returnTo=/water/overview">
           <span>雨水收集量（循环利用子项）</span>
           <strong>{{ formatVolume(rainIn) }}<small>m³</small></strong>
-          <small class="stat-hint">仅雨水入池 · 不代表已回用或循环水流量</small>
-        </div>
+          <small class="stat-hint">仅雨水入池 · 点击核查来源和环节</small>
+        </RouterLink>
       </div>
 
       <section class="panel">
@@ -517,7 +564,7 @@ function goAiWorkspace(): void {
             style="width: 150px"
             :value="sourceFilter"
             :options="sourceOptions"
-            @update:value="(value: string) => (sourceFilter = value)"
+            @update:value="changeLedgerSource"
           />
           <NSelect
             size="small"
@@ -552,11 +599,47 @@ function goAiWorkspace(): void {
           :pagination="false"
           :scroll-x="1200"
           :bordered="false"
+          :row-props="rowProps"
         />
         <p v-if="!ledgerRows.length" class="empty">
           当前筛选条件下没有账本记录，请调整来源类型、方向或时间范围。
         </p>
 
+        <section v-if="selectedEntry" class="ledger-trace">
+          <h3>选中水量记录 · {{selectedEntry.id}}</h3>
+          <p>当前仅列示固定种子账本，所有现场管网和末端关系需人工确认。点击表格其他行可切换。</p>
+          <dl class="trace-facts">
+           <div><dt>来源 / 时间</dt><dd>{{selectedEntry.sourceType}} · {{selectedEntry.period}} · {{selectedEntry.source}}</dd></div>
+           <div><dt>环节与口径</dt><dd>{{traceLabel(selectedEntry).stage}} / {{traceLabel(selectedEntry).category}}</dd></div>
+           <div><dt>方向与水量</dt><dd>{{selectedEntry.direction==='in'?'入账':'出账'}} {{formatVolume(selectedEntry.volume)}} {{selectedEntry.unit}}</dd></div>
+           <div><dt>原始口径说明</dt><dd>{{selectedEntry.note}}</dd></div>
+           <div><dt>计量点</dt><dd>{{selectedTrace?.pointLabel??'未登记真实点位（缺数）'}}</dd></div>
+           <div><dt>回路/实际用途</dt><dd>{{selectedTrace?.destination??'尚未核实实际用水终端或回路（缺数）'}}</dd></div>
+          </dl>
+          <div v-if="selectedTrace" class="trace-submitted">
+            <NTag size="small" :type="selectedTrace.status==='reviewed'?'success':'warning'">{{selectedTrace.status==='reviewed'?'内部资料已审核（非现场验收）':selectedTrace.status==='rejected'?'审核不通过':'待内部资料审核'}}</NTag>
+            <p>人工依据：{{selectedTrace.evidenceRef}} · {{selectedTrace.note}}</p>
+            <p v-if="selectedTrace.reviewNote">复核说明：{{selectedTrace.reviewNote}}（仍需现场核实管线与计量）</p>
+          </div>
+          <div v-if="canRegister&&selectedTrace?.status!=='reviewed'" class="trace-form">
+            <h4>登记计量点与去向（USER_ENTRY / 待审核）</h4>
+            <NInput v-model:value="traceInput.pointLabel" size="small" placeholder="计量点编号/名称（需真实依据）"/>
+            <NInput v-model:value="traceInput.destination" size="small" placeholder="终端/处理环节名称（未核实不得写已接通）"/>
+            <NInput v-model:value="traceInput.evidenceRef" size="small" placeholder="图纸或测点资料编号"/>
+            <NInput v-model:value="traceInput.note" size="small" placeholder="人工记录说明及待核条件"/>
+            <NButton size="small" type="primary" @click="submitTrace">提交计量映射待审</NButton>
+          </div>
+          <div v-if="canReview&&selectedTrace?.status==='pending'" class="trace-form">
+            <NInput v-model:value="traceInput.reviewNote" type="textarea" :rows="2" placeholder="内部资料复核说明（不等于现场验证）"/>
+            <NButton size="small" type="primary" @click="reviewTrace(true)">审核资料引用</NButton>
+            <NButton size="small" @click="reviewTrace(false)">退回核查</NButton>
+          </div>
+          <RouterLink :to="{path:'/engineering/registry',query:{focus:'topology',returnTo:route.fullPath}}">查看水路工程核查底账 →</RouterLink>
+        </section>
+        <p v-else-if="sourceFilter==='循环水'" class="ledger-trace">
+          当前没有独立循环回路的流经量计量记录。不能用雨水入池量、中水外供量或处理量替代循环水循环量；
+          应补齐洗车回路等计量点及实际用途后再统计。
+        </p>
         <div class="note-box">{{ filteredSummary.note }}</div>
       </section>
 
@@ -758,6 +841,17 @@ function goAiWorkspace(): void {
 </template>
 
 <style scoped>
+.water-drill{color:inherit;text-decoration:none;cursor:pointer}
+.water-drill:hover{outline:2px solid #92c9e3;outline-offset:2px}
+.ledger-trace{padding:14px;border:1px solid #d7e7f1;border-radius:8px;background:#f7fcff;display:grid;gap:10px;color:#3a637b;font-size:12px}
+.ledger-trace h3{margin:0;font-size:15px}.ledger-trace p{margin:0;line-height:1.6}
+.trace-facts{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.trace-facts>div{padding:9px;background:white;border:1px solid #e3eef4;border-radius:7px;display:grid;gap:4px}
+.trace-facts dt{font-size:11px;color:#8097a7}.trace-facts dd{margin:0;overflow-wrap:anywhere}
+.trace-form{display:grid;gap:8px;border-top:1px solid #d7e7f1;padding-top:10px}
+.trace-form h4{margin:0}
+@media(max-width:650px){.trace-facts{grid-template-columns:1fr}}
+
 .water-page {
   display: flex;
   flex-direction: column;

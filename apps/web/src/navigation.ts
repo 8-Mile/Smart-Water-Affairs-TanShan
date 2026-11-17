@@ -32,8 +32,10 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     id: "running", label: "运行中心", permission: read,
     children: [
+      {label:"岗位工作台",to:"/operations/role-workspace",permission:read},
       { label: "值守与事件中心", to: "/operations/events", permission: read,
         aliases: ["/operations/alarms", "/intelligent/unattended", "/intelligent/correlation"] },
+      {label:"应急协同",to:"/operations/emergency",permission:read},
     ],
   },
   { id: "process", label: "工艺监控", permission: read, children: SUBSYSTEM_NAV },
@@ -89,6 +91,8 @@ export function navChildForPath(path: string): NavChild | undefined {
 const TITLES: Record<string, string> = {
   "/archives": "档案管理",
   "/overview": "综合总览",
+  "/operations/role-workspace":"岗位工作台",
+  "/operations/emergency":"应急协同",
   "/operations/events": "值守与事件中心",
   "/intelligent/unattended": "集中值守中心",
   "/intelligent/correlation": "跨系统关联处置",

@@ -529,7 +529,10 @@ export const useDemoStore = defineStore("demo", () => {
    */
   function closeAlarmWithReview(
     id: string,
-    payload: { evidenceRef: string; note: string },
+    payload: { evidenceRef: string; note: string; recovery?: {
+      metric:string;before:string;after:string;unit:string;
+      status:"reported-recovered"|"unresolved";
+    } },
   ): UserState {
     assertCan(role.value, "alarm:close");
     const alarm = alarms.value.find((item) => item.id === id);
@@ -545,16 +548,36 @@ export const useDemoStore = defineStore("demo", () => {
     if (evidenceRef.length > 160 || note.length > 800) {
       throw new Error("核查编号或说明过长，请整理为简明的有效引用与情况描述。");
     }
+    if (payload.recovery) {
+      const r=payload.recovery;
+      if (!r.metric.trim() || !r.before.trim() || !r.after.trim() || !r.unit.trim()) {
+        throw new Error("必须填写复核指标、处理前后复测值和单位。");
+      }
+      if ([r.metric,r.before,r.after,r.unit].some(x=>x.length>100)) {
+        throw new Error("复测字段过长，请使用可追溯的简短记录。");
+      }
+      if (r.status!=="reported-recovered")throw new Error("仍存在异常或尚未恢复，不允许关闭告警。");
+    }
     if (alarm.workOrderId) {
       const related = workorders.value.find((item) => item.id === alarm.workOrderId);
       if (!related) throw new Error("原关联工单不存在，不允许绕过失效引用关闭告警。");
       if (related.assetId !== alarm.assetId) throw new Error("原工单关联的设备不一致，禁止关闭。");
       if (related.status !== "archived") throw new Error("原关联工单未验收归档，不能关闭告警。");
     }
+    if (!payload.recovery) {
+      throw new Error("必须提供同一指标的处理前后复测值、单位和人工恢复结论，不能仅凭工单归档关闭。");
+    }
     const next = clone(userState.value);
     next.alarms = [
       ...next.alarms.filter((item) => item.id !== id),
-      { ...alarm, status: "closed" as const },
+      { ...alarm, status: "closed" as const,
+        ...(payload.recovery?{recoveryReview:{
+          evidenceRef,note,metric:payload.recovery.metric.trim(),before:payload.recovery.before.trim(),
+          after:payload.recovery.after.trim(),unit:payload.recovery.unit.trim(),
+          recordedAt:new Date().toISOString(),source:"USER_ENTRY" as const,
+          status:"reported-recovered" as const,reviewer:role.value,
+        }}:{}),
+      },
     ];
     pushAudit(
       next, role.value, "alarm:close", "alarm", id,

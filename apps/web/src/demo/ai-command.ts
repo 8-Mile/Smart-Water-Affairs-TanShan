@@ -85,6 +85,12 @@ export function planCommand(parsed: ParsedIntent, input: CommandInputs): AiComma
     command.execution.tool = "spray.local";
     return command;
   }
+  if (parsed.kind === "compose_ui" && /(水资源|自来水|中水|循环水|回用水|雨水)/.test(text)) {
+    command.intent="report";
+    command.execution.tool="navigation.open";
+    command.navigation={name:"ai-workspace",query:{mode:"water",prompt:text,returnTo:context.returnTo}};
+    return command;
+  }
   if (parsed.kind === "compose_ui" && parsed.subsystemId === "spray") {
     command.intent = "report";
     command.execution.tool = "navigation.open";

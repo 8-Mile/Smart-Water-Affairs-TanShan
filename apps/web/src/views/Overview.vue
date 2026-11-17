@@ -260,13 +260,14 @@ function elapsed(at: string) {
             <span>绿色调度 · 节能运行</span>
           </div>
           <div class="green-port-metrics">
-            <div v-for="m in greenMetrics" :key="m.key" class="green-metric">
+            <RouterLink v-for="m in greenMetrics" :key="m.key" class="green-metric"
+              :to="{path:'/water/ledger',query:{source:m.key==='tap'?'自来水':m.key==='reclaimed'?'中水':'雨水',returnTo:'/overview'}}">
               <Icon :name="m.icon" />
               <span>{{ m.label }}</span>
               <strong>{{ fmt(m.value, 0) }}<small>m³</small></strong>
               <em v-if="m.share !== undefined">占比 {{ m.share.toFixed(1) }}%</em>
               <em v-else>今日累计</em>
-            </div>
+            </RouterLink>
           </div>
           <p class="green-source">MOCK源端样例 · 自来水 / 中水 / 循环利用中的雨水子项；未包含洗车及其他循环水，不代表循环水总量 · 今日样例总量 {{ fmt(today.consumed) }} m³</p>
         </section>
@@ -293,7 +294,9 @@ function elapsed(at: string) {
         </RouterLink></div>
       </section>
       <section class="glass panel-box work-panel">
-        <header><h2><Icon name="clipboard" />协同处置进展</h2><RouterLink to="/operations/events?focus=tasks">岗位待办 <span>›</span></RouterLink></header>
+        <header><h2><Icon name="clipboard" />协同处置进展</h2>
+          <div class="role-header-links"><RouterLink to="/operations/events?focus=tasks">岗位待办 <span>›</span></RouterLink>
+            <RouterLink to="/operations/role-workspace">我的工作台 <span>›</span></RouterLink></div></header>
         <div class="summary-list"><RouterLink v-for="row in counts" :key="row.title" :to="row.to" class="work-row"><span class="work-icon"><Icon :name="row.icon" /></span><b>{{ row.title }}</b><strong>{{ row.value }} <small>项</small></strong><span class="work-note">（{{ row.note }}）</span></RouterLink></div>
       </section>
     </div>

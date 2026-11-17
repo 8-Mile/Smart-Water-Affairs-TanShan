@@ -520,3 +520,11 @@ p {
   }
   .panorama-shell .overview-topbar .overview-user {grid-column:5;grid-row:2;min-width:0;justify-content:center;}
 }
+
+/* V4.3 Green KPI water ledger drilldown */
+.green-port-metrics a{color:inherit;text-decoration:none}
+.green-port-metrics a:hover{outline:1px solid #8ac8dd;outline-offset:2px;border-radius:4px}
+
+/* V4.3 Keep the original pending-task shortcut next to the role-workspace entry. */
+.role-header-links{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.role-header-links a{font-size:11px;white-space:nowrap}
