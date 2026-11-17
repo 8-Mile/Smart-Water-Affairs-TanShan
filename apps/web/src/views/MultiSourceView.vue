@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import WorkspaceNav from "../components/WorkspaceNav.vue";
+import {notifyDemoEvidenceUpdated} from "../demo/demoTour";
 import {RouterLink} from "vue-router";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -90,6 +91,7 @@ function save():void{
     const created = saveSupplyDraft(applied.value, result.value, store.role, localStorage);
     drafts.value = readDrafts<SupplyDraft>(MULTI_SOURCE_DRAFT_KEY, localStorage);
     showDrafts.value=true;
+    notifyDemoEvidenceUpdated();
     message.success("已保存待人工审核草稿 "+created.id+"；没有下发设备控制");
   } catch(err) { message.error((err as Error).message); }
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PortBusinessJourney from "../components/PortBusinessJourney.vue";
+import {notifyDemoEvidenceUpdated} from "../demo/demoTour";
 import {computed,reactive,ref,watch} from "vue";
 import {useRoute} from "vue-router";
 import {NButton,NInputNumber,NSelect,NTag,useMessage} from "naive-ui";
@@ -114,6 +115,7 @@ function saveRun(){
   };
   localStorage.setItem(reportKey,JSON.stringify(record));
   latest.value=record.id;
+    notifyDemoEvidenceUpdated();
   message.success("已保存MOCK分析快照，仅用于项目评审或演示，不代替工单/控制指令");
  }catch(e){message.error("浏览器本地存储失败："+(e as Error).message);}
 }

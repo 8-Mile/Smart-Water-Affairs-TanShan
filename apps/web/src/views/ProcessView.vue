@@ -79,6 +79,12 @@ const alarms = computed(() =>
 const activeAlarms = computed(() =>
   alarms.value.filter((alarm) => alarm.status === "active"),
 );
+// A focus cue tied to existing records, only in the pump-fault MOCK scene.
+const focusedFaultAsset = computed(() =>
+ subsystemId.value==="medium-pressure"&&store.scenarioId==="SCN-PUMP-FAULT"
+  ?assets.value.find(a=>a.id==="asset-p002"):undefined);
+const focusedFaultAlarm = computed(() => alarms.value.find(a=>a.id==="ALM-P002-01"));
+const focusedFaultOrder = computed(() => store.workorders.find(o=>o.id==="wo-2026-014"));
 const sortedAlarms = computed(() =>
   [...alarms.value].sort(
     (a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt),
@@ -356,6 +362,21 @@ function alarmType(level: string): "error" | "warning" | "info" {
         </div>
       </header>
 
+      <section v-if="focusedFaultAsset" class="pump-fault-spotlight"
+        aria-label="当前模拟故障工艺聚焦">
+        <div class="fault-spotlight-marker">MOCK 模拟故障聚焦</div>
+        <div class="fault-spotlight-body">
+          <strong>{{ focusedFaultAsset.code }} · {{ focusedFaultAsset.name }}</strong>
+          <span>设备状态：{{ STATUS_LABELS[focusedFaultAsset.status] }} ·
+            原告警：{{ focusedFaultAlarm?ALARM_STATUS_LABELS[focusedFaultAlarm.status]:'无记录' }} ·
+            原工单：{{ focusedFaultOrder?WORKORDER_STATUS_LABELS[focusedFaultOrder.status]:'无记录' }}</span>
+        </div>
+        <div class="fault-spotlight-links">
+          <RouterLink to="/operations/asset-workspace?assetId=asset-p002&tab=events">定位设备与告警</RouterLink>
+          <RouterLink to="/operations/workorders?workOrderId=wo-2026-014">查看原维修工单</RouterLink>
+        </div>
+      </section>
+
       <section class="process-engineering-link" aria-label="工程依据与现场条件">
         <div class="engineering-summary">
           <strong>工程证据 · 待核查</strong>
@@ -491,7 +512,7 @@ function alarmType(level: string): "error" | "warning" | "info" {
             </div>
             <ul v-if="assets.length" class="asset-status-list">
               <li v-for="asset in assets" :key="asset.id">
-                <button type="button" class="asset-status-item" @click="openAsset(asset.id)">
+                <button type="button" class="asset-status-item" :class="{'fault-row':asset.status==='fault'}" @click="openAsset(asset.id)">
                   <span class="status-dot" :class="asset.status"></span>
                   <span class="asset-status-main">
                     <strong>{{ asset.name }}</strong>
@@ -839,6 +860,23 @@ function alarmType(level: string): "error" | "warning" | "info" {
 </template>
 
 <style scoped>
+.pump-fault-spotlight{display:flex;gap:13px;align-items:center;flex-wrap:wrap;
+ padding:10px 13px;border:1px solid #ecd0a8;border-left:3px solid #d99649;
+ background:linear-gradient(100deg,#fff6ea,#fcfdff 65%);border-radius:9px}
+.fault-spotlight-marker{flex:none;font-size:10px;font-weight:800;
+ color:#966128;background:#fff0d8;border:1px solid #f1d4a9;
+ border-radius:5px;padding:6px 8px}
+.fault-spotlight-body{flex:1;min-width:170px;display:grid;gap:4px}
+.fault-spotlight-body strong{font-size:13px;color:#6a543f}
+.fault-spotlight-body span{font-size:11px;color:#927961;line-height:1.5}
+.fault-spotlight-links{display:flex;gap:7px;flex-wrap:wrap}
+.fault-spotlight-links a{border:1px solid #e6c799;border-radius:6px;background:#fff;
+ color:#8d6136;font-size:11px;padding:7px 9px;text-decoration:none}
+.fault-spotlight-links a:hover{background:#fff1dc}
+.asset-status-item.fault-row{border-left:3px solid #d59c56;background:#fff9f1}
+@media(max-width:720px){.pump-fault-spotlight{gap:8px}
+ .fault-spotlight-links{width:100%}.fault-spotlight-links a{flex:1;text-align:center}}
+
 .process-engineering-link{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid #e4d8be;background:linear-gradient(100deg,#fffcf5,#f7fbfd);padding:10px 13px;border-radius:9px}
 .engineering-summary{display:grid;gap:5px;min-width:230px;flex:1}.engineering-summary strong{font-size:11px;color:#9c7748}.engineering-summary span{font-size:11px;color:#8b9ba8;line-height:1.7}
 .engineering-shortcuts{display:flex;align-items:center;flex-wrap:wrap;gap:7px}

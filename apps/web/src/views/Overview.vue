@@ -11,6 +11,7 @@ import type { SceneHotspot } from "../demo/diagram";
 import { isPumpAsset, scorePumpHealth } from "../demo/health";
 import { ENGINEERING_CHECKS,readEngineeringReviews } from "../demo/engineering";
 import {topologySummary} from "../demo/engineeringTopology";
+import {workOrderStatusLabels} from "../demo/workorderMeta";
 
 const store = useDemoStore();
 const ui = useUiStore();
@@ -33,6 +34,17 @@ const fmt = (n: number | null | undefined, digits = 1) => n == null ? "缺测" :
 const positions: Record<string, [number, number]> = { spray: [315, 151], "medium-pressure": [603, 194], mining: [885, 146], rainwater: [231, 278], pool: [608, 313], domestic: [918, 267] };
 const icons: Record<string, string> = { spray: "spray", "medium-pressure": "tap", mining: "flask", rainwater: "rain", pool: "tank", domestic: "water" };
 const alarms = computed(() => store.alarms.filter(a => a.status === "active"));
+const focusedPump = computed(() => store.scenarioId==="SCN-PUMP-FAULT"
+  ?store.getAsset("asset-p002"):null);
+const focusedAlarm = computed(() => store.alarms.find(a=>a.id==="ALM-P002-01"));
+const focusedOrder = computed(() => store.workorders.find(o=>o.id==="wo-2026-014"));
+const focusedAlarmLabel = computed(() => {
+ const value=focusedAlarm.value?.status;
+ if(value==="active")return "待人工确认";
+ if(value==="acknowledged")return "已确认待复核";
+ if(value==="closed")return "人工已关闭";
+ return "未发现关联告警";
+});
 const systems = computed(() => store.subsystems.map(item => {
   const devices = store.assets.filter(a => a.subsystemId === item.id && !a.archived);
   const warning = devices.some(a => a.status === "fault") || alarms.value.some(a => a.subsystemId === item.id && a.level === "critical");
@@ -210,9 +222,25 @@ function elapsed(at: string) {
           
           <RouterLink to="/engineering/registry?focus=topology" class="map-evidence-link" @click.stop>水路关系 {{ engineeringTopology.fieldVerified }}/{{ engineeringTopology.total }} 现场已确认 · 查看核查</RouterLink>
           <span class="map-evidence-flag">六工艺位置示意 · 连通关系待图纸核查</span>
+          <div v-if="focusedPump" class="fault-focus" aria-label="中压泵模拟故障聚焦">
+            <div class="fault-focus-heading">
+              <small>MOCK 异常聚焦 · 不代表现场故障</small>
+              <strong>{{ focusedPump.code }} · {{ focusedPump.name }}</strong>
+            </div>
+            <div class="fault-focus-status">
+              <span>告警：{{ focusedAlarmLabel }}</span>
+              <span>工单：{{ focusedOrder?workOrderStatusLabels[focusedOrder.status]:'无关联记录' }}</span>
+            </div>
+            <nav aria-label="模拟故障核查入口">
+              <RouterLink to="/process/medium-pressure">工艺</RouterLink>
+              <RouterLink to="/operations/asset-workspace?assetId=asset-p002&tab=events">设备核查</RouterLink>
+              <RouterLink to="/operations/workorders?workOrderId=wo-2026-014">原工单</RouterLink>
+            </nav>
+          </div>
           <span class="berth first">51号泊位</span><span class="berth second">52号泊位</span>
           <button v-for="s in systems" :key="s.id" type="button" class="hotspot" :data-system="s.id"
             :title="s.id === 'domestic' ? '生活污水关联管理示意，现场建设范围待核实' : s.name+'工艺示意'"
+            :class="{'hotspot-risk':s.warning}"
             :aria-label="'查看'+s.name+'系统基础信息'"
             :style="{left:'clamp(80px, '+(s.position[0]/1048*100)+'%, calc(100% - 80px))',top:(s.position[1]/379*100)+'%'}"
             @click="openSystem(s.id, $event)">
@@ -313,6 +341,21 @@ function elapsed(at: string) {
 </template>
 
 <style scoped>
+.fault-focus{position:absolute;z-index:5;top:3px;left:11px;width:min(238px,calc(100% - 24px));
+  padding:4px 9px;border:1px solid #f1b671;border-radius:9px;
+  color:#fff;background:linear-gradient(120deg,#273f51ef,#1c5265ea);
+  box-shadow:0 7px 20px #001b3b4d;backdrop-filter:blur(9px);pointer-events:auto}
+.fault-focus-heading{display:grid;gap:1px;min-width:0}
+.fault-focus small{font-size:10px;line-height:14px;color:#ffddb4;letter-spacing:.02em}
+.fault-focus strong{font-size:12px;line-height:16px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fault-focus-status{display:flex;gap:5px;flex-wrap:nowrap;font-size:10px;color:#deebf1;
+  line-height:14px;margin:2px 0;white-space:nowrap}
+.fault-focus nav{display:flex;gap:5px;margin-top:3px}
+.fault-focus nav a{flex:1;text-align:center;padding:4px 3px;border:1px solid #94cce2a6;
+  border-radius:5px;color:#e9faff!important;background:#ffffff15;font-size:10px;line-height:13px;white-space:nowrap}
+.fault-focus nav a:hover{background:#ffffff35}
+.hotspot.hotspot-risk{border-color:#ffc66c;box-shadow:0 0 0 2px #ec9f4b70,0 0 15px #f7b14ca6,inset 0 0 12px #86d9e580}
+.hotspot.hotspot-risk:focus-visible{outline:3px solid #ffcc6a}
 .map-evidence-link{position:absolute;z-index:4;top:9px;right:11px;max-width:60%;font-size:11px;padding:7px 10px;background:#053b5ec9;border:1px solid #83c7e699;color:#eaf8ff!important;border-radius:7px;text-decoration:none;white-space:normal}
 .map-evidence-link:hover{background:#005b84e8}
 
@@ -387,6 +430,10 @@ h2,p { margin:0; } .panorama a { color:inherit; text-decoration:none; } .panoram
 }
 @media(max-width:960px) {.core-business{grid-template-columns:1fr}.core-card strong,.core-card small{white-space:normal}}
 @media(max-width:540px) {
+  .fault-focus{top:8px;left:7px;width:min(228px,calc(100% - 18px));padding:6px 8px}
+  .fault-focus-status{display:none}
+  .fault-focus nav{margin-top:4px}
+  .fault-focus strong{font-size:11px}
   .panorama { gap:10px; }.metrics { gap:8px; }.metric h2 { font-size:13px; }.metric-main { flex:1; }.metric-main strong { white-space:nowrap; }.metric-water .emblem { display:none; }
   .sparkline { width:60px; opacity:.4; }.metric-detail p { font-size:12px; }.metric-detail b { font-size:14px; }
   .map { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); aspect-ratio:auto; min-height:0; padding-top:51%; gap:8px; overflow:visible; }.map img { width:100%; height:auto; top:0; border-radius:12px; }.flow-layer { display:none; }.map:after { display:none; }

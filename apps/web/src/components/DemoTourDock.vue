@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed,ref,watch} from "vue";
+import {computed,onMounted,onUnmounted,ref,watch} from "vue";
 import {useRoute,useRouter} from "vue-router";
 import {NButton,useDialog,useMessage} from "naive-ui";
 import {can,roleNames} from "../demo/permissions";
@@ -7,7 +7,7 @@ import {readDrafts,MULTI_SOURCE_DRAFT_KEY,type SupplyDraft} from "../demo/propos
 import {readGreenDrafts,type GreenBenefitDraft} from "../demo/greenBenefit";
 import {useDemoStore} from "../demo/store";
 import {
- TOUR_DEFINITIONS,tourTarget,useDemoTour,type TourId,type TourStepKind,
+ TOUR_DEFINITIONS,tourTarget,useDemoTour,DEMO_EVIDENCE_UPDATED,type TourId,type TourStepKind,
 } from "../demo/demoTour";
 import type {Role} from "../demo/types";
 
@@ -21,6 +21,8 @@ const dialog=useDialog(),message=useMessage();
 const refreshTick=ref(0);
 function refresh(){refreshTick.value++;}
 watch(()=>route.fullPath,refresh);
+onMounted(()=>window.addEventListener(DEMO_EVIDENCE_UPDATED,refresh));
+onUnmounted(()=>window.removeEventListener(DEMO_EVIDENCE_UPDATED,refresh));
 const record=computed(()=>tour.record);
 const definition=computed(()=>tour.definition);
 const step=computed(()=>tour.step);
@@ -256,8 +258,14 @@ watch(()=>tour.launcherOpen,value=>{
      <button type="button" class="tour-stop" @click="stop">结束导览，保留本地业务操作结果</button>
     </div>
    </template>
-   <div v-else class="tour-minimized-text" @click="refresh();tour.minimized=false">
-    {{ step.name }} · 点击展开操作提示
+   <div v-else class="tour-mini-row">
+    <button type="button" class="tour-mini-detail" @click="refresh();tour.minimized=false">
+      <span>{{ step.name }}</span>
+      <small :class="{done:status.complete}">{{ status.complete?'业务结果已核验':'查看讲解与操作状态' }}</small>
+    </button>
+    <button v-if="status.complete&&record.step<definition.steps.length-1"
+      type="button" class="tour-mini-next" aria-label="当前步骤已完成，进入下一步"
+      @click="next">下一步 ›</button>
    </div>
   </aside>
  </Teleport>
@@ -306,7 +314,16 @@ watch(()=>tour.launcherOpen,value=>{
 .tour-exact-id{font-size:10px;color:#416f83;overflow-wrap:anywhere}
 .tour-buttons{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
 .tour-stop{font-size:10px;border:0;background:none;color:#8199a7;text-decoration:underline;cursor:pointer;justify-self:center;padding:6px}
-.tour-minimized-text{font-size:11px;padding:9px 13px;color:#48748d;cursor:pointer}
+.tour-mini-row{display:flex;align-items:stretch;min-width:0}
+.tour-mini-detail{flex:1;display:grid;gap:3px;text-align:left;min-width:0;
+  padding:9px 13px;background:transparent;border:0;cursor:pointer;color:#48748d}
+.tour-mini-detail span{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tour-mini-detail small{font-size:10px;color:#7895a7}
+.tour-mini-detail small.done{color:#24856e}
+.tour-mini-next{flex:none;border:0;border-left:1px solid #c4dfeb;background:#e8f7f3;
+  color:#247f72;font-size:11px;font-weight:750;padding:8px 10px;cursor:pointer}
+.tour-mini-next:hover{background:#d6f1e9}
+.tour-mini-next:focus-visible,.tour-mini-detail:focus-visible{outline:2px solid #247ba8;outline-offset:-2px}
 @media(max-width:700px){
  .tour-picker{padding:16px;gap:12px}
  .tour-options{grid-template-columns:1fr}

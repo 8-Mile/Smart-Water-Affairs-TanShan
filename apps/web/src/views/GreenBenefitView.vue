@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import WorkspaceNav from "../components/WorkspaceNav.vue";
+import {notifyDemoEvidenceUpdated} from "../demo/demoTour";
 import { computed, reactive, ref, watch } from "vue";
 import {useRoute} from "vue-router";
 import { NButton, NCheckbox, NInputNumber, NTag, useMessage } from "naive-ui";
@@ -99,6 +100,7 @@ function save():void{
     const draft=saveGreenBenefitDraft(applied.value,result.value,store.scenarioId,store.role,localStorage);
     drafts.value=readGreenDrafts(localStorage,store.scenarioId);
     showHistory.value=true;
+    notifyDemoEvidenceUpdated();
     message.success("已保存模拟效益核算草稿 "+draft.id+"；未宣称真实节约或下发控制");
   }catch(err){message.error((err as Error).message);}
 }

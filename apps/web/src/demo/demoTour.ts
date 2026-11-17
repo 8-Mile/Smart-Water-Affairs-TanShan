@@ -107,3 +107,10 @@ export const useDemoTour=defineStore("demo-tour",()=>{
  function stop(){record.value=null;save(null);minimized.value=false;}
  return {record,launcherOpen,minimized,definition,step,start,move,stop};
 });
+
+/** Notify the open presenter of a successful write in an existing business page.
+ * The event is a UI invalidation hint, not evidence or a business audit record. */
+export const DEMO_EVIDENCE_UPDATED = "tanggang-demo-evidence-updated";
+export function notifyDemoEvidenceUpdated():void{
+ if(typeof window!=="undefined")window.dispatchEvent(new Event(DEMO_EVIDENCE_UPDATED));
+}
