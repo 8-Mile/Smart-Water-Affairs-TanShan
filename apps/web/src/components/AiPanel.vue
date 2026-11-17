@@ -5,6 +5,7 @@ import { saveDispatchDraft, saveSupplyDraft } from "../demo/proposalDrafts";
 import { evaluateKnowledge, type KnowledgeResult } from "../demo/knowledge";
 import { buildHandoverReport, saveHandoverDraft, type HandoverReport } from "../demo/handover";
 import { useUnattendedStore } from "../demo/unattendedStore";
+import {answerWaterUsageQuery} from "../demo/waterQuery";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { NButton, NInput, NModal, NTag, useMessage } from "naive-ui";
@@ -1151,7 +1152,7 @@ function createSprayCheckDraft(): void {
 
 const suggestedWaterPage=computed(()=>{
   const prompt=parsed.value?.prompt??"";
-  if(!/(循环水|循环利用|水量账本|大机供水|大机用水|动态平衡|供需平衡)/.test(prompt))return null;
+  if(!/(循环水|循环利用|水量账本|大机供水|大机用水|动态平衡|供需平衡|中水|自来水|雨水|回用水|水资源)/.test(prompt))return null;
   if(/大机/.test(prompt))return {path:"/water/machine-supply",label:"各大机供水保障"};
   if(/动态平衡|供需平衡/.test(prompt))return {path:"/water/balance",label:"供需动态平衡"};
   return {path:"/water/overview",label:"水资源循环利用"};
@@ -1159,6 +1160,8 @@ const suggestedWaterPage=computed(()=>{
 const queryAnswer = computed(() => {
   const intent = parsed.value;
   if (!intent || intent.kind !== "query") return null;
+  const water=answerWaterUsageQuery(intent.prompt,store.seed.ledger);
+  if(water)return {title:water.title,lines:water.lines};
   if (intent.topic) return sprayAnswer(intent.topic);
   if (intent.targetAssetId) {
     const asset = store.getAsset(intent.targetAssetId);

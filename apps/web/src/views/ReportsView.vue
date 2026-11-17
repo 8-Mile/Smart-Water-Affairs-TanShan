@@ -307,6 +307,12 @@ const reports = computed<ReportDef[]>(() => [
 ]);
 
 const openIds = ref<string[]>([]);
+watch(()=>route.query.reportId,(value)=>{
+ if(typeof value!=="string"||!reports.value.some(x=>x.id===value))return;
+ if(!openIds.value.includes(value))openIds.value=[...openIds.value,value];
+ // 下钻优先显示目标报表，避免用户从水量账本跳转后还需寻找报表卡片。
+ void Promise.resolve().then(()=>document.getElementById("report-"+value)?.scrollIntoView({block:"start",behavior:"auto"}));
+},{immediate:true});
 
 function isOpen(id: string): boolean {
   return openIds.value.includes(id);
@@ -419,7 +425,8 @@ const missingIndicators = [
     </section>
 
     <div class="report-grid">
-      <section v-for="report in reports" :key="report.id" class="panel report-card">
+      <section v-for="report in reports" :id="'report-'+report.id" :key="report.id"
+        class="panel report-card" :class="{'report-highlight':route.query.reportId===report.id}">
         <div class="report-head">
           <div>
             <h2>{{ report.title }}</h2>
@@ -591,6 +598,7 @@ const missingIndicators = [
   gap: 16px;
   align-items: start;
 }
+.report-card.report-highlight{outline:2px solid #7bb8d3;outline-offset:2px;scroll-margin-top:20px}
 .report-card {
   display: flex;
   flex-direction: column;

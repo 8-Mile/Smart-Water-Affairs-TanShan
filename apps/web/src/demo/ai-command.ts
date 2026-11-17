@@ -73,6 +73,12 @@ export function planCommand(parsed: ParsedIntent, input: CommandInputs): AiComma
     if (parsed.errors.length) block(parsed.errors.map(e=>e.message).join("；"));
     return command;
   }
+  if (parsed.kind === "query" && /(中水|自来水|循环水|雨水|水资源|回用水)/.test(text)
+    && /(用了多少|使用了多少|用水量|用量|补水量|回用量|循环量|多少水|水量多少|今天|今日|本月|本周)/.test(text)) {
+    command.intent="query";
+    command.execution.tool="water.ledger.read";
+    return command;
+  }
   if (parsed.kind === "query" && parsed.topic) {
     // 射雾器查询由本地规则计算，保留在 AI 抽屉内展示，不做跳转。
     command.intent = "query";

@@ -1,17 +1,41 @@
 <script setup lang="ts">
-import {computed,reactive,ref} from "vue";
-import {RouterLink} from "vue-router";
+import {computed,reactive,ref,watch} from "vue";
+import {RouterLink,useRoute} from "vue-router";
+import {useDemoStore} from "../demo/store";
+import {readFlowDraft,saveFlowDraft} from "../demo/userJourney";
 import {NButton,NInputNumber,NTag} from "naive-ui";
-import {createMachineSupplyScenario,evaluateMachineSupply,type MachineScenarioId} from "../demo/machineSupply";
-
-const scenario=ref<MachineScenarioId>("single");
-const model=reactive(createMachineSupplyScenario());
+import {createMachineSupplyScenario,evaluateMachineSupply,type MachineScenarioId,type MachineSupplyInput} from "../demo/machineSupply";
+const route=useRoute();
+const store=useDemoStore();
+const flowKey=()=>"machine-supply:"+store.scenarioId;
+function validState(value:unknown):value is MachineSupplyInput{
+ try{
+  if(!value||typeof value!=="object"||!Array.isArray((value as MachineSupplyInput).terminals))return false;
+  const state=value as MachineSupplyInput;
+  if(state.terminals.length!==3||state.terminals.some(x=>typeof x.active!=="boolean"||typeof x.name!=="string"))return false;
+  evaluateMachineSupply(state);return true;
+ }catch{return false;}
+}
+const remembered=readFlowDraft(sessionStorage,flowKey(),validState);
+const scenario=ref<MachineScenarioId|"custom">(remembered?"custom":"single");
+const model=reactive<MachineSupplyInput>(remembered??createMachineSupplyScenario());
+const recovered=ref(Boolean(remembered));
+watch(model,()=>saveFlowDraft(sessionStorage,flowKey(),model),{deep:true});
+watch(()=>store.scenarioId,()=>{
+ const next=readFlowDraft(sessionStorage,flowKey(),validState);
+ Object.assign(model,next??createMachineSupplyScenario());
+ recovered.value=Boolean(next);
+ scenario.value=next?"custom":"single";
+});
 const assessment=computed(()=>{try{return evaluateMachineSupply(model);}catch{return null;}});
 const fmt=(value:number|undefined)=>value===undefined?"缺数":value.toLocaleString("zh-CN",{maximumFractionDigits:1});
 function setScenario(id:MachineScenarioId){
  scenario.value=id;
  Object.assign(model,createMachineSupplyScenario(id));
+  recovered.value=false;
 }
+function resetAnalysis(){setScenario("single");}
+function markCustom(){scenario.value="custom";recovered.value=false;}
 const scenarios:{id:MachineScenarioId;label:string}[]=[
  {id:"single",label:"单机作业"},{id:"parallel",label:"多机同时作业"},{id:"limited",label:"供水能力不足"},
 ];
@@ -30,6 +54,8 @@ const scenarios:{id:MachineScenarioId;label:string}[]=[
   <section class="machine-presets" aria-label="供水场景">
    <NButton v-for="item in scenarios" :key="item.id" :type="scenario===item.id?'primary':'default'"
      :secondary="scenario!==item.id" @click="setScenario(item.id)">{{item.label}}</NButton>
+   <NButton size="small" secondary @click="resetAnalysis">恢复默认条件</NButton>
+   <span v-if="scenario==='custom'||recovered" class="flow-saved">本标签页已保留模拟参数，返回后无需重新填写</span>
   </section>
   <section class="machine-kpis">
    <div><span>作业供水需求</span><strong>{{ fmt(assessment?.demandedM3h) }} <small>m³/h</small></strong></div>
@@ -43,12 +69,12 @@ const scenarios:{id:MachineScenarioId;label:string}[]=[
     <p class="sub">此处的大机编号、作业状态和需水定额均为演示样例，可切换验证并行作业造成的供水压力。</p>
     <div class="machine-record" v-for="t in model.terminals" :key="t.id">
      <div class="machine-name">
-      <label><input type="checkbox" v-model="t.active" /> <strong>{{t.name}}</strong></label>
+      <label><input type="checkbox" v-model="t.active" @change="markCustom" /> <strong>{{t.name}}</strong></label>
       <small>{{t.waterPurpose}} · 供水线路未核实</small>
      </div>
      <label class="rate">需水量（m³/h）
       <NInputNumber :value="t.demandM3h" :min="0" :max="100000" size="small" style="width:128px"
-        @update:value="value=>t.demandM3h=value??0" />
+        @update:value="value=>{t.demandM3h=value??0;markCustom()}" />
      </label>
      <div class="allocated">
       <strong>{{fmt(assessment?.terminals.find(x=>x.id===t.id)?.allocatedM3h)}}</strong>
@@ -60,10 +86,10 @@ const scenarios:{id:MachineScenarioId;label:string}[]=[
     <h3>供水能力条件（模拟）</h3>
     <div class="setting-row"><span>泵组模拟总供水能力（m³/h）</span>
       <NInputNumber :value="model.capacityM3h" :min="0" size="small"
-        @update:value="value=>model.capacityM3h=value??0" /></div>
+        @update:value="value=>{model.capacityM3h=value??0;markCustom()}" /></div>
     <div class="setting-row"><span>必要的保障预留（m³/h）</span>
       <NInputNumber :value="model.reservedM3h" :min="0" size="small"
-        @update:value="value=>model.reservedM3h=value??0" /></div>
+        @update:value="value=>{model.reservedM3h=value??0;markCustom()}" /></div>
     <p class="sub">分配顺序依据业务优先级模拟，并非 PLC 启停或调阀方案。管网实际连通、最不利点压力和泵组曲线还需专项核实。</p>
     <div class="machine-result" v-if="assessment">
      <NTag :type="assessment.fullySatisfied?'success':'warning'">{{assessment.fullySatisfied?'模拟流量满足':'模拟供水存在缺口'}}</NTag>
@@ -76,10 +102,10 @@ const scenarios:{id:MachineScenarioId;label:string}[]=[
   <section class="machine-panel machine-bottom">
    <h3>关联的业务流程</h3>
    <nav class="machine-links">
-    <RouterLink to="/process/medium-pressure">查看中压供水泵组 →</RouterLink>
-    <RouterLink to="/process/spray">查看射雾除尘末端 →</RouterLink>
-    <RouterLink :to="{path:'/water/balance',query:{machineDemand:String(assessment?.demandedM3h??0),machineCapacity:String(assessment?.availableM3h??0)}}">带入动态平衡分析 →</RouterLink>
-    <RouterLink to="/operations/events">进入异常处置 →</RouterLink>
+    <RouterLink :to="{path:'/process/medium-pressure',query:{returnTo:route.fullPath}}">查看中压供水泵组 →</RouterLink>
+    <RouterLink :to="{path:'/process/spray',query:{returnTo:route.fullPath}}">查看射雾除尘末端 →</RouterLink>
+    <RouterLink :to="{path:'/water/balance',query:{machineDemand:String(assessment?.demandedM3h??0),machineCapacity:String(assessment?.availableM3h??0),returnTo:route.fullPath}}">带入动态平衡分析 →</RouterLink>
+    <RouterLink :to="{path:'/operations/events',query:{returnTo:route.fullPath}}">进入异常处置 →</RouterLink>
    </nav>
    <p class="sub">本项目尚未确认各大机真实供水点、供水站归属、阀门、管径和末端计量。当前模型只用于分析需求与能力，不计算管网压力、不发控制命令。</p>
   </section>
@@ -87,9 +113,10 @@ const scenarios:{id:MachineScenarioId;label:string}[]=[
 </template>
 
 <style scoped>
-.machine-page{display:grid;gap:13px;padding:2px 2px 24px;color:#234b65}
+.machine-page{display:grid;gap:11px;padding:0 2px 20px;color:#234b65}
+.flow-saved{font-size:11px;color:#527c92;align-self:center}
 .machine-header,.machine-panel,.machine-kpis>div{background:#f9fcff;border:1px solid #d0e3ee;border-radius:11px;box-shadow:0 3px 10px #265c7a0b}
-.machine-header{padding:17px 20px;display:flex;justify-content:space-between;align-items:start;gap:14px}
+.machine-header{padding:12px 17px;display:flex;justify-content:space-between;align-items:start;gap:14px}
 .machine-header h2{margin:4px 0 7px;font-size:22px}.machine-header p{margin:0;font-size:13px;color:#64879c;max-width:760px}
 .eyebrow{font-size:11px!important;color:#5a91a8!important}.machine-presets{display:flex;gap:8px;flex-wrap:wrap}
 .machine-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}

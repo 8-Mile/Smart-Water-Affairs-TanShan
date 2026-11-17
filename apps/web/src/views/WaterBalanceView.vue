@@ -3,9 +3,26 @@ import {computed,reactive,ref,watch} from "vue";
 import {RouterLink,useRoute} from "vue-router";
 import {NButton,NInputNumber,NTag,NCheckbox} from "naive-ui";
 import {assessIntegratedBalance,DEFAULT_INTEGRATED_BALANCE,type IntegratedBalanceInput} from "../demo/integratedBalance";
+import {useDemoStore} from "../demo/store";
+import {readFlowDraft,saveFlowDraft} from "../demo/userJourney";
 type NumericKey={ [K in keyof IntegratedBalanceInput]:IntegratedBalanceInput[K] extends number?K:never }[keyof IntegratedBalanceInput];
 const route=useRoute();
-const model=reactive<IntegratedBalanceInput>({...DEFAULT_INTEGRATED_BALANCE});
+const store=useDemoStore();
+const flowKey=()=>"water-balance:"+store.scenarioId;
+function validState(value:unknown):value is IntegratedBalanceInput{
+ if(!value||typeof value!=="object")return false;
+ const given=value as Record<string,unknown>;
+ return Object.entries(DEFAULT_INTEGRATED_BALANCE).every(([key,v])=>typeof given[key]===typeof v);
+}
+const remembered=readFlowDraft(sessionStorage,flowKey(),validState);
+const model=reactive<IntegratedBalanceInput>({...DEFAULT_INTEGRATED_BALANCE,...remembered});
+const recovered=ref(Boolean(remembered));
+watch(model,()=>saveFlowDraft(sessionStorage,flowKey(),model),{deep:true});
+watch(()=>store.scenarioId,()=>{
+ const next=readFlowDraft(sessionStorage,flowKey(),validState);
+ Object.assign(model,{...DEFAULT_INTEGRATED_BALANCE,...next});
+ recovered.value=Boolean(next);
+});
 const preset=ref("normal");
 const fields:{key:NumericKey;label:string;unit:string}[]=[
  {key:"periodHours",label:"核算时段",unit:"h"},
@@ -32,7 +49,8 @@ loadQuery();
 watch(()=>route.fullPath,loadQuery);
 const output=computed(()=>{try{return assessIntegratedBalance(model);}catch{return null;}});
 const format=(n:number|undefined)=>n===undefined?"缺数":n.toLocaleString("zh-CN",{maximumFractionDigits:1});
-function setNumber(key:NumericKey,value:number|null){model[key]=value??0;}
+function setNumber(key:NumericKey,value:number|null){model[key]=value??0;recovered.value=false;}
+function resetAnalysis(){Object.assign(model,{...DEFAULT_INTEGRATED_BALANCE});loadQuery();preset.value="normal";recovered.value=false;}
 function scenario(id:"normal"|"rain"|"shortage"){
  preset.value=id;Object.assign(model,{...DEFAULT_INTEGRATED_BALANCE});
  loadQuery();
@@ -52,6 +70,8 @@ function scenario(id:"normal"|"rain"|"shortage"){
    <NButton :type="preset==='normal'?'primary':'default'" secondary @click="scenario('normal')">正常作业</NButton>
    <NButton :type="preset==='rain'?'primary':'default'" secondary @click="scenario('rain')">强降雨 · 消纳不足</NButton>
    <NButton :type="preset==='shortage'?'primary':'default'" secondary @click="scenario('shortage')">大机供水不足</NButton>
+   <NButton size="small" secondary @click="resetAnalysis">重置试算条件</NButton>
+   <span class="flow-saved">模拟输入仅在本标签页保留{{recovered?' · 已恢复上次编辑':''}}，不会自动执行调度</span>
   </div>
   <div v-if="output" class="balance-stats">
    <div><span>污染雨水入池（估算）</span><strong>{{format(output.pollutedRainInM3)}}<small>m³</small></strong></div>
@@ -97,10 +117,10 @@ function scenario(id:"normal"|"rain"|"shortage"){
   <section class="balance-panel">
    <h3>专业分析与原系统联动</h3>
    <div class="links">
-    <RouterLink :to="{path:'/water/dispatch',query:{rainMm:String(model.rainMm),source:'balance'}}">继续雨前调蓄方案比选 →</RouterLink>
-    <RouterLink :to="{path:'/water/multi-source',query:{machineDemandM3:String(Math.round(model.machineDemandM3h*model.periodHours)),source:'balance'}}">把同周期大机需水带入多水源匹配 →</RouterLink>
-    <RouterLink to="/water/port-chain">核查污染水业务链 →</RouterLink>
-    <RouterLink to="/water/machine-supply">核查各大机供水对象 →</RouterLink>
+    <RouterLink :to="{path:'/water/dispatch',query:{rainMm:String(model.rainMm),source:'balance',returnTo:route.fullPath}}">继续雨前调蓄方案比选 →</RouterLink>
+    <RouterLink :to="{path:'/water/multi-source',query:{machineDemandM3:String(Math.round(model.machineDemandM3h*model.periodHours)),source:'balance',returnTo:route.fullPath}}">把同周期大机需水带入多水源匹配 →</RouterLink>
+    <RouterLink :to="{path:'/water/port-chain',query:{returnTo:route.fullPath}}">核查污染水业务链 →</RouterLink>
+    <RouterLink :to="{path:'/water/machine-supply',query:{returnTo:route.fullPath}}">核查各大机供水对象 →</RouterLink>
    </div>
    <p class="muted">专项页面只传递明确的降雨量或需求量参数，不冒充同一座池、同一条管路或已经验证的动态联动控制。真实运行仍需独立水力分析与现场验收。</p>
   </section>
@@ -108,9 +128,10 @@ function scenario(id:"normal"|"rain"|"shortage"){
 </template>
 
 <style scoped>
-.balance-page{display:grid;gap:13px;padding-bottom:24px;color:#234c64}
+.balance-page{display:grid;gap:11px;padding-bottom:20px;color:#234c64}
+.flow-saved{font-size:11px;color:#527b91;align-self:center}
 .balance-header,.balance-panel,.balance-stats>div{background:#f9fcff;border:1px solid #d0e3ee;border-radius:11px;box-shadow:0 3px 10px #265c7a0b}
-.balance-header{display:flex;justify-content:space-between;align-items:start;padding:16px 20px;gap:12px}
+.balance-header{display:flex;justify-content:space-between;align-items:start;padding:12px 17px;gap:12px}
 .balance-header h2{font-size:22px;margin:4px 0 7px}.balance-header p{font-size:13px;line-height:1.6;color:#69899b;margin:0;max-width:830px}
 .eyebrow{font-size:11px!important;color:#5a93a8!important}.preset-row{display:flex;gap:8px;flex-wrap:wrap}
 .balance-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}.balance-stats>div{padding:13px;display:grid;gap:6px}

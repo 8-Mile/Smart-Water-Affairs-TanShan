@@ -476,6 +476,14 @@ function openAssetTimeline(): void {
   message.info("已打开设备详情，请切换到「设备履历」Tab 查看归档记录。");
 }
 
+function goBackToSourceAlarm():void{
+ if(!linkedAlarm.value)return;
+ const alarmId=linkedAlarm.value.id;
+ close();
+ void router.push({path:"/operations/events",query:{
+  tab:"alarms",alarmId,eventRef:"alarm:"+alarmId,
+ }});
+}
 function close(): void {
   emit("close");
 }
@@ -739,7 +747,9 @@ function onShowUpdate(value: boolean): void {
 
       <template #footer>
         <div v-if="order" class="drawer-footer">
-          <NButton v-if="order.status === 'archived'" type="primary" secondary @click="openAssetTimeline">
+          <NButton v-if="order.status === 'archived' && linkedAlarm" type="primary"
+            @click="goBackToSourceAlarm">到原事件复核恢复</NButton>
+          <NButton v-if="order.status === 'archived'" secondary @click="openAssetTimeline">
             查看设备履历
           </NButton>
           <NButton v-else secondary @click="openAssetDetail">打开设备详情</NButton>

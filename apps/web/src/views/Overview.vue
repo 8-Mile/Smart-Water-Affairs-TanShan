@@ -175,7 +175,7 @@ function elapsed(at: string) {
 <template>
   <section class="panorama" aria-label="港区全景监控">
     <div class="metrics">
-      <RouterLink to="/water/balance" class="glass metric metric-water" title="同周期水量守恒与供需动态平衡 · MOCK">
+      <RouterLink to="/water/balance?returnTo=/overview" class="glass metric metric-water" title="同周期水量守恒与供需动态平衡 · MOCK">
         <span class="emblem"><Icon name="rain" /></span>
         <div class="metric-main"><h2>动态平衡</h2><strong class="needs-check">模型演示</strong><p>来水 / 处理 / 回用</p></div>
       </RouterLink>
@@ -183,7 +183,7 @@ function elapsed(at: string) {
         <span class="emblem"><Icon name="flask" /></span><div class="metric-main"><h2>环保处理</h2><strong class="needs-check">水质待核</strong></div>
         <div class="metric-detail"><p>处理能力 <b>待核</b></p><p>回用管网 <b>待核</b></p></div>
       </RouterLink>
-      <RouterLink to="/water/machine-supply" class="glass metric metric-environment">
+      <RouterLink to="/water/machine-supply?returnTo=/overview" class="glass metric metric-environment">
         <span class="emblem"><Icon name="shield" /></span><div class="metric-main"><h2>供水保障</h2><strong class="needs-check">终端待核</strong></div>
         <div class="metric-detail"><p>供水拓扑 <b>未知</b></p><p>现场验收 <b>{{ verifiedEquipmentCount }}</b></p></div>
       </RouterLink>
@@ -194,15 +194,15 @@ function elapsed(at: string) {
     </div>
 
     <section class="core-business" aria-label="港口三大核心业务链">
-      <RouterLink to="/water/overview" class="core-card">
+      <RouterLink to="/water/overview?returnTo=/overview" class="core-card">
         <span class="core-no">01 / 循环利用</span><strong>自来水 · 中水 · 循环水</strong>
         <small>来源 → 处理 → 回用 → 分账</small><b>查看水量账本 ›</b>
       </RouterLink>
-      <RouterLink to="/water/machine-supply" class="core-card">
+      <RouterLink to="/water/machine-supply?returnTo=/overview" class="core-card">
         <span class="core-no">02 / 生产保障</span><strong>各大机 · 供水需求</strong>
         <small>作业状态 → 需水量 → 保障能力</small><b>验证供水缺口 ›</b>
       </RouterLink>
-      <RouterLink to="/water/balance" class="core-card">
+      <RouterLink to="/water/balance?returnTo=/overview" class="core-card">
         <span class="core-no">03 / 动态平衡</span><strong>收集 · 处理 · 回用</strong>
         <small>同周期水量 → 池容 → 风险</small><b>进入平衡分析 ›</b>
       </RouterLink>
@@ -272,7 +272,7 @@ function elapsed(at: string) {
         </section>
         <section class="glass panel-box events-panel">
           <header><h2><Icon name="bell" />重点运行事件（{{ alarms.length }}）</h2><RouterLink to="/operations/alarms">查看全部 <span>›</span></RouterLink></header>
-          <div class="events-list"><RouterLink v-for="a in alarms.slice(0,3)" :key="a.id" :to="{name:'alarms',query:{alarmId:a.id}}" class="event" :title="a.title+'：'+a.detail">
+          <div class="events-list"><RouterLink v-for="a in alarms.slice(0,3)" :key="a.id" :to="{path:'/operations/events',query:{tab:'queue',eventRef:'alarm:'+a.id,returnTo:'/overview'}}" class="event" :title="a.title+'：'+a.detail">
             <b class="event-level" :class="a.level">{{ a.level === 'critical' ? '高' : a.level === 'warning' ? '中' : '低' }}</b>
             <span class="event-text"><strong>{{ a.title }}</strong><small>{{ a.detail }}</small></span><time>{{ elapsed(a.occurredAt) }}</time>
           </RouterLink><p v-if="!alarms.length" class="empty">暂无活动事件</p></div>

@@ -497,6 +497,15 @@ export function parseIntent(
     };
   }
 
+  // 水量问数应先归入只读水务查询；否则泛用知识检索会把“用了多少”误判为设备诊断。
+  const waterUsageQuestion=/(中水|自来水|循环水|雨水|水资源|回用水)/.test(text)
+    && /(用了多少|使用了多少|用水量|用量|补水量|回用量|循环量|多少水|水量多少|今天|今日|本月|本周)/.test(text)
+    && !/(方案|优化|调度|调蓄|模拟|预测|启动|下发|控制设备)/.test(text);
+  if(waterUsageQuestion){
+    return {...resultBase("query",text),points:[],requiresPick:false,errors:[],missingFields:[],
+      reason:"从已登记水量账本查找统计数据；不支持的时间粒度会明确提示缺数。"};
+  }
+
   const knowledge=parseKnowledgeRequest(text,assets,context.assetId);
   if(knowledge){
     return {

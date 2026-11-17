@@ -410,13 +410,17 @@ function goAiWorkspace(): void {
             </div>
           </div>
           <div class="quick-links">
-            <RouterLink class="quick-link" to="/water/machine-supply">
+            <RouterLink class="quick-link" to="/water/machine-supply?returnTo=/water/overview">
               <strong>各大机供水保障 →</strong>
               <span>按作业需求和供水能力比较，发现缺口并给出核查方向。</span>
             </RouterLink>
-            <RouterLink class="quick-link" to="/water/balance">
+            <RouterLink class="quick-link" to="/water/balance?returnTo=/water/overview">
               <strong>供需动态平衡 →</strong>
               <span>同周期分析雨水入池、处理、清水储存、回用消纳及大机需求。</span>
+            </RouterLink>
+            <RouterLink class="quick-link" to="/data/reports?reportId=water-ledger&returnTo=/water/overview">
+              <strong>生成水资源账本报表 →</strong>
+              <span>直达对应报表，可核对来源口径并导出CSV。</span>
             </RouterLink>
             <RouterLink class="quick-link" to="/water/ledger">
               <strong>水量账本 →</strong>

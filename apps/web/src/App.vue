@@ -10,6 +10,7 @@ import { SCENARIO_NAMES } from "./demo/scenarioLabels";
 import { useDemoStore } from "./demo/store";
 import { useUiStore } from "./demo/ui";
 import { navGroupLabel, navTitle } from "./navigation";
+import {safeReturnPath} from "./demo/userJourney";
 
 // 懒加载全局抽屉：路由首屏不加载AI解析器与设备趋势图依赖。
 const GlobalAiDrawer = defineAsyncComponent(() => import("./components/GlobalAiDrawer.vue"));
@@ -21,6 +22,7 @@ const ui = useUiStore();
 const demoTour = useDemoTour();
 const route = useRoute();
 const navOpen = ref(false);
+const returnTarget=computed(()=>safeReturnPath(route.query.returnTo,route.path));
 const tourStageLocation=computed(()=>{
  if(!demoTour.record||!demoTour.step||route.name==="overview")return null;
  const candidateId=typeof route.query.supplyDraftId==="string"?route.query.supplyDraftId:undefined;
@@ -48,7 +50,7 @@ const groupLabel = computed(() =>
       <AppSidebar />
 
       <main class="main-area">
-        <div class="page-head" :class="{ 'overview-page-title': route.name === 'overview' }">
+        <div v-if="!route.meta.hideGlobalHeading" class="page-head" :class="{ 'overview-page-title': route.name === 'overview' }">
           <div>
             <div class="eyebrow">智慧水务 / {{ groupLabel }}</div>
             <h1 v-if="route.name !== 'process-spray'" class="page-title">{{ pageTitle }}</h1>
@@ -64,11 +66,8 @@ const groupLabel = computed(() =>
           </div>
         </div>
         <div class="content">
-          <RouterLink
-            v-if="typeof route.query.returnTo === 'string' && /^\/(?![\/\\])/.test(route.query.returnTo) && route.query.returnTo !== route.path"
-            :to="route.query.returnTo"
-          >
-            返回来源页面
+          <RouterLink v-if="returnTarget && route.name !== 'workorders'" :to="returnTarget" class="context-return">
+            ← 返回来源业务页面
           </RouterLink>
           <div v-if="tourStageLocation" class="demo-stage-ribbon"
             :class="{offstage:!tourStageLocation.onTarget}" aria-label="本轮演示页面指引">
@@ -93,6 +92,10 @@ const groupLabel = computed(() =>
   </div>
 </template>
 <style scoped>
+.context-return{display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;
+ padding:7px 11px;border-radius:7px;border:1px solid #cde3ef;background:#edf8fc;
+ font-size:12px;font-weight:600;color:#226f94;text-decoration:none}
+.context-return:hover{border-color:#88bfd8}
 .demo-stage-ribbon{display:flex;gap:11px;align-items:center;min-width:0;
   margin:0 0 11px;padding:9px 12px;background:linear-gradient(100deg,#e5f4fa,#f7fcff);
   color:#326980;border-radius:8px;border:1px solid #c7e4ef}

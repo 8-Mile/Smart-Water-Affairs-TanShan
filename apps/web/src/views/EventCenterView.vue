@@ -6,6 +6,7 @@ import {useDemoStore} from "../demo/store";
 import {useUnattendedStore} from "../demo/unattendedStore";
 import {useUiStore} from "../demo/ui";
 import RoleActionQueue from "../components/RoleActionQueue.vue";
+import WorkOrderDrawer from "../components/WorkOrderDrawer.vue";
 import {buildEventHub,filterHubEvents,type EventHubFilter,type HubEvent,type EventOrigin} from "../demo/eventHub";
 
 const DutyPanel=defineAsyncComponent(()=>import("./UnattendedView.vue"));
@@ -56,6 +57,16 @@ const selected=computed(()=>filtered.value.find(x=>x.ref===selectedRef.value)??f
 const related=computed(()=>selected.value?
  index.value.events.filter(x=>x.assetId===selected.value?.assetId&&x.ref!==selected.value?.ref):[]);
 const selectedOrder=computed(()=>demo.workorders.find(x=>x.id===selected.value?.workOrderId));
+const inlineWorkOrderId=ref<string|null>(null);
+const closureTip=computed(()=>{
+ if(!selected.value)return "";
+ if(selectedOrder.value?.status==="archived"&&selected.value.active)
+   return "工单已归档，但原事件尚未独立关闭。下一步应核查测点、设备状态及现场恢复证据，再由有权限人员确认事件。";
+ if(selectedOrder.value?.status==="pending_acceptance")
+   return "维修结果已提交，等待具备验收权限的人员确认；验收通过后仍需单独核实原事件。";
+ if(selectedOrder.value)return "当前事件已经关联工单，可在本页打开工单抽屉办理，无需离开事件上下文。";
+ return "当前事件尚无已确认的关联工单，可先核查设备与原始记录，再按权限建立处理任务。";
+});
 const eventTimeline=computed(()=>{
   if(!selected.value)return [];
   const lines=[{at:selected.value.at,action:"原始事件产生",by:"监测 / 业务记录",note:selected.value.description}];
@@ -67,8 +78,12 @@ const eventTimeline=computed(()=>{
   return lines.sort((a,b)=>Date.parse(a.at)-Date.parse(b.at));
 });
 watch(()=>route.query.eventRef,refValue=>{
- if(typeof refValue==="string")selectedRef.value=refValue;
-});
+ if(typeof refValue==="string"){
+  selectedRef.value=refValue;
+  const event=index.value.events.find(x=>x.ref===refValue);
+  if(event&&!event.active)state.value="all";
+ }
+},{immediate:true});
 function clearAssetScope(){
  const query={...route.query};
  delete query.assetId;
@@ -84,7 +99,7 @@ function changeTab(next:WorkTab){
  const e=selected.value;
  if(e&&next==="alarms"&&e.origin==="alarm")query.alarmId=e.originalId;
  if(e&&next==="duty"&&e.origin==="duty")query.eventId=e.originalId;
- if(e){query.eventRef=e.ref;query.assetId=e.assetId;}
+ if(e){query.eventRef=e.ref;if(next!=="queue")query.assetId=e.assetId;}
  void router.push({path:"/operations/events",query});
 }
 function openInWorkflow(e:HubEvent){
@@ -95,6 +110,10 @@ function openInWorkflow(e:HubEvent){
  }});
 }
 function openOrder(e:HubEvent){
+ if(!e.workOrderId||e.isMissingWorkOrder)return;
+ inlineWorkOrderId.value=e.workOrderId;
+}
+function openOrderWorkspace(e:HubEvent){
  if(!e.workOrderId||e.isMissingWorkOrder)return;
  void router.push({path:"/operations/workorders",query:{
   workOrderId:e.workOrderId,returnTo:"/operations/events?tab=queue&eventRef="+encodeURIComponent(e.ref),
@@ -182,10 +201,17 @@ function timestamp(v:string){
        <div class="hub-caution">事件队列只汇总展示，不修改原始告警或值守状态。跨工艺关联属于待核线索，必须经工程证据复核。</div>
        <div class="hub-actions">
         <NButton type="primary" size="small" @click="openInWorkflow(selected)">在本工作台处理原事件</NButton>
-        <NButton size="small" secondary :disabled="!selected.workOrderId||selected.isMissingWorkOrder" @click="openOrder(selected)">打开关联工单</NButton>
+        <NButton size="small" secondary :disabled="!selected.workOrderId||selected.isMissingWorkOrder" @click="openOrder(selected)">本页办理关联工单</NButton>
+        <NButton size="small" quaternary :disabled="!selected.workOrderId||selected.isMissingWorkOrder" @click="openOrderWorkspace(selected)">完整工单页面</NButton>
         <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="goAssetWorkspace(selected)">设备工作台</NButton>
         <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="openAsset(selected)">快速设备详情</NButton>
         <NButton size="small" quaternary @click="changeTab('correlation')">查看协同核查</NButton>
+       </div>
+       <div class="hub-closure" aria-label="当前事件的下一步处理">
+        <strong>下一步处理建议</strong>
+        <p>{{closureTip}}</p>
+        <NButton v-if="selectedOrder?.status==='archived'&&selected.active" size="small" type="primary"
+          secondary @click="openInWorkflow(selected)">返回原事件，核查是否恢复</NButton>
        </div>
        <div class="hub-related">
         <strong>事件与工单时间线（{{ eventTimeline.length }}）</strong>
@@ -213,6 +239,7 @@ function timestamp(v:string){
   <DutyPanel v-else-if="tab==='duty'" embedded />
   <AlarmsPanel v-else-if="tab==='alarms'" />
   <CorrelationPanel v-else embedded />
+  <WorkOrderDrawer :work-order-id="inlineWorkOrderId" @close="inlineWorkOrderId=null" />
  </section>
 </template>
 
@@ -247,6 +274,9 @@ function timestamp(v:string){
 .hub-dl dt{color:#819fae}.hub-dl dd{margin:0;overflow-wrap:anywhere}
 .hub-description{background:#f7fbfd;border-radius:6px;padding:12px;font-size:11px}
 .hub-description p{margin:6px 0 0;line-height:1.7;overflow-wrap:anywhere}
+.hub-closure{padding:11px 13px;border:1px solid #c7e3ef;border-radius:8px;background:#edf8fd}
+.hub-closure strong{font-size:12px;color:#1c688c}
+.hub-closure p{font-size:11px;color:#426e83;line-height:1.7;margin:6px 0}
 .hub-caution{color:#9a763b;border:1px solid #f1e6d4;background:#fffaf2;padding:10px;border-radius:6px;font-size:11px;line-height:1.6}
 .hub-actions{display:flex;gap:8px;flex-wrap:wrap}
 .hub-related{display:grid;gap:8px;padding-top:5px;border-top:1px solid #eef2f5;font-size:11px}

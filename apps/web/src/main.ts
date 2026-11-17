@@ -56,10 +56,10 @@ const routes: RouteRecordRaw[] = [
     meta: { title: "港口环保水业务链", permission: read } },
   { path: "/water/machine-supply", name: "machine-supply",
     component: () => import("./views/MachineSupplyView.vue"),
-    meta: { title: "各大机供水保障", permission: read } },
+    meta: { title: "各大机供水保障", permission: read, hideGlobalHeading: true } },
   { path: "/water/balance", name: "water-balance",
     component: () => import("./views/WaterBalanceView.vue"),
-    meta: { title: "供需动态平衡", permission: read } },
+    meta: { title: "供需动态平衡", permission: read, hideGlobalHeading: true } },
   {
     path: "/water/overview",
     name: "water-overview",
