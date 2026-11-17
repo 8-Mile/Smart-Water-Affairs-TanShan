@@ -25,7 +25,7 @@ const detail = ref(false);
 const showDrafts = ref(route.query.source === "ai");
 // AI从当前页面发起时同一路由会复用组件；必须主动同步最新草稿和参数。
 watch(() => route.fullPath, () => {
-  if (route.query.source !== "ai") return;
+  if (route.query.source !== "ai" && route.query.source !== "balance") return;
   drafts.value = readDrafts<DispatchDraft>(DISPATCH_DRAFT_KEY, localStorage);
   showDrafts.value = true;
   const rain = typeof route.query.rainMm === "string" ? Number(route.query.rainMm) : NaN;
@@ -124,6 +124,7 @@ function exportCsv(): void {
 <template>
   <div class="dispatch-view">
     <WorkspaceNav label="调蓄与四预" :items="[{name:'调蓄方案',to:'/water/dispatch'},{name:'风险预演',to:'/decision/four-pre'}]" />
+    <div v-if="route.query.source==='balance'" class="water-handoff">已从动态平衡传入雨量参数；本页单池面积、容积和处理能力仍使用独立模拟条件，不等同于业务链中的真实池体。</div>
     <div class="dispatch-intro">
       <div>
         <div class="eyebrow">水资源管理 · 雨前主动决策</div>

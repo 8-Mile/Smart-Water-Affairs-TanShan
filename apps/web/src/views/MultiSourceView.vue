@@ -17,6 +17,14 @@ const message=useMessage();
 const store=useDemoStore();
 const route=useRoute();
 const initialInputs=cloneMultiSource();
+function applyBalanceDemand(input:MultiSourceInputs):void{
+  if(route.query.source!=="balance")return;
+  const demand=Number(route.query.machineDemandM3);
+  if(route.query.machineDemandM3===undefined||!Number.isFinite(demand)||demand<0||demand>1000000)return;
+  const target=input.demands.find(d=>d.id==="critical");
+  if(target)target.neededM3=demand;
+}
+applyBalanceDemand(initialInputs);
 if (route.query.scenario === "quality") {
   for (const path of initialInputs.routes) if (path.sourceId === "reclaimed") path.qualityAccepted = false;
 } else if (route.query.scenario === "shortage") {
@@ -34,7 +42,7 @@ const showDetails=ref(false);
 const showDrafts=ref(route.query.source === "ai");
 // AI在本页上直接生成草稿或切换情景时，路由组件不会重新挂载。
 watch(() => route.fullPath, () => {
-  if (route.query.source !== "ai") return;
+  if (route.query.source !== "ai" && route.query.source !== "balance") return;
   drafts.value = readDrafts<SupplyDraft>(MULTI_SOURCE_DRAFT_KEY, localStorage);
   showDrafts.value = true;
   const next = cloneMultiSource();
@@ -46,6 +54,7 @@ watch(() => route.fullPath, () => {
     next.sources.find(x => x.id === "rain")!.availableM3 = 100;
     next.sources.find(x => x.id === "reclaimed")!.availableM3 = 100;
   }
+  applyBalanceDemand(next);
   Object.assign(editable, cloneMultiSource(next));
   applied.value = next;
 });
@@ -83,6 +92,7 @@ function selectPreset(id:"normal"|"quality"|"shortage"):void{
     editable.sources.find(x=>x.id==="rain")!.availableM3=100;
     editable.sources.find(x=>x.id==="reclaimed")!.availableM3=100;
   }
+  applyBalanceDemand(editable);
   run();
 }
 function save():void{
@@ -112,6 +122,7 @@ function exportCsv():void{
 <template>
   <div class="multi-water">
     <WorkspaceNav label="水源优化与效益" :items="[{name:'水源分配',to:'/water/multi-source'},{name:'成本效益',to:'/water/green-benefit'}]" />
+    <p v-if="route.query.source==='balance'" class="water-handoff">已从动态平衡页带入同周期大机需水作为“关键生产补水”模拟需求；其他水源库存、末端管路和水质仍为独立假设，未证明实际连通。</p>
     <div class="water-header">
       <div>
         <div class="eyebrow">水资源管理 / 多水源协同利用</div>

@@ -8,6 +8,7 @@ import type { DataTableColumns } from "naive-ui";
 import Chart from "../Chart.vue";
 import { useDemoStore } from "../demo/store";
 import { summarizeLedger, toCsv } from "../demo/water";
+import { classifyWaterAccounting, waterAccountingSnapshot } from "../demo/waterAccounting";
 import type { LedgerEntry } from "../demo/types";
 
 type WaterMode = "overview" | "ledger" | "rainfall";
@@ -57,15 +58,12 @@ function ledgerVolume(sourceType: string, direction: "in" | "out"): number | nul
   return rows.reduce((sum, entry) => sum + entry.volume, 0);
 }
 
-const latestRain = computed(
-  () => store.seed.rainEvents[store.seed.rainEvents.length - 1] ?? null,
-);
-
-const latestRainStorage = computed(() => rainStorage(latestRain.value).end?.total ?? null);
 
 const rainIn = computed(() => ledgerVolume("雨水", "in"));
 const tapIn = computed(() => ledgerVolume("自来水", "in"));
 const reuseOut = computed(() => ledgerVolume("中水", "out"));
+const accounting = computed(() => waterAccountingSnapshot(ledgerEntries.value));
+const circulationVolume = computed(() => accounting.value.circulatingM3);
 
 /* ------------------------------ 账本 ------------------------------ */
 
@@ -111,6 +109,8 @@ const filteredLedger = computed(() =>
 );
 
 interface LedgerTableRow extends LedgerEntry {
+  categoryLabel: string;
+  stageLabel: string;
   directionLabel: string;
   volumeLabel: string;
   sourceLabel: string;
@@ -127,12 +127,16 @@ const ledgerRows = computed<LedgerTableRow[]>(() =>
     directionLabel: directionLabels[entry.direction],
     volumeLabel: `${formatVolume(entry.volume)} ${entry.unit}`,
     sourceLabel: entry.source,
+    categoryLabel: classifyWaterAccounting(entry).category,
+    stageLabel: classifyWaterAccounting(entry).stage,
   })),
 );
 
 const ledgerColumns: DataTableColumns<LedgerTableRow> = [
   { title: "周期", key: "period", width: 100 },
   { title: "来源类型", key: "sourceType", width: 110 },
+  { title: "循环利用归属", key: "categoryLabel", width: 135 },
+  { title: "水流环节", key: "stageLabel", width: 210 },
   { title: "方向", key: "directionLabel", width: 64 },
   { title: "水量", key: "volumeLabel", width: 132, align: "right" },
   { title: "数据来源", key: "sourceLabel", width: 120 },
@@ -160,10 +164,12 @@ const trendSeries = computed(() => {
 });
 
 function exportLedgerCsv(): void {
-  const headers = ["周期", "来源类型", "方向", "水量", "单位", "数据来源", "口径说明"];
+  const headers = ["周期", "来源类型", "循环利用归属", "水流环节", "方向", "水量", "单位", "数据来源", "口径说明"];
   const rows = filteredLedger.value.map((entry) => [
     entry.period,
     entry.sourceType,
+    classifyWaterAccounting(entry).category,
+    classifyWaterAccounting(entry).stage,
     directionLabels[entry.direction],
     entry.volume,
     entry.unit,
@@ -261,39 +267,29 @@ function goAiWorkspace(): void {
 
 <template>
   <section class="water-page">
-    <WorkspaceNav label="水资源数据" :items="[{name:'水资源总览',to:'/water/overview'},{name:'雨次分析',to:'/water/rainfall'},{name:'水量账本',to:'/water/ledger'}]" />
+    <WorkspaceNav label="水资源循环利用" :items="[{name:'循环利用总览',to:'/water/overview'},{name:'雨次分析',to:'/water/rainfall'},{name:'水量账本',to:'/water/ledger'}]" />
     <!-- 水资源总览 -->
     <template v-if="mode === 'overview'">
       <div class="stat-grid">
         <div class="stat-card storage">
-          <span>最近雨次末段储量</span>
-          <strong>
-            {{ formatVolume(latestRainStorage) }}<small>m³</small>
-          </strong>
-          <small class="stat-hint">
-            最近雨次末段南北分区合计 · {{ latestRain ? latestRain.name : "缺数" }}
-          </small>
+          <span>自来水补水量</span>
+          <strong>{{ formatVolume(tapIn) }}<small>m³</small></strong>
+          <small class="stat-hint">自然月账本进项 · 非实时仪表</small>
         </div>
         <div class="stat-card rain">
-          <span>最近雨次</span>
-          <strong>
-            {{ latestRain ? latestRain.rainfallMm : "缺数" }}<small>mm</small>
-          </strong>
-          <small class="stat-hint">{{ latestRain ? latestRain.name : "种子无雨次" }}</small>
+          <span>中水实际外供量</span>
+          <strong>{{ formatVolume(reuseOut) }}<small>m³</small></strong>
+          <small class="stat-hint">MOCK 回用水外供 · 不代表新增取水</small>
         </div>
         <div class="stat-card reuse">
-          <span>回用量</span>
-          <strong>{{ formatVolume(reuseOut) }}<small>m³</small></strong>
-          <small class="stat-hint">中水外供，单列不重复计入取水</small>
+          <span>循环水循环量</span>
+          <strong>{{ formatVolume(circulationVolume) }}<small>m³</small></strong>
+          <small class="stat-hint">缺少洗车台及其他循环回路计量 · 不以雨水进项代替</small>
         </div>
         <div class="stat-card supply">
-          <span>补水 / 外供</span>
-          <div class="split-values">
-            <strong>{{ formatVolume(tapIn) }}<small>m³</small></strong>
-            <span class="divider">/</span>
-            <strong>{{ formatVolume(reuseOut) }}<small>m³</small></strong>
-          </div>
-          <small class="stat-hint">左：自来水补水 · 右：中水外供</small>
+          <span>雨水收集量（循环利用子项）</span>
+          <strong>{{ formatVolume(rainIn) }}<small>m³</small></strong>
+          <small class="stat-hint">仅雨水入池 · 不代表已回用或循环水流量</small>
         </div>
       </div>
 
@@ -410,10 +406,18 @@ function goAiWorkspace(): void {
           <div class="panel-head">
             <div>
               <h2>下钻与联动</h2>
-              <p>总览只保留关键指标，完整明细在水量账本与雨次分析中查看。</p>
+              <p>自来水、中水、循环水分口径展示；雨水入池与处理后回用不重复累计。</p>
             </div>
           </div>
           <div class="quick-links">
+            <RouterLink class="quick-link" to="/water/machine-supply">
+              <strong>各大机供水保障 →</strong>
+              <span>按作业需求和供水能力比较，发现缺口并给出核查方向。</span>
+            </RouterLink>
+            <RouterLink class="quick-link" to="/water/balance">
+              <strong>供需动态平衡 →</strong>
+              <span>同周期分析雨水入池、处理、清水储存、回用消纳及大机需求。</span>
+            </RouterLink>
             <RouterLink class="quick-link" to="/water/ledger">
               <strong>水量账本 →</strong>
               <span>按来源类型、方向与周期筛选，支持 CSV 导出。</span>
@@ -423,7 +427,7 @@ function goAiWorkspace(): void {
               <span>三次降雨的南北分区储量对比，可进入四预或生成分析图。</span>
             </RouterLink>
             <RouterLink class="quick-link" to="/water/dispatch">
-              <strong>雨前智能调蓄 →</strong>
+              <strong>雨前智能调蓄（专项）→</strong>
               <span>比较维持现状、雨前腾库、处理回用三种方案的风险与增量经济性。</span>
             </RouterLink>
             <RouterLink class="quick-link" to="/water/multi-source">
@@ -446,8 +450,8 @@ function goAiWorkspace(): void {
             <div>
               <dt>统计边界</dt>
               <dd>
-                按自然月账本口径，南北分区合并展示。中水外供来自雨水回用，只作为回用量单列，
-                不再叠加为新增取水或自来水补水。
+                以来源、处理环节和终端用途分账：雨水入池是收集量，中水外供是回用量，
+                洗车等循环水应按回路循环量另计；相同水量跨工序流转不可相加。
               </dd>
             </div>
             <div>
@@ -476,17 +480,17 @@ function goAiWorkspace(): void {
           <small class="stat-hint">雨水 + 自来水等进项合计</small>
         </div>
         <div class="stat-card out">
-          <span>筛选范围出水量</span>
+          <span>跨环节出项（不可直接累计）</span>
           <strong>{{ formatVolume(filteredSummary.totalOut) }}<small>m³</small></strong>
           <small class="stat-hint">回用、外排与处理去向合计</small>
         </div>
         <div class="stat-card reuse">
           <span>其中回用量</span>
           <strong>{{ formatVolume(filteredSummary.reuseVolume) }}<small>m³</small></strong>
-          <small class="stat-hint">中水外供，单列不重复计入取水</small>
+          <small class="stat-hint">仅中水外供已知；洗车及其他循环水缺表</small>
         </div>
         <div class="stat-card diff">
-          <span>账本净差</span>
+          <span>账面进出差（非漏损）</span>
           <strong>{{ formatVolume(filteredSummary.difference) }}<small>m³</small></strong>
           <small class="stat-hint">账面进−出，不等同储量变化</small>
         </div>
@@ -542,7 +546,7 @@ function goAiWorkspace(): void {
           :columns="ledgerColumns"
           :data="ledgerRows"
           :pagination="false"
-          :scroll-x="920"
+          :scroll-x="1200"
           :bordered="false"
         />
         <p v-if="!ledgerRows.length" class="empty">

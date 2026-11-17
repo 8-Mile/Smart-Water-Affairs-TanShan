@@ -34,7 +34,6 @@ export const NAV_GROUPS: NavGroup[] = [
     children: [
       { label: "值守与事件中心", to: "/operations/events", permission: read,
         aliases: ["/operations/alarms", "/intelligent/unattended", "/intelligent/correlation"] },
-      { label: "港口水务业务链", to: "/water/port-chain", permission: read },
     ],
   },
   { id: "process", label: "工艺监控", permission: read, children: SUBSYSTEM_NAV },
@@ -50,12 +49,12 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     id: "water", label: "水资源管理", permission: read,
     children: [
-      { label: "水资源总览", to: "/water/overview", permission: read,
+      { label: "水资源循环利用", to: "/water/overview", permission: read,
         aliases: ["/water/rainfall", "/water/ledger"] },
-      { label: "调蓄与四预", to: "/water/dispatch", permission: read,
-        aliases: ["/decision/four-pre"] },
-      { label: "水源优化与效益", to: "/water/multi-source", permission: read,
-        aliases: ["/water/green-benefit"] },
+      { label: "各大机供水保障", to: "/water/machine-supply", permission: read },
+      { label: "供需动态平衡", to: "/water/balance", permission: read,
+        aliases: ["/water/dispatch","/decision/four-pre","/water/multi-source","/water/green-benefit"] },
+      { label: "雨污水处理与回用", to: "/water/port-chain", permission: read },
     ],
   },
   {
@@ -95,7 +94,9 @@ const TITLES: Record<string, string> = {
   "/intelligent/correlation": "跨系统关联处置",
   "/engineering/registry": "工程核查与证据",
   "/water/port-chain": "港口环保水业务链",
-  "/water/overview": "水资源总览",
+  "/water/overview": "水资源循环利用",
+  "/water/machine-supply": "各大机供水保障",
+  "/water/balance": "供需动态平衡",
   "/water/dispatch": "智能调蓄决策",
   "/water/multi-source": "多水源协同优化",
   "/water/green-benefit": "绿色运营效益核算",

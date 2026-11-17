@@ -358,6 +358,22 @@ function submit(text?: string): void {
     message.warning("请输入指令");
     return;
   }
+  // 纯导航指令优先于子系统关键字匹配。否则“大机供水”容易被泛化为中压泵监控。
+  const navigationRequest = /^(?:查看|打开|进入|前往|显示|跳转到|看看)\s*/.test(prompt);
+  if (navigationRequest) {
+    const destination = /大机/.test(prompt) && /(供水|用水|保障)/.test(prompt)
+      ? "/water/machine-supply"
+      : /(动态平衡|供需平衡)/.test(prompt)
+        ? "/water/balance"
+        : /(循环水|循环利用|水量账本)/.test(prompt)
+          ? (/水量账本/.test(prompt) ? "/water/ledger" : "/water/overview")
+          : "";
+    if (destination) {
+      message.info("已打开对应的本地模拟业务页面");
+      void ui.navigate(router, destination);
+      return;
+    }
+  }
 
   lastCreated.value = null;
   addDone.value = null;
@@ -1133,6 +1149,13 @@ function createSprayCheckDraft(): void {
   }
 }
 
+const suggestedWaterPage=computed(()=>{
+  const prompt=parsed.value?.prompt??"";
+  if(!/(循环水|循环利用|水量账本|大机供水|大机用水|动态平衡|供需平衡)/.test(prompt))return null;
+  if(/大机/.test(prompt))return {path:"/water/machine-supply",label:"各大机供水保障"};
+  if(/动态平衡|供需平衡/.test(prompt))return {path:"/water/balance",label:"供需动态平衡"};
+  return {path:"/water/overview",label:"水资源循环利用"};
+});
 const queryAnswer = computed(() => {
   const intent = parsed.value;
   if (!intent || intent.kind !== "query") return null;
@@ -1326,6 +1349,9 @@ watch(
       <button type="button" @click="useExample('查询当前无人值守待处理事件')">值守事件查询</button>
       <button type="button" @click="useExample('帮我完成今天的运行检查，整理异常情况，生成交班报告')">一键交班报告</button>
       <button type="button" @click="useExample('查找P-002振动异常的诊断依据')">知识证据核查</button>
+      <button type="button" @click="goRoute('/water/overview')">循环利用管理</button>
+      <button type="button" @click="goRoute('/water/machine-supply')">大机供水保障</button>
+      <button type="button" @click="goRoute('/water/balance')">动态平衡分析</button>
     </div>
     <div class="submit-row">
       <NTag size="tiny" :bordered="false" type="warning">本地规则解析 · 不调用大模型</NTag>
@@ -1635,6 +1661,11 @@ watch(
       </template>
 
       <template v-else-if="parsed.kind === 'query'">
+        <div v-if="suggestedWaterPage" class="created-actions">
+          <NButton size="small" type="primary" @click="goRoute(suggestedWaterPage.path)">
+            打开{{ suggestedWaterPage.label }}（本地业务页面）
+          </NButton>
+        </div>
         <div v-if="queryAnswer" class="diff-lines">
           <strong>{{ queryAnswer.title }}</strong>
           <span v-for="line in queryAnswer.lines" :key="line">{{ line }}</span>

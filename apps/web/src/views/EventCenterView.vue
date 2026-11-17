@@ -55,6 +55,17 @@ const filtered=computed(()=>filterHubEvents(index.value.events,state.value,origi
 const selected=computed(()=>filtered.value.find(x=>x.ref===selectedRef.value)??filtered.value[0]??null);
 const related=computed(()=>selected.value?
  index.value.events.filter(x=>x.assetId===selected.value?.assetId&&x.ref!==selected.value?.ref):[]);
+const selectedOrder=computed(()=>demo.workorders.find(x=>x.id===selected.value?.workOrderId));
+const eventTimeline=computed(()=>{
+  if(!selected.value)return [];
+  const lines=[{at:selected.value.at,action:"原始事件产生",by:"监测 / 业务记录",note:selected.value.description}];
+  if(selectedOrder.value){
+    lines.push(...selectedOrder.value.history.map(x=>({
+      at:x.at,action:x.action,by:x.by,note:x.note||"工单流程记录"
+    })));
+  }
+  return lines.sort((a,b)=>Date.parse(a.at)-Date.parse(b.at));
+});
 watch(()=>route.query.eventRef,refValue=>{
  if(typeof refValue==="string")selectedRef.value=refValue;
 });
@@ -175,6 +186,16 @@ function timestamp(v:string){
         <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="goAssetWorkspace(selected)">设备工作台</NButton>
         <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="openAsset(selected)">快速设备详情</NButton>
         <NButton size="small" quaternary @click="changeTab('correlation')">查看协同核查</NButton>
+       </div>
+       <div class="hub-related">
+        <strong>事件与工单时间线（{{ eventTimeline.length }}）</strong>
+        <p>事件状态与工单状态独立，工单已归档不代表现场测点恢复或告警自动关闭。</p>
+        <ol aria-label="事件处理时间线">
+          <li v-for="item in eventTimeline" :key="item.at+'-'+item.action">
+            <b>{{ timestamp(item.at) }} · {{ item.action }}</b>
+            <span> · {{ item.by }} · {{ item.note }}</span>
+          </li>
+        </ol>
        </div>
        <div class="hub-related">
         <strong>同设备其他记录（{{ related.length }}）</strong>

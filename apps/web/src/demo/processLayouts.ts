@@ -319,20 +319,18 @@ const mining: ProcessLayout = {
       id: "g-load",
       label: "处理负荷",
       unit: "m³/h",
-      formula: "各设备「流量」测点最新值合计，缺测不计入",
+      formula: "含矿污水站进水总管有效流量（PT-009）；不合计加药泵与污泥泵流量",
       source: "CALCULATED",
-      value: (ctx) =>
-        total(ctx.assets.map((asset) => numericLatest(ctx, asset, "流量"))),
-      hint: (ctx) => {
-        const points = ctx.assets.flatMap((asset) =>
-          ctx.pointsOf(asset.id).filter(
-            (point) => point.kind === "number" && point.label.includes("流量"),
-          ),
-        );
-        return points.length
-          ? `按 ${points.length} 个流量测点合计`
-          : "无流量测点，缺数";
+      value: (ctx) => {
+        const point = ctx.assets.flatMap(asset => ctx.pointsOf(asset.id))
+          .find(point => point.kind === "number" &&
+            /(?:进站|进水总管|处理站入口|总进水)/.test(point.label) && /流量/.test(point.label));
+        if (!point) return null;
+        const sample = ctx.latest(point.id);
+        return sample?.quality === "valid" && typeof sample.value === "number" ? sample.value : null;
       },
+      hint: () => "需进站总管流量 PT-009；演示种子缺该测点，不能用加药/排泥泵流量替代",
+
     },
     {
       id: "g-effluent",

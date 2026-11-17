@@ -139,9 +139,9 @@ const greenMetrics = computed(() => {
   const total = today.value.consumed;
   const share = (n:number) => total ? n / total * 100 : 0;
   return [
-    { key: "rain", icon: "rain", label: "雨水用量", value: today.value.supply.rain, share: share(today.value.supply.rain) },
-    { key: "reclaimed", icon: "recycle", label: "中水用量", value: today.value.supply.reclaimed, share: share(today.value.supply.reclaimed) },
     { key: "tap", icon: "tap", label: "自来水用量", value: today.value.supply.tap, share: share(today.value.supply.tap) },
+    { key: "reclaimed", icon: "recycle", label: "中水用量", value: today.value.supply.reclaimed, share: share(today.value.supply.reclaimed) },
+    { key: "rain", icon: "rain", label: "循环利用·雨水", value: today.value.supply.rain, share: share(today.value.supply.rain) },
   ];
 });
 // REVIEWED_DEMO is an audit of a local note, never a real equipment acceptance.
@@ -158,7 +158,7 @@ const scoredPumps = computed(() => store.assets.filter(a => !a.archived && isPum
   return { asset, score: health.score, band: health.band };
 }).sort((a,b) => (a.score ?? Infinity) - (b.score ?? Infinity)));
 const pumps = computed(() => scoredPumps.value.slice(0, 3));
-const highRisk = computed(() => scoredPumps.value.filter(p => p.score !== null && p.score < 60).length);
+const highRisk = computed(() => scoredPumps.value.filter(p => p.score !== null && p.score < 80).length);
 const ordersPending = computed(() => store.workorders.filter(o => ["draft", "pending_dispatch"].includes(o.status)));
 const ordersActive = computed(() => store.workorders.filter(o => o.status === "in_progress"));
 const counts = computed(() => [
@@ -175,36 +175,36 @@ function elapsed(at: string) {
 <template>
   <section class="panorama" aria-label="港区全景监控">
     <div class="metrics">
-      <RouterLink to="/water/port-chain?scenario=storm" class="glass metric metric-water" title="污染水业务链 · 前期工程口径仍待设计核验">
+      <RouterLink to="/water/balance" class="glass metric metric-water" title="同周期水量守恒与供需动态平衡 · MOCK">
         <span class="emblem"><Icon name="rain" /></span>
-        <div class="metric-main"><h2>污染水调蓄</h2><strong class="needs-check">设计待核</strong><p>逐池库容 / 合法水路</p></div>
+        <div class="metric-main"><h2>动态平衡</h2><strong class="needs-check">模型演示</strong><p>来水 / 处理 / 回用</p></div>
       </RouterLink>
       <RouterLink to="/process/mining" class="glass metric metric-supply">
         <span class="emblem"><Icon name="flask" /></span><div class="metric-main"><h2>环保处理</h2><strong class="needs-check">水质待核</strong></div>
         <div class="metric-detail"><p>处理能力 <b>待核</b></p><p>回用管网 <b>待核</b></p></div>
       </RouterLink>
-      <RouterLink to="/intelligent/correlation" class="glass metric metric-environment">
+      <RouterLink to="/water/machine-supply" class="glass metric metric-environment">
         <span class="emblem"><Icon name="shield" /></span><div class="metric-main"><h2>供水保障</h2><strong class="needs-check">终端待核</strong></div>
         <div class="metric-detail"><p>供水拓扑 <b>未知</b></p><p>现场验收 <b>{{ verifiedEquipmentCount }}</b></p></div>
       </RouterLink>
       <RouterLink to="/operations/alarms?status=active" class="glass metric metric-risks">
         <span class="emblem"><Icon name="risk" /></span><div class="metric-main"><h2>MOCK重点事件</h2><strong class="risk">{{ alarms.length }} <small>项</small></strong></div>
-        <div class="metric-detail"><p>设备健康关注 <b class="risk">{{ highRisk }}</b></p><p>待协调工单 <b>{{ ordersPending.length }}</b></p></div>
+        <div class="metric-detail"><p>设备健康需关注 <b class="risk">{{ highRisk }}</b></p><p>待协调工单 <b>{{ ordersPending.length }}</b></p></div>
       </RouterLink>
     </div>
 
     <section class="core-business" aria-label="港口三大核心业务链">
-      <RouterLink to="/water/port-chain?scenario=storm" class="core-card">
-        <span class="core-no">01 / 环保风险</span><strong>暴雨污染水 · 收集与调蓄</strong>
-        <small>分区来水 → 逐池库容 → 合规路径</small><b>开展情景核查 ›</b>
+      <RouterLink to="/water/overview" class="core-card">
+        <span class="core-no">01 / 循环利用</span><strong>自来水 · 中水 · 循环水</strong>
+        <small>来源 → 处理 → 回用 → 分账</small><b>查看水量账本 ›</b>
       </RouterLink>
-      <RouterLink to="/water/port-chain?scenario=normal" class="core-card">
-        <span class="core-no">02 / 合规回用</span><strong>含矿污水 · 处理与消纳</strong>
-        <small>处理负荷 → 出水水质 → 码头冲洗</small><b>查看制约环节 ›</b>
+      <RouterLink to="/water/machine-supply" class="core-card">
+        <span class="core-no">02 / 生产保障</span><strong>各大机 · 供水需求</strong>
+        <small>作业状态 → 需水量 → 保障能力</small><b>验证供水缺口 ›</b>
       </RouterLink>
-      <RouterLink to="/intelligent/correlation" class="core-card">
-        <span class="core-no">03 / 生产保障</span><strong>环保供水 · 影响与处置</strong>
-        <small>末端异常 → 人工核查 → 工单闭环</small><b>进入协同处置 ›</b>
+      <RouterLink to="/water/balance" class="core-card">
+        <span class="core-no">03 / 动态平衡</span><strong>收集 · 处理 · 回用</strong>
+        <small>同周期水量 → 池容 → 风险</small><b>进入平衡分析 ›</b>
       </RouterLink>
     </section>
 
@@ -268,7 +268,7 @@ function elapsed(at: string) {
               <em v-else>今日累计</em>
             </div>
           </div>
-          <p class="green-source">MOCK模拟水量 · 雨水 / 中水 / 自来水；非实时分表数据 · 今日样例总量 {{ fmt(today.consumed) }} m³</p>
+          <p class="green-source">MOCK源端样例 · 自来水 / 中水 / 循环利用中的雨水子项；未包含洗车及其他循环水，不代表循环水总量 · 今日样例总量 {{ fmt(today.consumed) }} m³</p>
         </section>
         <section class="glass panel-box events-panel">
           <header><h2><Icon name="bell" />重点运行事件（{{ alarms.length }}）</h2><RouterLink to="/operations/alarms">查看全部 <span>›</span></RouterLink></header>
@@ -286,7 +286,7 @@ function elapsed(at: string) {
         <WaterChart :records="daily" :period="period" />
       </section>
       <section class="glass panel-box health-panel">
-        <header><h2><Icon name="health" />重点设备健康风险</h2><RouterLink to="/decision/health">全部设备 <span>›</span></RouterLink></header>
+        <header><h2><Icon name="health" />设备健康关注与风险</h2><RouterLink to="/decision/health">全部设备 <span>›</span></RouterLink></header>
         <div class="summary-list"><RouterLink v-for="p in pumps" :key="p.asset.id" :to="{name:'health',query:{assetId:p.asset.id}}" class="health-row">
           <Icon name="pump" /><b class="pump-code">{{ p.asset.code }}</b><b class="pump-name" :title="p.asset.name">{{ p.asset.name }}</b>
           <div class="health-score" :class="p.score === null ? 'missing' : p.score < 80 ? 'risk' : 'good'"><div><strong>{{ p.score === null ? '待评价' : fmt(p.score,0) }}<small v-if="p.score !== null">分</small></strong><b>{{ p.score === null ? '缺测' : p.band }}</b></div><span class="health-track"><i :style="{width:(p.score ?? 0)+'%'}" /></span></div><span class="row-arrow">›</span>
