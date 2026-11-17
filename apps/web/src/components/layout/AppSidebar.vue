@@ -47,7 +47,8 @@ function toggleGroup(id: string): void {
     <nav>
       <template v-for="group in groups" :key="group.id">
         <template v-if="allow(group.permission)">
-          <RouterLink v-if="group.to" :to="group.to" class="nav-item" active-class="active">
+          <RouterLink v-if="group.to" :to="group.to" class="nav-item" active-class="active"
+            :class="{active:navGroupForPath(route.path)?.id===group.id}">
             <OverviewIcon :name="navIcons[group.id]" class="overview-nav-icon" />{{ group.label }}
           </RouterLink>
           <template v-else>

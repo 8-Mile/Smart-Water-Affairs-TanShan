@@ -6,7 +6,9 @@ import WaterChart from "../components/overview/OverviewWaterChart.vue";
 import portPicture from "../assets/dasboard/gongyi.png";
 import { useDemoStore } from "../demo/store";
 import { useUiStore } from "../demo/ui";
-import { can } from "../demo/permissions";
+import { can, roleNames } from "../demo/permissions";
+import { useUnattendedStore } from "../demo/unattendedStore";
+import { buildRoleQueue } from "../demo/roleQueue";
 import type { SceneHotspot } from "../demo/diagram";
 import { isPumpAsset, scorePumpHealth } from "../demo/health";
 import { ENGINEERING_CHECKS,readEngineeringReviews } from "../demo/engineering";
@@ -15,6 +17,10 @@ import {workOrderStatusLabels} from "../demo/workorderMeta";
 
 const store = useDemoStore();
 const ui = useUiStore();
+const duty = useUnattendedStore();
+const roleTaskCount = computed(() => buildRoleQueue(
+  store.role, store.alarms, store.workorders, duty.events, store.assets,
+).tasks.length);
 const sceneEditing = ref(false);
 const sceneAssetId = ref('');
 const movingHotspotId = ref('');
@@ -295,8 +301,10 @@ function elapsed(at: string) {
       </section>
       <section class="glass panel-box work-panel">
         <header><h2><Icon name="clipboard" />协同处置进展</h2>
-          <div class="role-header-links"><RouterLink to="/operations/events?focus=tasks">岗位待办 <span>›</span></RouterLink>
-            <RouterLink to="/operations/role-workspace">我的工作台 <span>›</span></RouterLink></div></header>
+          <div class="role-header-links">
+            <span class="role-summary">{{roleNames[store.role]}} · 可办理常规事项 {{roleTaskCount}} 项</span>
+            <RouterLink to="/operations/events?focus=tasks">查看岗位待办 <span>›</span></RouterLink>
+          </div></header>
         <div class="summary-list"><RouterLink v-for="row in counts" :key="row.title" :to="row.to" class="work-row"><span class="work-icon"><Icon :name="row.icon" /></span><b>{{ row.title }}</b><strong>{{ row.value }} <small>项</small></strong><span class="work-note">（{{ row.note }}）</span></RouterLink></div>
       </section>
     </div>

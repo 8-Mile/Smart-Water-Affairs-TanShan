@@ -12,10 +12,11 @@ test.beforeEach(async({page})=>{
 test("V35兼容：七个业务导航分组可访问港口业务、设备和原档案",async({page})=>{
   await page.goto("/overview");
   await expect(page.locator(".sidebar nav > .nav-item, .sidebar nav > .nav-group")).toHaveCount(7);
-  await expect(page.getByRole("button",{name:"运行中心"})).toBeVisible();
-  await page.getByRole("button",{name:"运行中心"}).click();
-  await expect(page.locator("#primary-navigation").getByRole("link",{name:"港口水务业务链"})).toBeVisible();
-  await expect(page.locator("#primary-navigation").getByRole("link",{name:"值守与事件中心"})).toBeVisible();
+  await expect(page.getByRole("link",{name:"运行处置"})).toBeVisible();
+  await page.getByRole("link",{name:"运行处置"}).click();
+  await expect(page.locator(".event-center")).toBeVisible();
+  await page.getByRole("button",{name:"水资源管理"}).click();
+  await expect(page.locator("#primary-navigation").getByRole("link",{name:"雨污水处理与回用"})).toBeVisible();
   await page.getByRole("button",{name:"设备运维"}).click();
   await expect(page.locator("#primary-navigation").getByRole("link",{name:"设备与档案"})).toBeVisible();
   await page.locator("#primary-navigation").getByRole("link",{name:"设备与档案"}).click();

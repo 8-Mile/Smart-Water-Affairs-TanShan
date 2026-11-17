@@ -26,23 +26,26 @@ const routes: RouteRecordRaw[] = [
     component: () => import("./views/Overview.vue"),
     meta: { title: "综合总览", permission: read },
   },
+  // V4.4: keep old deep links functional, but do not maintain a second operations UI.
   {
     path: "/operations/role-workspace",
-    name: "role-workspace",
-    component: () => import("./views/RoleWorkspaceView.vue"),
-    meta: {title:"岗位工作台",permission:read,hideGlobalHeading:true},
+    redirect: (to) => ({
+      path: "/operations/events",
+      query: {...to.query, tab: "queue", focus: "tasks"},
+    }),
   },
   {
     path: "/operations/emergency",
-    name: "emergency",
-    component: () => import("./views/EmergencyView.vue"),
-    meta: {title:"应急协同",permission:read,hideGlobalHeading:true},
+    redirect: (to) => ({
+      path: "/operations/events",
+      query: {...to.query, tab: "correlation", mode: "emergency"},
+    }),
   },
   {
     path: "/operations/events",
     name: "event-center",
     component: () => import("./views/EventCenterView.vue"),
-    meta: { title: "值守与事件中心", permission: read },
+    meta: { title: "值守与事件中心", permission: read, hideGlobalHeading: true },
   },
   {
     path: "/process/spray",

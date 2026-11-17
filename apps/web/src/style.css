@@ -528,3 +528,7 @@ p {
 /* V4.3 Keep the original pending-task shortcut next to the role-workspace entry. */
 .role-header-links{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
 .role-header-links a{font-size:11px;white-space:nowrap}
+
+/* V4.4 compact role summary: do not introduce a second personal dashboard. */
+.role-header-links{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.role-header-links .role-summary{font-size:10px;color:#7da4b6;font-weight:500}

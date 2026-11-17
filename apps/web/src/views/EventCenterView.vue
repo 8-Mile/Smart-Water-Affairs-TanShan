@@ -1,29 +1,41 @@
 <script setup lang="ts">
 import {computed,defineAsyncComponent,ref,watch} from "vue";
 import {useRoute,useRouter} from "vue-router";
+import type {LocationQueryRaw} from "vue-router";
 import {NButton,NInput,NSelect,NTag} from "naive-ui";
 import {useDemoStore} from "../demo/store";
 import {useUnattendedStore} from "../demo/unattendedStore";
 import {useUiStore} from "../demo/ui";
 import RoleActionQueue from "../components/RoleActionQueue.vue";
 import WorkOrderDrawer from "../components/WorkOrderDrawer.vue";
+import {can} from "../demo/permissions";
+import {readEmergencyCases} from "../demo/emergencyWorkflow";
 import {buildEventHub,filterHubEvents,type EventHubFilter,type HubEvent,type EventOrigin} from "../demo/eventHub";
 
 const DutyPanel=defineAsyncComponent(()=>import("./UnattendedView.vue"));
 const AlarmsPanel=defineAsyncComponent(()=>import("./AlarmsView.vue"));
 const CorrelationPanel=defineAsyncComponent(()=>import("./CorrelationView.vue"));
+const EmergencyPanel=defineAsyncComponent(()=>import("../components/EmergencyWorkflowPanel.vue"));
 type WorkTab="queue"|"duty"|"alarms"|"correlation";
 const tabs:readonly {value:WorkTab;label:string;hint:string}[]=[
  {value:"queue",label:"全部事件",hint:"跨来源待办"},
  {value:"duty",label:"值守巡查",hint:"规则与异常"},
  {value:"alarms",label:"生产告警",hint:"告警受理"},
- {value:"correlation",label:"协同核查",hint:"关联与证据"},
+ {value:"correlation",label:"协同处置",hint:"关联核查 / 应急"},
 ];
 function validTab(v:unknown):v is WorkTab {
  return v==="queue"||v==="duty"||v==="alarms"||v==="correlation";
 }
 const route=useRoute(),router=useRouter(),demo=useDemoStore(),duty=useUnattendedStore(),ui=useUiStore();
 const tab=computed<WorkTab>(()=>validTab(route.query.tab)?route.query.tab:"queue");
+const collaborationMode=computed<"analysis"|"emergency">(()=>
+ route.query.mode==="emergency"?"emergency":"analysis");
+const canCreateEmergency=computed(()=>can(demo.role,"emergency:create"));
+const emergencies=ref(readEmergencyCases(localStorage,demo.scenarioId));
+function refreshEmergency(){emergencies.value=readEmergencyCases(localStorage,demo.scenarioId);}
+watch(()=>demo.scenarioId,refreshEmergency);
+const openEmergencies=computed(()=>emergencies.value.filter(x=>x.status!=="closed").length);
+const showExtraActions=ref(false);
 const index=computed(()=>buildEventHub(demo.alarms,duty.events,demo.assets,demo.workorders));
 const selectedRef=ref(typeof route.query.eventRef==="string"?route.query.eventRef:"");
 const state=ref<EventHubFilter>("open");
@@ -90,6 +102,7 @@ function clearAssetScope(){
  void router.replace({path:route.path,query});
 }
 function select(e:HubEvent){
+ showExtraActions.value=false;
  selectedRef.value=e.ref;
  void router.replace({path:route.path,query:{...route.query,tab:"queue",eventRef:e.ref}});
 }
@@ -119,11 +132,25 @@ function openOrderWorkspace(e:HubEvent){
   workOrderId:e.workOrderId,returnTo:"/operations/events?tab=queue&eventRef="+encodeURIComponent(e.ref),
  }});
 }
-function openEmergency(e:HubEvent){
- void router.push({path:"/operations/emergency",query:{
-  ...(e.origin==="alarm"?{alarmId:e.originalId}:{}),
-  returnTo:route.fullPath,
- }});
+function openEmergency(e?:HubEvent|null){
+ const query:Record<string,string>={tab:"correlation",mode:"emergency"};
+ if(e){
+  query.eventRef=e.ref;
+  query.assetId=e.assetId;
+  if(e.origin==="alarm")query.alarmId=e.originalId;
+ }
+ void router.push({path:"/operations/events",query});
+}
+function selectCollaboration(mode:"analysis"|"emergency"){
+ const query:LocationQueryRaw={...route.query,tab:"correlation"};
+ if(mode==="emergency")query.mode="emergency";
+ else delete query.mode;
+ void router.replace({path:"/operations/events",query});
+}
+function returnToEvent(){
+ const query:Record<string,string>={tab:"queue"};
+ if(typeof route.query.eventRef==="string")query.eventRef=route.query.eventRef;
+ void router.push({path:"/operations/events",query});
 }
 function openAsset(e:HubEvent){ if(demo.getAsset(e.assetId))ui.openAsset(e.assetId); }
 function goAssetWorkspace(e:HubEvent){
@@ -139,7 +166,7 @@ function timestamp(v:string){
 
 <template>
  <section class="event-center">
-  <div class="hub-intro">
+  <div v-if="tab==='queue'" class="hub-intro">
    <div>
     <span class="hub-eyebrow">运行中心 / 统一事件工作台</span>
     <h2>事件汇总与业务处置</h2>
@@ -147,8 +174,9 @@ function timestamp(v:string){
    </div>
    <NTag size="small" type="warning">DEMO · 非现场24小时监护</NTag>
   </div>
-  <RoleActionQueue />
-  <div class="hub-stats" aria-label="当前事件概况">
+  <h2 v-else class="hub-visually-hidden">运行处置 · {{tab==='correlation'?'协同处置':tab==='duty'?'值守巡查':'生产告警'}}</h2>
+  <RoleActionQueue v-if="tab==='queue'" />
+  <div v-if="tab==='queue'" class="hub-stats" aria-label="当前事件概况">
    <div><span>未闭环事件</span><strong>{{ visibleSummary.open }}</strong><small>含已确认未关闭；独立于岗位可办理数</small></div>
    <div><span>告警与业务提醒</span><strong>{{ visibleSummary.alarms }}</strong><small>含业务提醒</small></div>
    <div><span>值守事件</span><strong>{{ visibleSummary.duty }}</strong><small>仅已产生的巡查事件</small></div>
@@ -159,6 +187,12 @@ function timestamp(v:string){
      :class="{selected:tab===t.value}" :aria-current="tab===t.value?'page':undefined"
      @click="changeTab(t.value)"><strong>{{ t.label }}</strong><small>{{ t.hint }}</small></button>
   </nav>
+  <div v-if="tab==='queue'" class="hub-quick-actions">
+   <span>当前事件 {{visibleSummary.open}} 条未闭环；应急任务 {{openEmergencies}} 项未归档（两项业务状态独立）</span>
+   <NButton size="small" secondary @click="openEmergency()">
+    查看应急任务 <span v-if="openEmergencies">({{openEmergencies}})</span>
+   </NButton>
+  </div>
 
   <template v-if="tab==='queue'">
    <div v-if="scopedAsset" class="hub-scope">
@@ -208,11 +242,18 @@ function timestamp(v:string){
        <div class="hub-actions">
         <NButton type="primary" size="small" @click="openInWorkflow(selected)">在本工作台处理原事件</NButton>
         <NButton size="small" secondary :disabled="!selected.workOrderId||selected.isMissingWorkOrder" @click="openOrder(selected)">本页办理关联工单</NButton>
-        <NButton size="small" quaternary :disabled="!selected.workOrderId||selected.isMissingWorkOrder" @click="openOrderWorkspace(selected)">完整工单页面</NButton>
-        <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="goAssetWorkspace(selected)">设备工作台</NButton>
         <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="openAsset(selected)">快速设备详情</NButton>
-        <NButton size="small" secondary @click="openEmergency(selected)">发起应急协同（草稿）</NButton>
-        <NButton size="small" quaternary @click="changeTab('correlation')">查看协同核查</NButton>
+        <NButton v-if="canCreateEmergency" size="small" secondary @click="openEmergency(selected)">升级应急处置</NButton>
+        <NButton size="small" quaternary @click="showExtraActions=!showExtraActions">
+         {{showExtraActions?"收起更多操作":"更多操作"}}
+        </NButton>
+       </div>
+       <div v-if="showExtraActions" class="hub-extra-actions">
+        <NButton size="small" quaternary :disabled="!selected.workOrderId||selected.isMissingWorkOrder"
+          @click="openOrderWorkspace(selected)">打开完整工单</NButton>
+        <NButton size="small" quaternary :disabled="!demo.getAsset(selected.assetId)"
+          @click="goAssetWorkspace(selected)">设备全量工作台</NButton>
+        <NButton size="small" quaternary @click="changeTab('correlation')">跨系统关联核查</NButton>
        </div>
        <div class="hub-closure" aria-label="当前事件的下一步处理">
         <strong>下一步处理建议</strong>
@@ -245,13 +286,27 @@ function timestamp(v:string){
   </template>
   <DutyPanel v-else-if="tab==='duty'" embedded />
   <AlarmsPanel v-else-if="tab==='alarms'" />
-  <CorrelationPanel v-else embedded />
+  <section v-else class="hub-collaboration">
+   <div class="hub-collaboration-header">
+    <div class="hub-collaboration-switch" aria-label="协同工作区">
+     <button type="button" :class="{selected:collaborationMode==='analysis'}"
+       @click="selectCollaboration('analysis')">跨系统关联核查</button>
+     <button type="button" :class="{selected:collaborationMode==='emergency'}"
+       @click="selectCollaboration('emergency')">应急任务 <span v-if="openEmergencies">({{openEmergencies}})</span></button>
+    </div>
+    <NButton v-if="route.query.eventRef" size="small" quaternary
+      @click="returnToEvent">返回原事件</NButton>
+   </div>
+   <CorrelationPanel v-if="collaborationMode==='analysis'" embedded />
+   <EmergencyPanel v-else embedded @changed="refreshEmergency" />
+  </section>
   <WorkOrderDrawer :work-order-id="inlineWorkOrderId" @close="inlineWorkOrderId=null" />
  </section>
 </template>
 
 <style scoped>
-.event-center{display:grid;gap:14px;min-width:0;color:#345d75}
+.event-center{display:grid;gap:11px;min-width:0;color:#345d75}
+.hub-visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .hub-intro{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(110deg,#edf8fd,#fff 70%);border:1px solid #dae9f1;border-radius:10px;padding:14px 18px}
 .hub-eyebrow{font-size:10px;letter-spacing:.06em;color:#7c9fb2}
 .hub-intro h2{margin:3px 0 4px;color:#194e6f;font-size:20px}
@@ -289,6 +344,13 @@ function timestamp(v:string){
 .hub-related{display:grid;gap:8px;padding-top:5px;border-top:1px solid #eef2f5;font-size:11px}
 .hub-related p{margin:0;color:#8ba2b1;line-height:1.6}
 .hub-related-row{text-align:left;padding:8px 10px;background:#f5fafd;border:1px solid #e0ebf0;border-radius:5px;color:#42748e;cursor:pointer}
+.hub-quick-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;color:#718b9d}
+.hub-collaboration{display:grid;gap:12px;min-width:0}
+.hub-collaboration-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hub-collaboration-switch{display:flex;gap:5px;background:#f0f6fa;border:1px solid #d8e9f0;border-radius:8px;padding:5px}
+.hub-collaboration-switch button{border:0;background:transparent;border-radius:5px;padding:9px 13px;font-size:12px;cursor:pointer;color:#537d93}
+.hub-collaboration-switch button.selected{background:#fff;box-shadow:0 1px 5px #1d698b20;color:#15668a;font-weight:700}
+.hub-extra-actions{display:flex;flex-wrap:wrap;gap:6px;padding:8px 9px;border-radius:6px;background:#f6fafd;border:1px solid #e2edf3}
 .hub-empty{padding:22px;font-size:12px;color:#8aa4b4}
 @media(max-width:1000px){.hub-columns{grid-template-columns:1fr}.hub-items{max-height:350px}}
 @media(max-width:720px){.hub-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.hub-filter{grid-template-columns:1fr}.hub-tabs button{min-width:120px}}

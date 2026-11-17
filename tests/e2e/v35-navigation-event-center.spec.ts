@@ -10,25 +10,24 @@ test.beforeEach(async({page})=>{
  });
 });
 
-test("V35-UI01 左侧收敛为7组20个入口，旧路由保持正确菜单定位",async({page})=>{
+test("V44-UI01 运行处置为一个直接入口，原业务及水务专业路由仍能访问",async({page})=>{
  await page.goto("/overview",{waitUntil:"networkidle"});
  await expect(page.getByRole("link",{name:"综合总览"})).toBeVisible();
- await expect(page.locator("#primary-navigation .nav-group")).toHaveCount(6);
- const groupTitles=await page.locator("#primary-navigation .nav-group").allTextContents();
- for(const x of ["运行中心","工艺监控","设备运维","水资源管理","分析中心","系统设置"])
-  expect(groupTitles.join(" ")).toContain(x);
+ await expect(page.locator("#primary-navigation .nav-group")).toHaveCount(5);
+ await expect(page.getByRole("link",{name:"运行处置"})).toBeVisible();
+ await expect(page.locator("#primary-navigation")).not.toContainText("岗位工作台");
+ await expect(page.locator("#primary-navigation")).not.toContainText("应急协同");
  await page.locator("#primary-navigation .nav-group").filter({hasText:"水资源管理"}).click();
- await expect(page.locator(".nav-children .nav-item")).toHaveCount(3);
- await expect(page.getByRole("link",{name:"调蓄与四预"})).toBeVisible();
- await page.locator("#primary-navigation .nav-group").filter({hasText:"运行中心"}).click();
- await expect(page.locator(".nav-children .nav-item")).toHaveCount(2);
- await expect(page.locator(".nav-children")).toContainText("值守与事件中心");
+ await expect(page.locator(".nav-children .nav-item")).toHaveCount(4);
+ await expect(page.getByRole("link",{name:"供需动态平衡"})).toBeVisible();
+ await page.getByRole("link",{name:"运行处置"}).click();
+ await expect(page).toHaveURL(/operations\/events/);
  await page.goto("/decision/four-pre");
  await expect(page.locator(".nav-group.open")).toContainText("水资源管理");
- await expect(page.locator(".nav-children .nav-item.active")).toContainText("调蓄与四预");
+ await expect(page.locator(".nav-children .nav-item.active")).toContainText("供需动态平衡");
  await page.goto("/operations/alarms?status=active");
- await expect(page.locator(".nav-group.open")).toContainText("运行中心");
- await expect(page.locator(".nav-children .nav-item.active")).toContainText("值守与事件中心");
+ await expect(page).toHaveURL(/operations\/alarms/);
+ await expect(page.locator(".sidebar")).toContainText("运行处置");
 });
 test("V35-UI02 统一队列查看来源与原事件，进入告警处理仍在同工作台",async({page})=>{
  await page.goto("/operations/events");
@@ -57,7 +56,7 @@ test("V35-UI03 值守模拟事件出现在统一队列，但不自动创建第�
   return useDemoStore().workorders.length;
  });
  await page.locator(".hub-event-row").filter({hasText:"智能巡查"}).first().click();
- await expect(page.locator(".hub-related")).toContainText("不会自动合并");
+ await expect(page.locator(".hub-related").last()).toContainText("不会自动合并");
  expect(await page.evaluate(async()=>{
   const {useDemoStore}=await import("/src/demo/store.ts");
   return useDemoStore().workorders.length;

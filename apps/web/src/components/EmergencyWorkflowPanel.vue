@@ -10,6 +10,8 @@ import {
 } from "../demo/emergencyWorkflow";
 import type {Role} from "../demo/types";
 
+defineProps<{embedded?:boolean}>();
+const emit=defineEmits<{changed:[]}>();
 const route=useRoute();
 const store=useDemoStore();
 const message=useMessage();
@@ -17,6 +19,17 @@ const cases=ref<EmergencyCase[]>(readEmergencyCases(localStorage,store.scenarioI
 const selectedId=ref(typeof route.query.caseId==="string"?route.query.caseId:cases.value.at(-1)?.id??"");
 const selected=computed(()=>cases.value.find(c=>c.id===selectedId.value));
 const currentAlarm=computed(()=>store.alarms.find(a=>a.id===newEventId.value));
+const sourceEventRef=computed(()=>{
+ if(newEventId.value)return "alarm:"+newEventId.value;
+ return typeof route.query.eventRef==="string"&&route.query.eventRef.startsWith("duty:")
+   ?route.query.eventRef:"";
+});
+const sourceAssetId=computed(()=>typeof route.query.assetId==="string"&&
+ store.getAsset(route.query.assetId)?route.query.assetId:"");
+const existingLinkedCase=computed(()=>sourceEventRef.value?
+ cases.value.find(c=>c.status!=="closed"&&
+  (c.sourceEventRef===sourceEventRef.value||
+   (newEventId.value&&c.eventId===newEventId.value))):undefined);
 const kind=ref<EmergencyKind>("supply");
 const newEventId=ref(typeof route.query.alarmId==="string"?route.query.alarmId:"");
 const newTitle=ref("关键供水设施异常联合处置（模拟）");
@@ -42,17 +55,35 @@ const states:Record<string,string>={
 };
 function refresh(){
  cases.value=readEmergencyCases(localStorage,store.scenarioId);
+ emit("changed");
  if(!cases.value.some(c=>c.id===selectedId.value))selectedId.value=cases.value.at(-1)?.id??"";
 }
 watch(()=>store.scenarioId,refresh);
-watch(()=>route.query.alarmId,(id)=>{if(typeof id==="string")newEventId.value=id;});
+watch(()=>[route.query.alarmId,route.query.eventRef],([id])=>{
+ newEventId.value=typeof id==="string"?id:"";
+ const match=existingLinkedCase.value;
+ if(match)selectedId.value=match.id;
+},{immediate:true});
+watch(()=>route.query.caseId,(id)=>{
+ if(typeof id==="string"&&cases.value.some(c=>c.id===id))selectedId.value=id;
+});
 function create(){
  try{
+  // One open emergency workflow per confirmed source event in a DEMO scenario.
+  // Do not silently create duplicate task chains for the same event.
+  const existing=existingLinkedCase.value;
+  if(existing){
+   selectedId.value=existing.id;
+   message.info("此来源事件已有未归档应急任务，已定位原任务，不重复创建");
+   return;
+  }
   const alarm=currentAlarm.value;
   const item=createEmergencyCase(localStorage,{
    scenarioId:store.scenarioId,actor:store.role,kind:kind.value,
    title:newTitle.value,severity:severity.value,
-   ...(alarm?{eventId:alarm.id,assetId:alarm.assetId}:{}),
+   ...(alarm?{eventId:alarm.id,assetId:alarm.assetId}:
+     sourceAssetId.value?{assetId:sourceAssetId.value}:{}),
+   ...(sourceEventRef.value?{sourceEventRef:sourceEventRef.value}:{}),
    now:new Date().toISOString(),
   });
   refresh();selectedId.value=item.id;
@@ -81,12 +112,19 @@ const labelOf=(role:Role)=>roleNames[role];
 </script>
 
 <template>
- <section class="emergency-page">
-  <header class="emergency-head">
+ <section class="emergency-page" :class="{embedded,'no-selection':!selected}">
+  <header v-if="!embedded" class="emergency-head">
    <div><small>运行中心 / 应急协同</small><h2>应急岗位任务与复盘</h2>
     <p>依据事件建立协同任务，人工核对已批准预案与联系人，记录响应、超时升级、反馈证据及复盘。不发送外部通知，不控制设备。</p></div>
    <NTag type="warning">DEMO · 预案模板非正式批准版本</NTag>
   </header>
+   <div v-if="sourceEventRef" class="emergency-linkage">
+   <strong>当前来源{{newEventId?'告警':'巡查事件'}}：{{currentAlarm?.code??sourceEventRef}}</strong>
+   <span>{{currentAlarm?.title??'保留原始事件引用，现场信息需核查'}} · 任务不会自动关闭原告警或巡查事件</span>
+   <NButton v-if="existingLinkedCase" size="tiny" secondary @click="selectedId=existingLinkedCase.id">
+    查看已关联应急任务 {{existingLinkedCase.id}}
+   </NButton>
+  </div>
   <div class="emergency-layout">
    <section class="emergency-panel">
     <h3>1. 建立应急协同草稿</h3>
@@ -102,7 +140,9 @@ const labelOf=(role:Role)=>roleNames[role];
       :options="store.alarms.map(a=>({value:a.id,label:a.code+' · '+a.title}))"/>
     </label>
     <p class="emergency-hint">建议模板：{{EMERGENCY_TEMPLATES[kind].plan}}。模板中的岗位任务由人工确认后才能启动。</p>
-    <NButton type="primary" size="small" :disabled="!canCreate" @click="create">创建应急协同草稿</NButton>
+    <NButton type="primary" size="small" :disabled="!canCreate" @click="create">
+     {{existingLinkedCase?'打开来源事件已有应急任务':'创建应急协同草稿'}}
+    </NButton>
     <p v-if="!canCreate" class="emergency-hint">当前岗位没有创建应急任务权限，可查看现有记录。</p>
     <hr/>
     <h3>历史演练记录</h3>
@@ -118,9 +158,14 @@ const labelOf=(role:Role)=>roleNames[role];
      <div><small>{{selected.id}}</small><h3>{{selected.title}}</h3></div>
      <NTag :type="selected.status==='closed'?'success':'warning'">{{states[selected.status]}}</NTag>
     </div>
-    <p class="emergency-hint">关联：{{selected.eventId??'未绑定原始告警'}} / {{selected.assetId??'无设备引用'}} · 风险等级 {{selected.severity}} · 来源 MOCK / USER_ENTRY</p>
+    <p class="emergency-hint">关联：{{selected.sourceEventRef??selected.eventId??'未绑定原始事件'}} /
+     {{selected.assetId??'无设备引用'}} · 风险等级 {{selected.severity}} · 来源 MOCK / USER_ENTRY</p>
     <p v-if="selected.resourceAvailability" class="emergency-hint">人工资源核查：{{selected.resourceAvailability}} · 候选设备 {{selected.resourceAssetIds?.length??0}} 台（尚未经现场可用性确认）</p>
     <div class="emergency-links">
+     <RouterLink v-if="selected.sourceEventRef"
+       :to="{path:'/operations/events',query:{tab:'queue',eventRef:selected.sourceEventRef}}">
+       返回原始事件 →
+     </RouterLink>
      <RouterLink v-if="selected.eventId" :to="{path:'/operations/events',query:{tab:'alarms',alarmId:selected.eventId,returnTo:route.fullPath}}">核查原告警 →</RouterLink>
      <RouterLink v-if="selected.assetId" :to="{path:'/operations/asset-workspace',query:{assetId:selected.assetId,returnTo:route.fullPath}}">查看设备档案 →</RouterLink>
     </div>
@@ -184,7 +229,13 @@ const labelOf=(role:Role)=>roleNames[role];
 </template>
 
 <style scoped>
-.emergency-page{display:grid;gap:13px;color:#28536d;font-size:12px}
+.emergency-page{display:grid;gap:11px;color:#28536d;font-size:12px}
+.emergency-page.embedded .emergency-panel{box-shadow:none}
+.emergency-page.embedded.no-selection .emergency-layout{
+ grid-template-columns:minmax(0,660px);justify-content:center;
+}
+.emergency-linkage{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 12px;background:#eef8fe;border:1px solid #d1eaf5;border-radius:7px}
+.emergency-linkage span{color:#688fa0}
 .emergency-head,.emergency-panel{background:#fafdff;border:1px solid #d4e7f1;border-radius:10px;padding:15px}
 .emergency-head{display:flex;align-items:start;justify-content:space-between;gap:12px}
 .emergency-head h2{font-size:20px;margin:5px 0}.emergency-head p{font-size:12px;color:#6a8898;margin:0;line-height:1.65;max-width:800px}

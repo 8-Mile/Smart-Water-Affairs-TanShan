@@ -29,15 +29,7 @@ export const SUBSYSTEM_NAV: NavChild[] = [
 
 export const NAV_GROUPS: NavGroup[] = [
   { id: "overview", label: "综合总览", to: "/overview", permission: read },
-  {
-    id: "running", label: "运行中心", permission: read,
-    children: [
-      {label:"岗位工作台",to:"/operations/role-workspace",permission:read},
-      { label: "值守与事件中心", to: "/operations/events", permission: read,
-        aliases: ["/operations/alarms", "/intelligent/unattended", "/intelligent/correlation"] },
-      {label:"应急协同",to:"/operations/emergency",permission:read},
-    ],
-  },
+  { id: "running", label: "运行处置", to: "/operations/events", permission: read },
   { id: "process", label: "工艺监控", permission: read, children: SUBSYSTEM_NAV },
   {
     id: "operations", label: "设备运维", permission: read,
@@ -79,6 +71,11 @@ export const NAV_GROUPS: NavGroup[] = [
 
 /** Determines active category for both new and historic routes. */
 export function navGroupForPath(path: string): NavGroup | undefined {
+  // Historic deep links stay in the same operations domain, not a phantom group.
+  if (["/operations/alarms", "/operations/emergency", "/operations/role-workspace",
+       "/intelligent/unattended", "/intelligent/correlation"].includes(path)) {
+    return NAV_GROUPS.find(group => group.id === "running");
+  }
   return NAV_GROUPS.find((group) => group.to === path ||
     group.children?.some((child) => child.to === path || child.aliases?.includes(path)));
 }

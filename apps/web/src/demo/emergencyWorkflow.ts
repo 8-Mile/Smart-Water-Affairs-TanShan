@@ -13,6 +13,8 @@ export interface EmergencyTask {
 }
 export interface EmergencyCase {
  id:string;scenarioId:ScenarioId;kind:EmergencyKind;eventId?:string;assetId?:string;
+ /** Stable source event reference, e.g. alarm:ALM-001 or duty:UT-001. */
+ sourceEventRef?:string;
  title:string;status:EmergencyStatus;severity:"critical"|"warning";
  planTemplate:string;approvedPlanRef?:string;commandBy?:string;
  resourceAvailability?:string;resourceAssetIds?:string[];
@@ -57,16 +59,23 @@ function persist(storage:LocalStore,cases:EmergencyCase[]):void{
 }
 export function createEmergencyCase(storage:LocalStore,input:{
  scenarioId:ScenarioId;actor:Role;kind:EmergencyKind;title:string;severity:"critical"|"warning";
- eventId?:string;assetId?:string;now:string;
+ eventId?:string;assetId?:string;sourceEventRef?:string;now:string;
 }):EmergencyCase{
  assertCan(input.actor,"emergency:create");
  if(!Number.isFinite(Date.parse(input.now)))throw Error("事件时间无效");
  const all=readEmergencyCases(storage);
+ if(input.sourceEventRef && all.some(c=>c.scenarioId===input.scenarioId&&
+    c.sourceEventRef===input.sourceEventRef&&c.status!=="closed"))
+   throw Error("来源事件已有未归档应急任务，请继续原流程，不重复创建");
+ if(input.eventId && all.some(c=>c.scenarioId===input.scenarioId&&
+    c.eventId===input.eventId&&c.status!=="closed"))
+   throw Error("同一原始告警已有未归档应急任务，请继续原流程");
  const id="EMG-"+input.scenarioId.slice(4)+"-"+String(all.filter(x=>x.scenarioId===input.scenarioId).length+1).padStart(3,"0");
  if(all.some(x=>x.id===id))throw Error("任务编号冲突");
  const template=EMERGENCY_TEMPLATES[input.kind];
  const draft:EmergencyCase={
   id,scenarioId:input.scenarioId,kind:input.kind,eventId:input.eventId,assetId:input.assetId,
+  sourceEventRef:input.sourceEventRef??(input.eventId?"alarm:"+input.eventId:undefined),
   title:nonempty(input.title,"事件说明",4),severity:input.severity,status:"draft",
   planTemplate:template.plan,createdAt:input.now,createdBy:input.actor,
   tasks:template.tasks.map((t,i)=>({
