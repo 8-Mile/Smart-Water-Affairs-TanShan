@@ -197,6 +197,9 @@ function toggleDoc(id: string): void {
       closable
     >
       <div v-if="asset" class="drawer-body">
+        <RouterLink class="asset-workspace-entry" :to="{path:'/operations/asset-workspace',query:{assetId:asset.id}}" @click="ui.closeAsset()">
+          进入设备统一工作台 · 监测 / 告警 / 工单 / 巡检 / 资料
+        </RouterLink>
         <div class="tag-row">
           <NTag size="small" :bordered="false" type="info">
             {{ subsystemName }}
@@ -418,6 +421,8 @@ function toggleDoc(id: string): void {
 </template>
 
 <style scoped>
+.asset-workspace-entry{display:block;text-decoration:none;font-size:12px;font-weight:700;color:#26779b;background:#e9f7fb;border:1px solid #a8d6e7;border-radius:7px;padding:11px 13px;margin-bottom:12px}
+.asset-workspace-entry:hover{background:#daf1f9}
 .drawer-body {
   min-height: 320px;
 }

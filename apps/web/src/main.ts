@@ -100,6 +100,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: "档案管理", permission: read },
   },
   {
+    path: "/operations/asset-workspace",
+    name: "asset-workspace",
+    component: () => import("./views/AssetWorkspaceView.vue"),
+    meta: { title: "设备统一工作台", permission: read },
+  },
+  {
     path: "/operations/assets",
     name: "assets",
     component: () => import("./views/AssetsView.vue"),

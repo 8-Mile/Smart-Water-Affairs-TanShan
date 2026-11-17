@@ -2,6 +2,13 @@
 
 京唐港区 51、52 号泊位智慧水务单机演示。前端为 Vue 3 + TypeScript + Vite + Pinia + Naive UI + ECharts，所有业务数据由本地种子与浏览器 `localStorage` 驱动，不请求 `/api`，启动 Vite 即可完整演示。
 
+## V3.7 设备统一工作台（2026-11-17）
+
+原系统新增单设备连续操作页：http://localhost:5174/operations/asset-workspace?assetId=asset-p002。
+包含测点与规则健康、告警确认、原工单办理、人工巡检、异常转单、设备履历与档案核查。
+业务动作沿用原数据和权限；不自动派单，不下发PLC/SCADA控制，不新增侧栏菜单。
+详情请见 docs/product/v37-unified-asset-workspace.md。
+
 ## V3.6 设备与水资源业务衔接（2026-11-17）
 
 - 设备台账选中设备后，可按相同 assetId 前往运行事件、工单、巡检、健康分析和设备档案；工单与巡检使用同一设备筛选。

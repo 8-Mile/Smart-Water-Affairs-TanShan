@@ -89,6 +89,10 @@ function openOrder(e:HubEvent){
  }});
 }
 function openAsset(e:HubEvent){ if(demo.getAsset(e.assetId))ui.openAsset(e.assetId); }
+function goAssetWorkspace(e:HubEvent){
+ if(!demo.getAsset(e.assetId))return;
+ void router.push({path:"/operations/asset-workspace",query:{assetId:e.assetId,tab:"events"}});
+}
 function detailTag(e:HubEvent){return !e.active?"default":e.severity==="critical"?"error":e.severity==="warning"?"warning":"info";}
 function timestamp(v:string){
  const time=Date.parse(v);
@@ -166,7 +170,8 @@ function timestamp(v:string){
        <div class="hub-actions">
         <NButton type="primary" size="small" @click="openInWorkflow(selected)">在本工作台处理原事件</NButton>
         <NButton size="small" secondary :disabled="!selected.workOrderId||selected.isMissingWorkOrder" @click="openOrder(selected)">打开关联工单</NButton>
-        <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="openAsset(selected)">查看设备</NButton>
+        <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="goAssetWorkspace(selected)">设备工作台</NButton>
+        <NButton size="small" secondary :disabled="!demo.getAsset(selected.assetId)" @click="openAsset(selected)">快速设备详情</NButton>
         <NButton size="small" quaternary @click="changeTab('correlation')">查看协同核查</NButton>
        </div>
        <div class="hub-related">

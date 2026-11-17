@@ -455,10 +455,23 @@ function openAssetDetail(): void {
     message.warning("关联设备不存在或已退役，无法打开设备详情。");
     return;
   }
+  if (router.currentRoute.value.path === "/operations/asset-workspace") {
+    const id = order.value.assetId;
+    close();
+    void router.replace({path:"/operations/asset-workspace",query:{assetId:id,tab:"monitor"}});
+    return;
+  }
   ui.openAsset(order.value.assetId);
 }
 
 function openAssetTimeline(): void {
+  if (order.value && router.currentRoute.value.path === "/operations/asset-workspace") {
+    const id=order.value.assetId;
+    close();
+    void router.replace({path:"/operations/asset-workspace",query:{assetId:id,tab:"inspection"}});
+    message.info("已返回当前设备工作台的「巡检与履历」，不离开原业务页面。");
+    return;
+  }
   openAssetDetail();
   message.info("已打开设备详情，请切换到「设备履历」Tab 查看归档记录。");
 }

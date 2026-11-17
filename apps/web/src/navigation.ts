@@ -41,7 +41,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     id: "operations", label: "设备运维", permission: read,
     children: [
-      { label: "设备与档案", to: "/operations/assets", permission: read, aliases: ["/archives"] },
+      { label: "设备与档案", to: "/operations/assets", permission: read, aliases: ["/archives", "/operations/asset-workspace"] },
       { label: "工单与巡检", to: "/operations/workorders", permission: read },
       { label: "健康与能效", to: "/decision/health", permission: read },
       { label: "工程底账", to: "/engineering/registry", permission: read },
@@ -105,6 +105,7 @@ const TITLES: Record<string, string> = {
   "/decision/knowledge": "证据知识与诊断",
   "/decision/four-pre": "微观四预",
   "/operations/assets": "设备台账",
+  "/operations/asset-workspace": "设备统一工作台",
   "/operations/alarms": "告警事件",
   "/operations/workorders": "工单任务",
   "/data/reports": "常用报表",

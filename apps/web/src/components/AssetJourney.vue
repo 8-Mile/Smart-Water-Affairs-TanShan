@@ -15,6 +15,7 @@ const docs=computed(()=>store.documents.filter(x=>x.assetIds.includes(props.asse
 const endpoints=computed(()=>{
  const id=props.assetId;
  return [
+  {label:"设备工作台",to:{path:"/operations/asset-workspace",query:{assetId:id}},active:route.path==="/operations/asset-workspace"},
   {label:"设备台账",to:{path:"/operations/assets",query:{assetId:id}},active:route.path==="/operations/assets"},
   {label:"运行事件",to:{path:"/operations/events",query:{assetId:id}},active:route.path==="/operations/events"},
   {label:"工单",to:{path:"/operations/workorders",query:{assetId:id}},active:route.path==="/operations/workorders"&&route.query.tab!=="inspections"},
