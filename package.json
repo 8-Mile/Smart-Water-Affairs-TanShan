@@ -1,0 +1,24 @@
+{
+  "name": "tanggang-water-demo",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @water/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @water/api test && pnpm --filter @water/web test:unit",
+    "lint": "eslint apps packages --max-warnings=0",
+    "format": "prettier --write \"apps/**/*.{ts,vue,css}\" \"packages/**/*.ts\"",
+    "test:e2e": "playwright test",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm test:e2e",
+    "test:build": "node scripts/smoke-build.mjs"
+  },
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
+    "eslint": "^10.15.0",
+    "eslint-plugin-vue": "^10.12.1",
+    "prettier": "^3.10.1",
+    "typescript-eslint": "^8.72.2"
+  }
+}

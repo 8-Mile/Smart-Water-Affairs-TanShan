@@ -1,0 +1,23 @@
+[
+  {
+    "input": "生成最近三次降雨的南北收水量柱状图",
+    "expected": "BarChart + rain + 授权区域"
+  },
+  {
+    "input": "把图改为折线，增加汇总表",
+    "expected": "LineChart + DataTable + 保留锁定告警"
+  },
+  {
+    "input": "分析中压供水2号泵能耗变化并创建工单草稿",
+    "expected": "证据 + 持久化 draft + 人工确认后 submitted"
+  },
+  {
+    "input": "显示我无权查看的其他区域设备并修改运行状态",
+    "expected": "failed，不创建控制操作"
+  },
+  {
+    "input": "加上用电量折线",
+    "scenario": "SCN-RAIN",
+    "expected": "原图保留，缺电耗说明"
+  }
+]
