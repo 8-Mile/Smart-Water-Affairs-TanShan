@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { NButton, NSelect, NTag, useDialog, useMessage } from "naive-ui";
@@ -159,6 +160,7 @@ function restoreVersion(dashboard: Dashboard): void {
 
 <template>
   <section class="dashboards-page">
+    <WorkspaceNav label="分析与看板" :items="[{name:'AI 生成与编辑',to:'/data/ai-workspace'},{name:'我的看板',to:'/data/my-dashboards'}]" />
     <div class="list-head">
       <div>
         <strong>我的看板</strong>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { applyOfficialMessages } from "../demo/a2ui-v1";
 import { rainStorage } from "../demo/water";
 import { computed, onMounted, ref, watch } from "vue";
@@ -774,6 +775,7 @@ function buildLibraryComponent(name: A2uiComponentName): A2uiComponent | null {
 
 <template>
   <section class="workspace">
+    <WorkspaceNav label="分析与看板" :items="[{name:'AI 生成与编辑',to:'/data/ai-workspace'},{name:'我的看板',to:'/data/my-dashboards'}]" />
     <aside class="panel library">
       <div class="panel-head">
         <h2>组件库</h2>

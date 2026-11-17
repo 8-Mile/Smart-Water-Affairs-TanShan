@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { rainStorage } from "../demo/water";
 import { computed, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
@@ -260,6 +261,7 @@ function goAiWorkspace(): void {
 
 <template>
   <section class="water-page">
+    <WorkspaceNav label="水资源数据" :items="[{name:'水资源总览',to:'/water/overview'},{name:'雨次分析',to:'/water/rainfall'},{name:'水量账本',to:'/water/ledger'}]" />
     <!-- 水资源总览 -->
     <template v-if="mode === 'overview'">
       <div class="stat-grid">

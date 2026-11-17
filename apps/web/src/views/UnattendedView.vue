@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import PortBusinessJourney from "../components/PortBusinessJourney.vue";
-import { computed, onMounted, onUnmounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { NButton, NTag, useMessage } from "naive-ui";
 import { useDemoStore } from "../demo/store";
 import { useUnattendedStore } from "../demo/unattendedStore";
@@ -11,11 +11,17 @@ import {
   assessPatrol, type EventStatus, type PatrolMode,
 } from "../demo/unattended";
 
+defineProps<{ embedded?: boolean }>();
 const router = useRouter();
+const route = useRoute();
 const message = useMessage();
 const demo = useDemoStore();
 const duty = useUnattendedStore();
 const selectedId = ref("");
+watch(()=>route.query.eventId,id=>{
+ if(typeof id==="string"&&id.trim())selectedId.value=id;
+},{immediate:true});
+
 const reason = ref("");
 const latest = computed(() => duty.records[0] ?? null);
 const active = computed(() => duty.openEvents);
@@ -86,7 +92,7 @@ onUnmounted(() => { if (tick) clearInterval(tick); });
 
 <template>
   <div class="duty-simple">
-  <PortBusinessJourney />
+  <PortBusinessJourney v-if="!embedded" />
     <div class="duty-heading">
       <div>
         <div class="overline">智能运行 / 集中值守</div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { computed, reactive, ref } from "vue";
 import { NButton, NCheckbox, NInputNumber, NTag, useMessage } from "naive-ui";
 import { useDemoStore } from "../demo/store";
@@ -103,6 +104,7 @@ const signedValue=computed(()=>result.value.netDeltaYuan===null?"暂不可比":c
 
 <template>
   <div class="benefit-root">
+    <WorkspaceNav label="水源优化与效益" :items="[{name:'水源分配',to:'/water/multi-source'},{name:'成本效益',to:'/water/green-benefit'}]" />
     <header class="green-hero">
       <div>
         <div class="eyebrow">水资源管理 / 绿色运营效益核算</div>

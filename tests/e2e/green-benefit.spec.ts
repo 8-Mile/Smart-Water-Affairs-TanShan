@@ -119,7 +119,8 @@ test("G10 水源库存没有独立核实时回用禁用，全自来水可比也�
 test("G11 全局导航可从综合总览异步进入绿色效益页，再返回原多水源页面",async({page})=>{
   await page.goto("/overview");
   await page.getByRole("button",{name:"水资源管理"}).click();
-  await page.getByRole("link",{name:"绿色运营效益核算"}).click();
+  await page.locator("#primary-navigation").getByRole("link",{name:"水源优化与效益"}).click();
+  await page.locator(".workspace-nav").getByRole("link",{name:"成本效益"}).click();
   await expect(page).toHaveURL(/\/water\/green-benefit/);
   await expect(page.locator(".metrics")).toContainText("1,700");
   await page.getByRole("link",{name:"查看三水源分配约束"}).click();

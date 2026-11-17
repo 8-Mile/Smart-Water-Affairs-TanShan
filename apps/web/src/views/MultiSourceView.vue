@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { NButton, NCheckbox, NInputNumber, NTag, useMessage } from "naive-ui";
@@ -107,6 +108,7 @@ function exportCsv():void{
 
 <template>
   <div class="multi-water">
+    <WorkspaceNav label="水源优化与效益" :items="[{name:'水源分配',to:'/water/multi-source'},{name:'成本效益',to:'/water/green-benefit'}]" />
     <div class="water-header">
       <div>
         <div class="eyebrow">水资源管理 / 多水源协同利用</div>

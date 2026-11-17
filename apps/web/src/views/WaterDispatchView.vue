@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { NButton, NCheckbox, NInputNumber, NTag, useMessage } from "naive-ui";
@@ -122,6 +123,7 @@ function exportCsv(): void {
 
 <template>
   <div class="dispatch-view">
+    <WorkspaceNav label="调蓄与四预" :items="[{name:'调蓄方案',to:'/water/dispatch'},{name:'风险预演',to:'/decision/four-pre'}]" />
     <div class="dispatch-intro">
       <div>
         <div class="eyebrow">水资源管理 · 雨前主动决策</div>

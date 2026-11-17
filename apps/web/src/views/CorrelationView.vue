@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import PortBusinessJourney from "../components/PortBusinessJourney.vue";
 import { computed, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { NButton, NInput, NTag, useMessage } from "naive-ui";
 import { useDemoStore } from "../demo/store";
 import { useUnattendedStore } from "../demo/unattendedStore";
@@ -16,7 +16,9 @@ import {
 
 const demo=useDemoStore();
 const duty=useUnattendedStore();
+defineProps<{ embedded?: boolean }>();
 const router=useRouter();
+const route=useRoute();
 const message=useMessage();
 const preview=ref(false);
 const recoveredPreview=ref(false);
@@ -32,7 +34,10 @@ const events=computed(()=>preview.value?[]:duty.events);
 const registry=ref(readCorrelation(localStorage));
 const scoped=computed(()=>readScenarioCorrelation(registry.value,scenario.value));
 const snapshot=computed(()=>buildCorrelationSnapshot(alarms.value,events.value,orders.value,assets.value,scoped.value.links,scenario.value));
-const selectedAssetId=ref("asset-p002");
+const selectedAssetId=ref(typeof route.query.assetId==="string"?route.query.assetId:"asset-p002");
+watch(()=>route.query.assetId,id=>{
+ if(typeof id==="string"&&id.trim())selectedAssetId.value=id;
+});
 /** 已受理事件必须在原始告警解除后继续留在队列，否则根本无法完成恢复核验。 */
 const displayedClusters=computed<CorrelationCluster[]>(()=>{
   const active=snapshot.value.clusters;
@@ -154,7 +159,7 @@ const statusName=(status:string)=>({
 
 <template>
   <section class="corr-root">
-  <PortBusinessJourney />
+  <PortBusinessJourney v-if="!embedded" />
     <header class="corr-head">
       <div>
         <div class="eyebrow">智能运行 / 异常关联与处置</div>

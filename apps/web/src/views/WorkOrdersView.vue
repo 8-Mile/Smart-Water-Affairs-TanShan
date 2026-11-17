@@ -33,6 +33,8 @@ const returnTo=computed(()=>{
  if(typeof value!=="string")return null;
  // Local known paths only; no external redirects or unsafe user-provided URL.
  if(value.startsWith("/engineering/registry?focus=balance")||
+    value==="/operations/events"||
+    /^\/operations\/events\?tab=(?:queue|duty|alarms|correlation)(?:&eventRef=(?:alarm|duty)%3A[A-Za-z0-9_-]+)?$/.test(value)||
     value==="/intelligent/unattended"||
     value==="/intelligent/correlation")return value;
  return null;

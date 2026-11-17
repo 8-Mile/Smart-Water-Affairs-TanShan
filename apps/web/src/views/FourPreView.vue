@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { NButton, NInputNumber, NSelect, NTag } from "naive-ui";
@@ -148,6 +149,7 @@ watch([queryRain, region], ([event, area]) => {
 
 <template>
   <section class="four-pre">
+    <WorkspaceNav label="调蓄与四预" :items="[{name:'调蓄方案',to:'/water/dispatch'},{name:'风险预演',to:'/decision/four-pre'}]" />
     <div class="four-pre-grid">
       <aside class="panel param-panel">
         <div class="panel-head">

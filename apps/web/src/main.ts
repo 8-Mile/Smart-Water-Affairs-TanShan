@@ -27,6 +27,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: "综合总览", permission: read },
   },
   {
+    path: "/operations/events",
+    name: "event-center",
+    component: () => import("./views/EventCenterView.vue"),
+    meta: { title: "值守与事件中心", permission: read },
+  },
+  {
     path: "/process/spray",
     name: "process-spray",
     component: () => import("./views/SprayProcessView.vue"),

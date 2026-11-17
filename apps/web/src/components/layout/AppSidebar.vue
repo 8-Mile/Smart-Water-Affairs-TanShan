@@ -5,42 +5,40 @@ import OverviewIcon from "../overview/OverviewIcon.vue";
 import { can } from "../../demo/permissions";
 import type { Action } from "../../demo/permissions";
 import { useDemoStore } from "../../demo/store";
-import { NAV_GROUPS } from "../../navigation";
+import { NAV_GROUPS, navGroupForPath, navChildForPath } from "../../navigation";
 
 const store = useDemoStore();
 const route = useRoute();
 
-const GROUP_ORDER = ["overview", "business", "process", "intelligent", "operations", "engineering", "water", "data", "admin"];
-const navIcons: Record<string, string> = { overview: "home", business: "layers", process: "process", intelligent: "shield", engineering: "layers", operations: "layers", water: "water", data: "chart", admin: "settings" };
+const GROUP_ORDER = ["overview", "running", "process", "operations", "water", "data", "admin"];
+const navIcons: Record<string, string> = { overview: "home", running: "shield", process: "process", operations: "layers", water: "water", data: "chart", admin: "settings" };
 const groups = computed(() =>
   GROUP_ORDER.map((id) => NAV_GROUPS.find((group) => group.id === id)).filter(
     (group): group is (typeof NAV_GROUPS)[number] => Boolean(group),
   ),
 );
-const openGroups = ref<string[]>([]);
+const openGroup = ref<string | null>(null);
 
 watch(
   () => route.path,
   (path) => {
-    const group = NAV_GROUPS.find(
-      (item) => item.to === path || item.children?.some((child) => child.to === path),
-    );
-    if (group?.children && !openGroups.value.includes(group.id)) {
-      openGroups.value = [...openGroups.value, group.id];
-    }
+    const group = navGroupForPath(path);
+    // Only one expanded group at a time: avoid 30-item menu overload.
+    openGroup.value = group?.children ? group.id : null;
   },
   { immediate: true },
 );
+const activeChildTo = computed(() => navChildForPath(route.path)?.to);
+
 
 function allow(permission: Action): boolean {
   return can(store.role, permission);
 }
 
 function toggleGroup(id: string): void {
-  openGroups.value = openGroups.value.includes(id)
-    ? openGroups.value.filter((item) => item !== id)
-    : [...openGroups.value, id];
+  openGroup.value = openGroup.value === id ? null : id;
 }
+
 </script>
 
 <template>
@@ -56,19 +54,22 @@ function toggleGroup(id: string): void {
             <button
               type="button"
               class="nav-group"
-              :class="{ open: openGroups.includes(group.id) }"
+              :class="{ open: openGroup === group.id }"
+              :aria-expanded="openGroup === group.id"
+              :aria-controls="'nav-children-'+group.id"
               @click="toggleGroup(group.id)"
             >
               <span><OverviewIcon :name="navIcons[group.id]" class="overview-nav-icon" />{{ group.label }}</span>
-              <span class="chevron">{{ openGroups.includes(group.id) ? "−" : "+" }}</span>
+              <span class="chevron">{{ openGroup === group.id ? "−" : "+" }}</span>
             </button>
-            <div v-if="openGroups.includes(group.id)" class="nav-children">
+            <div v-if="openGroup === group.id" :id="'nav-children-'+group.id" class="nav-children">
               <RouterLink
                 v-for="child in group.children?.filter((item) => allow(item.permission))"
                 :key="child.to"
                 :to="child.to"
                 class="nav-item child"
                 active-class="active"
+                :class="{active:activeChildTo===child.to}"
               >
                 {{ child.label }}
               </RouterLink>

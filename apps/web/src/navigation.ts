@@ -4,6 +4,8 @@ export interface NavChild {
   label: string;
   to: string;
   permission: Action;
+  /** Compatible legacy locations; keep routes working while consolidating menu entries. */
+  aliases?: string[];
 }
 
 export interface NavGroup {
@@ -28,68 +30,67 @@ export const SUBSYSTEM_NAV: NavChild[] = [
 export const NAV_GROUPS: NavGroup[] = [
   { id: "overview", label: "综合总览", to: "/overview", permission: read },
   {
-    id: "business", label: "港口核心业务", permission: read,
+    id: "running", label: "运行中心", permission: read,
     children: [
-      { label: "污染水处理与回用业务链", to: "/water/port-chain", permission: read },
-      { label: "环保供水异常协同", to: "/intelligent/correlation", permission: read },
+      { label: "值守与事件中心", to: "/operations/events", permission: read,
+        aliases: ["/operations/alarms", "/intelligent/unattended", "/intelligent/correlation"] },
+      { label: "港口水务业务链", to: "/water/port-chain", permission: read },
     ],
   },
   { id: "process", label: "工艺监控", permission: read, children: SUBSYSTEM_NAV },
   {
-    id: "intelligent", label: "智能运行", permission: read,
+    id: "operations", label: "设备运维", permission: read,
     children: [
-      { label: "集中值守中心", to: "/intelligent/unattended", permission: read },
-      { label: "设备健康与能效", to: "/decision/health", permission: read },
-      { label: "知识与证据诊断", to: "/decision/knowledge", permission: read },
-      { label: "微观四预", to: "/decision/four-pre", permission: read },
+      { label: "设备与档案", to: "/operations/assets", permission: read, aliases: ["/archives"] },
+      { label: "工单与巡检", to: "/operations/workorders", permission: read },
+      { label: "健康与能效", to: "/decision/health", permission: read },
+      { label: "工程底账", to: "/engineering/registry", permission: read },
     ],
-  },
-  {
-    id: "operations", label: "设备与运维", permission: read,
-    children: [
-      { label: "设备台账", to: "/operations/assets", permission: read },
-      { label: "告警事件", to: "/operations/alarms", permission: read },
-      { label: "工单任务", to: "/operations/workorders", permission: read },
-      { label: "档案管理", to: "/archives", permission: read },
-    ],
-  },
-  {
-    id: "engineering", label: "工程基础", permission: read,
-    children: [{ label: "工程核查与证据", to: "/engineering/registry", permission: read }],
   },
   {
     id: "water", label: "水资源管理", permission: read,
     children: [
-      { label: "水资源总览", to: "/water/overview", permission: read },
-      { label: "雨次分析", to: "/water/rainfall", permission: read },
-      { label: "智能调蓄决策", to: "/water/dispatch", permission: read },
-      { label: "水量账本", to: "/water/ledger", permission: read },
-      { label: "多水源协同优化", to: "/water/multi-source", permission: read },
-      { label: "绿色运营效益核算", to: "/water/green-benefit", permission: read },
+      { label: "水资源总览", to: "/water/overview", permission: read,
+        aliases: ["/water/rainfall", "/water/ledger"] },
+      { label: "调蓄与四预", to: "/water/dispatch", permission: read,
+        aliases: ["/decision/four-pre"] },
+      { label: "水源优化与效益", to: "/water/multi-source", permission: read,
+        aliases: ["/water/green-benefit"] },
     ],
   },
   {
-    id: "data", label: "分析与看板", permission: read,
+    id: "data", label: "分析中心", permission: read,
     children: [
-      { label: "常用报表", to: "/data/reports", permission: read },
-      { label: "AI 分析工作台", to: "/data/ai-workspace", permission: read },
-      { label: "我的看板", to: "/data/my-dashboards", permission: read },
+      { label: "报表与交接班", to: "/data/reports", permission: read },
+      { label: "AI 工作台与看板", to: "/data/ai-workspace", permission: read,
+        aliases: ["/data/my-dashboards"] },
+      { label: "知识与证据", to: "/decision/knowledge", permission: read },
     ],
   },
   {
-    id: "admin", label: "系统管理", permission: "admin:write",
+    id: "admin", label: "系统设置", permission: "admin:write",
     children: [
-      { label: "角色权限", to: "/admin/roles", permission: "admin:write" },
-      { label: "设备配置", to: "/admin/asset-config", permission: "admin:write" },
-      { label: "页面模板", to: "/admin/templates", permission: "admin:write" },
-      { label: "场景与操作日志", to: "/admin/demo", permission: "admin:write" },
+      { label: "管理工作台", to: "/admin/roles", permission: "admin:write",
+        aliases: ["/admin/asset-config", "/admin/templates", "/admin/demo"] },
     ],
   },
 ];
 
+/** Determines active category for both new and historic routes. */
+export function navGroupForPath(path: string): NavGroup | undefined {
+  return NAV_GROUPS.find((group) => group.to === path ||
+    group.children?.some((child) => child.to === path || child.aliases?.includes(path)));
+}
+
+export function navChildForPath(path: string): NavChild | undefined {
+  return NAV_GROUPS.flatMap((group) => group.children ?? [])
+    .find((child) => child.to === path || child.aliases?.includes(path));
+}
+
 const TITLES: Record<string, string> = {
   "/archives": "档案管理",
   "/overview": "综合总览",
+  "/operations/events": "值守与事件中心",
   "/intelligent/unattended": "集中值守中心",
   "/intelligent/correlation": "跨系统关联处置",
   "/engineering/registry": "工程核查与证据",
@@ -125,8 +126,5 @@ export function navTitle(path: string): string {
 }
 
 export function navGroupLabel(path: string): string {
-  const group = NAV_GROUPS.find(
-    (item) => item.to === path || item.children?.some((child) => child.to === path),
-  );
-  return group?.label ?? "智慧水务";
+  return navGroupForPath(path)?.label ?? "智慧水务";
 }

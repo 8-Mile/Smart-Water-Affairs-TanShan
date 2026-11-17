@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import WorkspaceNav from "../components/WorkspaceNav.vue";
 import { computed, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import {
@@ -676,6 +677,7 @@ watch(
 
 <template>
   <div class="assets-page">
+    <WorkspaceNav label="设备与档案" :items="[{name:'设备台账与履历',to:'/operations/assets'},{name:'档案与案例',to:'/archives'}]" />
     <aside class="panel tree-panel">
       <div class="panel-head compact">
         <div>

@@ -31,10 +31,11 @@ test("首页响应式重排且字体不会随大屏整体放大", async ({ page 
     await page.screenshot({ path: testInfo.outputPath(`responsive-${size.width}.png`), fullPage: true });
   }
   await page.getByRole("button", { name: "菜单", exact: true }).click();
-  await expect(page.locator(".sidebar nav > .nav-item, .sidebar nav > .nav-group")).toHaveCount(9);
-  await page.getByRole("button", { name: "设备与运维" }).click();
-  await expect(page.getByRole("link", { name: "档案管理", exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "档案管理", exact: true }).click();
+  await expect(page.locator(".sidebar nav > .nav-item, .sidebar nav > .nav-group")).toHaveCount(7);
+  await page.getByRole("button", { name: "设备运维" }).click();
+  await page.locator("#primary-navigation").getByRole("link", { name: "设备与档案" }).click();
+  await expect(page.getByRole("link", { name: "档案与案例" })).toBeVisible();
+  await page.getByRole("link", { name: "档案与案例" }).click();
   await expect(page).toHaveURL(/\/archives$/);
   expect(errors).toEqual([]);
 });
@@ -78,7 +79,7 @@ test("首页图表周期、角色权限和工艺档案入口可以实际使用",
   }
   await page.getByRole("button", { name: "切换演示角色" }).click();
   await page.locator(".n-dropdown-menu").getByText("只读访客", { exact: true }).click();
-  await expect(page.locator(".sidebar").getByText("系统管理", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".sidebar").getByText("系统设置", { exact: true })).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole("button", { name: "切换演示角色" })).toContainText("只读访客");
   for (const id of ["spray", "medium-pressure", "mining", "rainwater", "pool", "domestic"]) {
@@ -102,10 +103,9 @@ test("首页图表周期、角色权限和工艺档案入口可以实际使用",
   await expect(page.getByRole("heading", { name: "巡检记录", exact: true })).toBeVisible();
   await expect(page.locator(".record-table tbody tr")).toHaveCount(2);
   await page.goto("/overview");
-  if (!(await page.getByRole("link", { name: "档案管理", exact: true }).isVisible())) {
-    await page.getByRole("button", { name: "设备与运维" }).click();
-  }
-  await page.getByRole("link", { name: "档案管理", exact: true }).click();
+  await page.getByRole("button", { name: "设备运维" }).click();
+  await page.locator("#primary-navigation").getByRole("link", { name: "设备与档案" }).click();
+  await page.getByRole("link", { name: "档案与案例" }).click();
   await expect(page).toHaveURL(/\/archives$/);
   await expect(page.getByRole("heading", { name: "档案管理", exact: true })).toBeVisible();
 });

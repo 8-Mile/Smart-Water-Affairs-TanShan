@@ -152,14 +152,14 @@ test("V3-UI09 射雾器不重做SCADA，追加工程核查/供水影响业务下
  await page.locator(".spray-v3-evidence").getByRole("link",{name:/CK-021/}).click();
  await expect(page).toHaveURL(/engineering\/registry\?item=CK-021/);
 });
-test("V3-UI10 V3菜单扩展保持原工艺/智能/运维/AI与档案模块，不强制变成新系统",async({page})=>{
+test("V35兼容：精简菜单仍能找到工艺、运维、工程底账与业务链",async({page})=>{
  await page.goto("/overview");
- await expect(page.locator(".sidebar nav > .nav-item, .sidebar nav > .nav-group")).toHaveCount(9);
- await page.getByRole("button",{name:"工程基础"}).click();
- await expect(page.getByRole("link",{name:"工程核查与证据"})).toBeVisible();
- await page.getByRole("link",{name:"工程核查与证据"}).click();
+ await expect(page.locator(".sidebar nav > .nav-item, .sidebar nav > .nav-group")).toHaveCount(7);
+ await page.getByRole("button",{name:"设备运维"}).click();
+ await expect(page.getByRole("link",{name:"工程底账"})).toBeVisible();
+ await page.getByRole("link",{name:"工程底账"}).click();
  await expect(page.locator(".entry")).toHaveCount(31);
- await page.getByRole("button",{name:"港口核心业务"}).click();
- await expect(page.getByRole("link",{name:"污染水处理与回用业务链"})).toBeVisible();
- await expect(page.locator(".sidebar")).toContainText("分析与看板");
+ await page.getByRole("button",{name:"运行中心"}).click();
+ await expect(page.locator(".sidebar").getByRole("link",{name:"港口水务业务链"})).toBeVisible();
+ await expect(page.locator(".sidebar")).toContainText("分析中心");
 });

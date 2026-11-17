@@ -9,17 +9,17 @@ test.beforeEach(async({page})=>{
     }
   });
 });
-test("V31-UI01 产品导航收敛为九组，港口核心业务有独立入口，所有原业务和档案均可直达",async({page})=>{
+test("V35兼容：七个业务导航分组可访问港口业务、设备和原档案",async({page})=>{
   await page.goto("/overview");
-  await expect(page.locator(".sidebar nav > .nav-item, .sidebar nav > .nav-group")).toHaveCount(9);
-  await expect(page.getByRole("button",{name:"港口核心业务"})).toBeVisible();
-  await page.getByRole("button",{name:"港口核心业务"}).click();
-  await expect(page.getByRole("link",{name:"污染水处理与回用业务链"})).toBeVisible();
-  await expect(page.getByRole("link",{name:"环保供水异常协同"})).toBeVisible();
-  await page.getByRole("button",{name:"设备与运维"}).click();
-  await expect(page.getByRole("link",{name:"设备台账",exact:true})).toBeVisible();
-  await expect(page.getByRole("link",{name:"档案管理",exact:true})).toBeVisible();
-  await page.getByRole("link",{name:"档案管理",exact:true}).click();
+  await expect(page.locator(".sidebar nav > .nav-item, .sidebar nav > .nav-group")).toHaveCount(7);
+  await expect(page.getByRole("button",{name:"运行中心"})).toBeVisible();
+  await page.getByRole("button",{name:"运行中心"}).click();
+  await expect(page.locator("#primary-navigation").getByRole("link",{name:"港口水务业务链"})).toBeVisible();
+  await expect(page.locator("#primary-navigation").getByRole("link",{name:"值守与事件中心"})).toBeVisible();
+  await page.getByRole("button",{name:"设备运维"}).click();
+  await expect(page.locator("#primary-navigation").getByRole("link",{name:"设备与档案"})).toBeVisible();
+  await page.locator("#primary-navigation").getByRole("link",{name:"设备与档案"}).click();
+  await page.getByRole("link",{name:"档案与案例"}).click();
   await expect(page).toHaveURL(/\/archives$/);
   await expect(page.getByRole("heading",{name:"档案管理",exact:true})).toBeVisible();
 });
