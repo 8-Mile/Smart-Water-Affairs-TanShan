@@ -1,0 +1,34 @@
+/* 唐港专业业务视图：复用5175浅色体系，独立作用域，不影响三维引擎 */
+.tg-biz { padding:24px; min-height:100%; color:#253f55; background:linear-gradient(130deg,#f5f9fc,#eff6fa); }
+.tg-biz * {box-sizing:border-box}
+.tg-biz-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:21px;flex-wrap:wrap}
+.tg-biz h1{font-size:23px;line-height:1.35;font-weight:750;margin:0 0 7px;color:#1f4560}
+.tg-biz h2{font-size:16px;font-weight:730;color:#28516a;margin:0}
+.tg-biz p{line-height:1.7}
+.tg-biz-sub{font-size:13px;color:#718999;margin:0}
+.tg-biz-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tg-biz-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:15px 0 20px}
+.tg-biz-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tg-biz-card{border:1px solid #dfeaf1;background:rgba(255,255,255,.9);box-shadow:0 7px 22px rgba(56,103,128,.06);border-radius:13px;padding:19px;min-width:0}
+.tg-biz-card[data-clickable="true"]{cursor:pointer;transition:box-shadow .17s,transform .17s,border-color .17s}
+.tg-biz-card[data-clickable="true"]:hover{transform:translateY(-2px);border-color:#8cc5db;box-shadow:0 10px 27px rgba(46,118,154,.12)}
+.tg-biz-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.tg-biz-card h3{margin:0;font-size:16px;color:#265570}
+.tg-biz-card p{font-size:13px;color:#607f91;margin:7px 0}
+.tg-biz-kpi{font-size:26px;color:#247e9f;font-weight:750;font-variant-numeric:tabular-nums}
+.tg-biz-note{background:#eef7fa;border:1px solid #d6ebf1;border-radius:9px;padding:13px 16px;font-size:12px;color:#53798f;line-height:1.7;margin:15px 0}
+.tg-biz-chip{display:inline-flex;align-items:center;border-radius:20px;background:#eaf3f8;color:#47798e;font-size:11px;padding:4px 9px;white-space:nowrap}
+.tg-biz-chip.warn{background:#fff5e7;color:#9e742c}
+.tg-biz-chip.ok{background:#eaf8f2;color:#3c8b6b}
+.tg-biz-link{display:inline-flex;align-items:center;gap:5px;color:#2584a7;cursor:pointer;text-decoration:none;font-weight:600;font-size:12px}
+.tg-biz-link:hover{text-decoration:underline}
+.tg-biz-list{display:grid;gap:9px;margin-top:12px}
+.tg-biz-list-row{padding:10px 0;border-bottom:1px solid #edf2f6;display:flex;gap:15px;align-items:center;justify-content:space-between;font-size:12px}
+.tg-biz-list-row:last-child{border-bottom:none}
+.tg-biz-label{color:#688397;font-size:12px}
+.tg-biz-empty{border:1px dashed #ccdde6;padding:23px;text-align:center;background:#f8fbfd;border-radius:10px;color:#819bac}
+.tg-biz-steps{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:15px 0}
+.tg-biz-steps span{background:#eaf3f8;color:#3f7891;border:1px solid #d2e6ed;border-radius:8px;padding:10px 12px;font-size:12px}
+.tg-biz-steps b{color:#a2bac6;font-size:16px}
+@media(max-width:1100px){.tg-biz-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:660px){.tg-biz{padding:14px}.tg-biz-grid,.tg-biz-grid.two{grid-template-columns:minmax(0,1fr)}.tg-biz h1{font-size:20px}}

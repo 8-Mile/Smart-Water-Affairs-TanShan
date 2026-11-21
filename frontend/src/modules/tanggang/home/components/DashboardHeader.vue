@@ -1,8 +1,24 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import {useRoute,useRouter} from 'vue-router'
+import {ElDropdown,ElDropdownMenu,ElDropdownItem} from 'element-plus'
+import { House, Monitor, DataAnalysis, Warning, Tools, TrendCharts, Setting } from '@element-plus/icons-vue'
+import { usePermissions } from '@/utils/permissions'
+import { tanggangGroupForPath,tanggangMenus } from '../../business/menu'
+
 import PortIcon from './PortIcon.vue'
 import type { PortIconName } from './PortIcon.vue'
 import { fetchPortWeather, weatherAccessMode, type PortWeather } from '../data/portWeather'
+
+const router=useRouter()
+const route=useRoute()
+const {hasPerm}=usePermissions()
+const activeMenu=computed(()=>tanggangGroupForPath(route.path))
+const menuIcons={overview:House,monitor:Monitor,water:DataAnalysis,operations:Warning,assets:Tools,analysis:TrendCharts,system:Setting}
+const visibleMenus=computed(()=>tanggangMenus.map(menu=>({
+  ...menu,children:menu.children?.filter(child=>!child.permission||hasPerm(child.permission)),
+})).filter(menu=>menu.id!=='system'||Boolean(menu.children?.length)))
+function navigateTo(path:string){ if(route.path!==path)void router.push(path) }
 
 type RoleId = 'manager' | 'operator' | 'engineer'
 type HeaderPopup = 'role' | 'message' | 'weather' | null
@@ -107,11 +123,25 @@ onBeforeUnmount(()=>{
       <span class="port-brand-name">唐港51.52号泊位智慧水务</span>
     </a>
 
-    <nav class="port-nav" aria-label="主导航">
-      <a href="#overview" aria-current="page">
-        <PortIcon name="overview" />
-        <span>综合总览</span>
-      </a>
+    <nav class="port-nav tg-top-nav" aria-label="唐港智慧水务七大业务模块">
+      <ElDropdown v-for="item in visibleMenus" :key="item.id" trigger="hover" placement="bottom-start"
+        :show-timeout="80" :hide-timeout="130" popper-class="tg-top-menu" @command="navigateTo">
+        <button class="tg-top-trigger" type="button"
+          :class="{ 'is-active': activeMenu===item.id }"
+          :aria-current="activeMenu===item.id ? 'page' : undefined"
+          @click="navigateTo(item.path)">
+          <component :is="menuIcons[item.id as keyof typeof menuIcons]" class="tg-top-icon" />
+          <span>{{item.title}}</span>
+        </button>
+        <template #dropdown>
+          <ElDropdownMenu>
+            <ElDropdownItem v-for="child in item.children || [{id:item.id,title:item.title,path:item.path}]" :key="child.id"
+              :command="child.path" :disabled="child.path===route.path">
+              {{child.title}}
+            </ElDropdownItem>
+          </ElDropdownMenu>
+        </template>
+      </ElDropdown>
     </nav>
 
     <div class="port-right">
@@ -210,3 +240,50 @@ onBeforeUnmount(()=>{
     </div>
   </header>
 </template>
+
+
+<style>
+/* 首页顶部导航与Three.js场景解耦：此文件归业务/UI开发，首页引擎不得覆写。 */
+.tanggang-home .screen-stage>.topbar.port-header nav.port-nav.tg-top-nav{
+  flex:1 1 auto!important;min-width:0!important;max-width:none;gap:1px!important;
+  margin-left:clamp(3px,.6vw,17px)!important;overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;align-items:stretch;justify-content:flex-start;
+}
+.tanggang-home .screen-stage>.topbar.port-header nav.port-nav.tg-top-nav::-webkit-scrollbar{display:none}
+.tanggang-home .port-header .tg-top-nav .el-dropdown{display:flex;align-items:stretch;flex:0 0 auto;outline:none}
+.tanggang-home .port-header .tg-top-nav .tg-top-trigger{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  border:0;outline-offset:-3px;white-space:nowrap;
+  padding:0 clamp(7px,.47vw,17px);font:650 clamp(12px,.66vw,16px)/1.2 inherit;
+  font-size:clamp(12px,.66vw,16px);font-family:inherit;
+  background:transparent;color:#347b96;cursor:pointer;position:relative;
+  transition:color .18s,background .18s;
+}
+.tanggang-home .port-header .tg-top-nav .tg-top-trigger:hover,
+.tanggang-home .port-header .tg-top-nav .tg-top-trigger.is-active{
+  color:#086b90;background:rgba(199,232,243,.38);
+}
+.tanggang-home .port-header .tg-top-nav .tg-top-trigger.is-active:after{
+  position:absolute;content:'';bottom:0;left:10%;right:10%;height:3px;
+  background:linear-gradient(90deg,#80d5e3,#1981a9);border-radius:4px;
+}
+.tanggang-home .port-header .tg-top-nav .tg-top-icon{width:16px;height:16px;flex:none}
+.tanggang-home .port-header .port-right{flex:0 0 auto;margin-left:0}
+.tg-top-menu.el-popper{border-color:#d6e9f2;box-shadow:0 10px 30px #173c5329}
+.tg-top-menu .el-dropdown-menu__item{font-size:13px;min-width:158px}
+@media(max-width:1650px){
+  .tanggang-home .port-header .tg-top-nav .tg-top-icon{display:none}
+  .tanggang-home .port-header .tg-top-nav .tg-top-trigger{font-size:12px;padding:0 7px}
+}
+@media(max-width:1160px){
+  .tanggang-home .screen-stage>.topbar.port-header nav.port-nav.tg-top-nav{margin-left:2px!important}
+  .tanggang-home .port-header .tg-top-nav .tg-top-trigger{padding:0 7px}
+}
+@media(max-width:650px){
+  .tanggang-home .screen-stage>.topbar.port-header nav.port-nav.tg-top-nav{
+    grid-area:nav;min-width:0!important;max-width:100%;margin-left:0!important;
+    border-top:1px solid #e0edf3;overflow-x:auto;overflow-y:hidden;
+  }
+  .tanggang-home .port-header .tg-top-nav .tg-top-trigger{font-size:12px;padding:0 9px}
+}
+</style>
