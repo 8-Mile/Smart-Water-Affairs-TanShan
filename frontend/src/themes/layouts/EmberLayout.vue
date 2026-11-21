@@ -9,7 +9,7 @@
         <div class="menu-left menu-left-light" :class="{ 'menu-left-close': collapsed }">
           <div class="header" @click="$router.push('/')">
             <img :src="logoImg" class="logo" alt="logo" />
-            <span v-if="!collapsed" class="sys-title">{{ appTitle }}</span>
+            <span v-if="!collapsed" class="sys-title" title="唐港51·52号泊位智慧水务">唐港智慧水务</span>
           </div>
           <el-scrollbar>
             <el-menu
@@ -18,6 +18,8 @@
               :collapse="collapsed"
               :default-active="active"
               :collapse-transition="false"
+              :unique-opened="true"
+              :default-openeds="activeGroupIndex ? [activeGroupIndex] : []"
               router
               background-color="transparent"
               @open="onSubMenuToggle"
@@ -90,7 +92,7 @@
         </div>
         <!-- 顶栏：仅页面名 -->
         <div class="head-title">
-          <span class="page-name">{{ pageTitle === '工作台' ? '泵站首页总览' : pageTitle }}</span>
+          <span class="page-name">{{ pageTitle === '工作台' ? '唐港综合总览' : pageTitle }}</span>
         </div>
         <div class="h-spacer" />
 
@@ -242,9 +244,25 @@ import {
 const router = useRouter()
 const route = useRoute()
 const { menus, active, pageTitle } = useAppMenus()
-const { user, appTitle, onLogout } = useAppChrome()
+const { user, onLogout } = useAppChrome()
 
 const collapsed = ref(false)
+// 路由级高亮沿用成熟滑块与子菜单动效，父级使用独立索引。
+// 不让二级目录与六工艺首页共享路由索引而产生选中状态冲突。
+const activeGroupIndex = computed(() => {
+  for (const node of menus.value) {
+    if (!node.children?.length) continue
+    if (node.children.some((child) => child.path === route.path)) return node.path ?? ''
+  }
+  return ''
+})
+function openActiveGroup() {
+  const index = activeGroupIndex.value
+  if (index && !collapsed.value) {
+    menuEl.value?.open(index)
+  }
+}
+
 
 /* ===== 侧栏选中高亮块：切换菜单时从旧位置滑到新位置，宽高跟随目标并带回弹 =====
    位置在路由变化/折叠/子菜单展开后重新测量；首次渲染静默定位，不播动画 */
@@ -336,12 +354,16 @@ watch(
   () => route.path,
   () => {
     drawerOpen.value = false
+    nextTick(openActiveGroup)
     updateHighlight()
   },
 )
-watch(collapsed, () => updateHighlight())
+watch(collapsed, () => { nextTick(openActiveGroup); updateHighlight() })
 watch(isMobile, () => updateHighlight())
-watch(menus, () => updateHighlight(false))
+watch(menus, () => {
+  nextTick(openActiveGroup)
+  updateHighlight(false)
+})
 
 const isFullscreen = ref(false)
 

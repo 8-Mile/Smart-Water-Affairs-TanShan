@@ -3,8 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import {useRoute,useRouter} from 'vue-router'
 import {ElDropdown,ElDropdownMenu,ElDropdownItem} from 'element-plus'
 import { House, Monitor, DataAnalysis, Warning, Tools, TrendCharts, Setting } from '@element-plus/icons-vue'
-import { usePermissions } from '@/utils/permissions'
-import { tanggangGroupForPath,tanggangMenus } from '../../business/menu'
+import { useAppMenus } from '@/composables/useAppMenus'
+import { tanggangGroupForPath } from '../../business/menu'
 
 import PortIcon from './PortIcon.vue'
 import type { PortIconName } from './PortIcon.vue'
@@ -12,12 +12,10 @@ import { fetchPortWeather, weatherAccessMode, type PortWeather } from '../data/p
 
 const router=useRouter()
 const route=useRoute()
-const {hasPerm}=usePermissions()
+// 与业务侧栏使用同一份后端权限过滤后的唐港菜单配置。
+const { tanggangVisibleItems: visibleMenus } = useAppMenus()
 const activeMenu=computed(()=>tanggangGroupForPath(route.path))
 const menuIcons={overview:House,monitor:Monitor,water:DataAnalysis,operations:Warning,assets:Tools,analysis:TrendCharts,system:Setting}
-const visibleMenus=computed(()=>tanggangMenus.map(menu=>({
-  ...menu,children:menu.children?.filter(child=>!child.permission||hasPerm(child.permission)),
-})).filter(menu=>menu.id!=='system'||Boolean(menu.children?.length)))
 function navigateTo(path:string){ if(route.path!==path)void router.push(path) }
 
 type RoleId = 'manager' | 'operator' | 'engineer'
@@ -129,7 +127,7 @@ onBeforeUnmount(()=>{
         <button class="tg-top-trigger" type="button"
           :class="{ 'is-active': activeMenu===item.id }"
           :aria-current="activeMenu===item.id ? 'page' : undefined"
-          @click="navigateTo(item.path)">
+          @click="navigateTo(item.children?.[0]?.path || item.path)">
           <component :is="menuIcons[item.id as keyof typeof menuIcons]" class="tg-top-icon" />
           <span>{{item.title}}</span>
         </button>

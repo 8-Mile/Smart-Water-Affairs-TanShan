@@ -14,7 +14,7 @@ const facilities=computed(()=>system.value?.areaEquipment.flatMap(e=>e.equipment
 const unique=computed(()=>Array.from(new Map(facilities.value.map(o=>[o.device!.id,o.device!])).values()))
 </script>
 <template>
-  <main class="tg-biz">
+  <main class="tg-biz page-fill">
     <div class="tg-biz-head">
       <div><h1>{{system?.name || '专业工艺监测'}}</h1><p class="tg-biz-sub">工程设施清单 · 设计参数 · 数据采集准备 · 跨系统关联</p></div>
       <div class="tg-biz-actions"><ElButton @click="router.push('/port/monitor')">全部专业系统</ElButton><ElButton type="primary" plain @click="router.push('/dashboard')">返回三维首页</ElButton></div>
@@ -25,12 +25,12 @@ const unique=computed(()=>Array.from(new Map(facilities.value.map(o=>[o.device!.
     <template v-else>
       <div class="tg-biz-note"><strong>工艺边界：</strong>{{system.intro}} <span v-if="system.disclaimer">{{system.disclaimer}}</span> 本页为工程资料与数据准备视图，不是已连接PLC的实时SCADA。实际控制操作须完成授权、联锁及厂家确认。</div>
       <div class="tg-biz-grid">
-        <section class="tg-biz-card"><h2>设计关联设备项</h2><p class="tg-biz-kpi">{{summarizeSystem(system,catalog).designCategories}}</p><p>依据设计设备清单归类，不等于实际安装台数。</p></section>
-        <section class="tg-biz-card"><h2>数据接入状态</h2><p class="tg-biz-kpi">待映射</p><p>资产ID、SCADA测点ID与现场点表尚未完成一一核对。</p></section>
-        <section class="tg-biz-card"><h2>系统关联区域</h2><p class="tg-biz-kpi">{{system.areaEquipment.length}}</p><p>由CAD系统清单定义，非实际控制站数量。</p></section>
+        <section class="tg-biz-card art-card"><h2>设计关联设备项</h2><p class="tg-biz-kpi">{{summarizeSystem(system,catalog).designCategories}}</p><p>依据设计设备清单归类，不等于实际安装台数。</p></section>
+        <section class="tg-biz-card art-card"><h2>数据接入状态</h2><p class="tg-biz-kpi">待映射</p><p>资产ID、SCADA测点ID与现场点表尚未完成一一核对。</p></section>
+        <section class="tg-biz-card art-card"><h2>系统关联区域</h2><p class="tg-biz-kpi">{{system.areaEquipment.length}}</p><p>由CAD系统清单定义，非实际控制站数量。</p></section>
       </div>
       <div class="tg-biz-grid two">
-        <section class="tg-biz-card">
+        <section class="tg-biz-card art-card">
           <h2>设计设施与数据采集项</h2>
           <div v-if="!unique.length" class="tg-biz-empty">该专业系统尚未映射设计设备</div>
           <div v-for="device in unique" :key="device.id" class="tg-biz-list-row">
@@ -38,7 +38,7 @@ const unique=computed(()=>Array.from(new Map(facilities.value.map(o=>[o.device!.
             <span class="tg-biz-chip" :class="{warn:device.currentStatus==='未接入'}">{{device.currentStatus||'需核验'}}</span>
           </div>
         </section>
-        <section class="tg-biz-card">
+        <section class="tg-biz-card art-card">
           <h2>数据与业务关联要求</h2>
           <div class="tg-biz-list">
             <div class="tg-biz-list-row"><span>工程来源</span><span class="tg-biz-chip">CAD / 第四分册</span></div>

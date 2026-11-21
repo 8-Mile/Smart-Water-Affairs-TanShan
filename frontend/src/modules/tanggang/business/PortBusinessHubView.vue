@@ -62,7 +62,7 @@ const cfg=computed(()=>configs[props.domain])
 const modules=computed(()=>cfg.value.modules.filter(m=>!m.perm||perms.hasPerm(m.perm)))
 </script>
 <template>
-  <main class="tg-biz">
+  <main class="tg-biz page-fill">
     <div class="tg-biz-head">
       <div><h1>{{cfg.title}}</h1><p class="tg-biz-sub">{{cfg.subtitle}}</p></div>
       <ElButton @click="router.push('/dashboard')">返回三维总览</ElButton>
@@ -72,7 +72,7 @@ const modules=computed(()=>cfg.value.modules.filter(m=>!m.perm||perms.hasPerm(m.
     </div>
     <div class="tg-biz-note"><strong>建设边界：</strong>{{cfg.note}}</div>
     <div class="tg-biz-grid">
-      <section v-for="module in modules" :key="module.title" class="tg-biz-card" :data-clickable="module.path!==('/port/'+props.domain)" role="link" tabindex="0"
+      <section v-for="module in modules" :key="module.title" class="tg-biz-card art-card" :data-clickable="module.path!==('/port/'+props.domain)" role="link" tabindex="0"
         @click="module.path!==('/port/'+props.domain) && router.push(module.path)"
         @keydown.enter="module.path!==('/port/'+props.domain) && router.push(module.path)">
         <div class="tg-biz-card-head"><h3>{{module.title}}</h3><span class="tg-biz-chip" :class="module.ready?'ok':'warn'">{{module.ready?'已有页面':'专业深化'}}</span></div>
@@ -81,7 +81,7 @@ const modules=computed(()=>cfg.value.modules.filter(m=>!m.perm||perms.hasPerm(m.
         <div v-else class="tg-biz-label">此功能尚未开发，保留需求入口</div>
       </section>
     </div>
-    <section class="tg-biz-card">
+    <section class="tg-biz-card art-card">
       <h2>跨模块一致性要求</h2>
       <p>同一设施、资产、测点、告警和工单必须使用统一ID及相同的数据权限。首页引擎只提供空间定位与状态呈现；业务页面负责状态查询、规则校验、人员协作、记录和追溯。</p>
     </section>

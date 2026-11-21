@@ -1,21 +1,21 @@
 /* 唐港专业业务视图：复用5175浅色体系，独立作用域，不影响三维引擎 */
-.tg-biz { padding:24px; min-height:100%; color:#253f55; background:linear-gradient(130deg,#f5f9fc,#eff6fa); }
+.tg-biz { padding:24px; min-height:100%; color:var(--art-gray-800,#253f55); background:transparent;font-family:inherit; }
 .tg-biz * {box-sizing:border-box}
 .tg-biz-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:21px;flex-wrap:wrap}
-.tg-biz h1{font-size:23px;line-height:1.35;font-weight:750;margin:0 0 7px;color:#1f4560}
-.tg-biz h2{font-size:16px;font-weight:730;color:#28516a;margin:0}
+.tg-biz h1{font-size:23px;line-height:1.35;font-weight:750;margin:0 0 7px;color:var(--art-gray-900,#1f4560)}
+.tg-biz h2{font-size:16px;font-weight:730;color:var(--art-gray-800,#28516a);margin:0}
 .tg-biz p{line-height:1.7}
 .tg-biz-sub{font-size:13px;color:#718999;margin:0}
 .tg-biz-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .tg-biz-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:15px 0 20px}
 .tg-biz-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-.tg-biz-card{border:1px solid #dfeaf1;background:rgba(255,255,255,.9);box-shadow:0 7px 22px rgba(56,103,128,.06);border-radius:13px;padding:19px;min-width:0}
+.tg-biz-card{border:1px solid var(--art-card-border,#dfeaf1);background:var(--default-box-color,#fff);box-shadow:none;border-radius:calc(var(--custom-radius,8px) + 4px);padding:19px;min-width:0}
 .tg-biz-card[data-clickable="true"]{cursor:pointer;transition:box-shadow .17s,transform .17s,border-color .17s}
-.tg-biz-card[data-clickable="true"]:hover{transform:translateY(-2px);border-color:#8cc5db;box-shadow:0 10px 27px rgba(46,118,154,.12)}
+.tg-biz-card[data-clickable="true"]:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--theme-color,#267fa4) 40%,transparent);box-shadow:0 6px 20px rgba(46,118,154,.1)}
 .tg-biz-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
 .tg-biz-card h3{margin:0;font-size:16px;color:#265570}
 .tg-biz-card p{font-size:13px;color:#607f91;margin:7px 0}
-.tg-biz-kpi{font-size:26px;color:#247e9f;font-weight:750;font-variant-numeric:tabular-nums}
+.tg-biz-card .tg-biz-kpi{font-size:26px;line-height:1.25;color:var(--theme-color,#247e9f);font-weight:750;font-variant-numeric:tabular-nums}
 .tg-biz-note{background:#eef7fa;border:1px solid #d6ebf1;border-radius:9px;padding:13px 16px;font-size:12px;color:#53798f;line-height:1.7;margin:15px 0}
 .tg-biz-chip{display:inline-flex;align-items:center;border-radius:20px;background:#eaf3f8;color:#47798e;font-size:11px;padding:4px 9px;white-space:nowrap}
 .tg-biz-chip.warn{background:#fff5e7;color:#9e742c}
@@ -32,3 +32,17 @@
 .tg-biz-steps b{color:#a2bac6;font-size:16px}
 @media(max-width:1100px){.tg-biz-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:660px){.tg-biz{padding:14px}.tg-biz-grid,.tg-biz-grid.two{grid-template-columns:minmax(0,1fr)}.tg-biz h1{font-size:20px}}
+
+/* 对齐5175成熟页面：标题、卡片、交互反馈、路由淡入统一沿用主题变量。 */
+.tg-biz .tg-biz-card { transition: transform var(--motion-fast,200ms) ease, border-color var(--motion-fast,200ms) ease, box-shadow var(--motion-fast,200ms) ease; }
+.tg-biz .tg-biz-card h2 { margin-bottom: 8px; }
+.tg-biz .tg-biz-head { padding: 2px 0 0; }
+.tg-biz .tg-biz-grid .tg-biz-card { animation: tg-biz-in var(--motion-normal,280ms) both cubic-bezier(.22,.61,.36,1); }
+.tg-biz .tg-biz-grid .tg-biz-card:nth-child(2){animation-delay:35ms}
+.tg-biz .tg-biz-grid .tg-biz-card:nth-child(3){animation-delay:70ms}
+.tg-biz .tg-biz-grid .tg-biz-card:nth-child(4){animation-delay:105ms}
+.tg-biz .tg-biz-grid .tg-biz-card:nth-child(n + 5){animation-delay:140ms}
+@keyframes tg-biz-in {from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){
+  .tg-biz .tg-biz-card{animation:none!important;transition:none!important}
+}
