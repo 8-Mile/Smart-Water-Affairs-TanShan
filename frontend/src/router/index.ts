@@ -49,36 +49,16 @@ const router = createRouter({
       children: [
         // 唐港专业业务入口：CAD工程参考页面面向已登录用户（不涉及生产控制）；
         // 既有5175正式业务页继续遵守各自的 meta.perm 与后台API鉴权。
-        {
-          path:'port/monitor',name:'port-monitor',
-          component:()=>import('@/modules/tanggang/business/PortMonitorView.vue'),
-          meta:{title:'唐港六工艺运行监测'},
-        },
+        {path:'port/monitor',redirect:'/port/process/fog'},
         {
           path:'port/process/:systemId',name:'port-process',
           component:()=>import('@/modules/tanggang/business/PortProcessView.vue'),
           meta:{title:'唐港专业工艺详情'},
         },
-        {
-          path:'port/water',name:'port-water',
-          component:()=>import('@/modules/tanggang/business/PortBusinessHubView.vue'),
-          props:{domain:'water'},meta:{title:'唐港水资源管理'},
-        },
-        {
-          path:'port/operations',name:'port-operations',
-          component:()=>import('@/modules/tanggang/business/PortBusinessHubView.vue'),
-          props:{domain:'operations'},meta:{title:'唐港运行处置'},
-        },
-        {
-          path:'port/assets',name:'port-assets',
-          component:()=>import('@/modules/tanggang/business/PortBusinessHubView.vue'),
-          props:{domain:'assets'},meta:{title:'唐港设备运维'},
-        },
-        {
-          path:'port/analysis',name:'port-analysis',
-          component:()=>import('@/modules/tanggang/business/PortBusinessHubView.vue'),
-          props:{domain:'analysis'},meta:{title:'唐港分析中心'},
-        },
+        {path:'port/water',redirect:'/water/stats'},
+        {path:'port/operations',redirect:'/alarm/realtime'},
+        {path:'port/assets',redirect:'/equipment/list'},
+        {path:'port/analysis',redirect:'/ai/chat'},
         // ai
         {
           path: 'ai/chat',

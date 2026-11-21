@@ -9,8 +9,7 @@ export interface TanggangNavItem {
 }
 export const tanggangMenus: TanggangNavItem[] = [
   { id:'overview', title:'综合总览', icon:'ri:dashboard-3-line',path:'/dashboard' },
-  { id:'monitor',title:'运行监测',icon:'ri:radar-line',path:'/port/monitor',children:[
-    {id:'monitor-all',title:'专业系统总览',icon:'ri:apps-2-line',path:'/port/monitor'},
+  { id:'monitor',title:'运行监测',icon:'ri:radar-line',path:'/port/process/fog',children:[
     {id:'fog',title:'射雾器除尘',icon:'ri:cloudy-line',path:'/port/process/fog'},
     {id:'middle',title:'中压供水',icon:'ri:water-flash-line',path:'/port/process/middle'},
     {id:'mineral',title:'含矿污水处理',icon:'ri:recycle-line',path:'/port/process/mineral'},
@@ -18,26 +17,22 @@ export const tanggangMenus: TanggangNavItem[] = [
     {id:'pool',title:'水池供水',icon:'ri:drop-line',path:'/port/process/pool'},
     {id:'domestic',title:'生活污水提升与外送',icon:'ri:flow-chart',path:'/port/process/domestic'},
   ]},
-  { id:'water',title:'水资源管理',icon:'ri:water-flash-line',path:'/port/water',children:[
-    {id:'water-hub',title:'水资源业务总览',icon:'ri:links-line',path:'/port/water'},
+  { id:'water',title:'水资源管理',icon:'ri:water-flash-line',path:'/water/stats',children:[
     {id:'water-stats',title:'供水统计',icon:'ri:bar-chart-line',path:'/water/stats',permission:'water:stats'},
     {id:'energy-stats',title:'能耗分析',icon:'ri:line-chart-line',path:'/energy/stats',permission:'energy:stats'},
     {id:'dispatch-stats',title:'调度指令',icon:'ri:send-plane-line',path:'/dispatch/stats',permission:'dispatch:stats'},
   ]},
-  { id:'operations',title:'运行处置',icon:'ri:alarm-warning-line',path:'/port/operations',children:[
-    {id:'operations-hub',title:'运行处置总览',icon:'ri:dashboard-line',path:'/port/operations'},
+  { id:'operations',title:'运行处置',icon:'ri:alarm-warning-line',path:'/alarm/realtime',children:[
     {id:'alarm',title:'告警中心',icon:'ri:alarm-warning-line',path:'/alarm/realtime',permission:'alarm:realtime'},
     {id:'repair',title:'维修工单',icon:'ri:tools-line',path:'/repair/list',permission:'repair:list'},
   ]},
-  { id:'assets',title:'设备运维',icon:'ri:server-line',path:'/port/assets',children:[
-    {id:'assets-hub',title:'设备运维总览',icon:'ri:dashboard-line',path:'/port/assets'},
+  { id:'assets',title:'设备运维',icon:'ri:server-line',path:'/equipment/list',children:[
     {id:'equipment',title:'设备台账',icon:'ri:server-line',path:'/equipment/list',permission:'eq:list'},
     {id:'inspection',title:'设备巡检',icon:'ri:list-check-2',path:'/inspection/tasks',permission:'insp:task:list'},
     {id:'maintenance',title:'计划维保',icon:'ri:settings-5-line',path:'/maintenance/plans',permission:'maint:plan:list'},
     {id:'archive',title:'档案管理',icon:'ri:archive-line',path:'/archive',permission:'archive:list'},
   ]},
-  { id:'analysis',title:'分析中心',icon:'ri:brain-line',path:'/port/analysis',children:[
-    {id:'analysis-hub',title:'分析中心总览',icon:'ri:dashboard-line',path:'/port/analysis'},
+  { id:'analysis',title:'分析中心',icon:'ri:brain-line',path:'/ai/chat',children:[
     {id:'analysis-ai',title:'AI智能助手',icon:'ri:robot-2-line',path:'/ai/chat'},
   ]},
   { id:'system',title:'系统管理',icon:'ri:settings-3-line',path:'/system/users',children:[

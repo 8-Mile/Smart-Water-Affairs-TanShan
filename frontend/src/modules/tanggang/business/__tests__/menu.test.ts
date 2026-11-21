@@ -34,8 +34,34 @@ describe('唐港首页/侧边栏统一菜单契约', () => {
       expect(router.resolve(preserved).name, preserved).not.toBe('exception-404')
     }
   })
+  it('所有一级业务菜单直接进入有功能的页面，不再展示二级总览', () => {
+    const expected:Record<string,string> = {
+      monitor:'/port/process/fog',
+      water:'/water/stats',
+      operations:'/alarm/realtime',
+      assets:'/equipment/list',
+      analysis:'/ai/chat',
+    }
+    for (const m of tanggangMenus) {
+      expect(m.children?.every(x=>!x.title.includes('总览'))??true,m.title).toBe(true)
+      if (expected[m.id]) expect(m.path).toBe(expected[m.id])
+    }
+    expect(tanggangMenus.find(x=>x.id==='overview')?.path).toBe('/dashboard')
+  })
+  it('已删除的总览页面地址只做兼容跳转，不再挂载旧组件', () => {
+    const redirects:Record<string,string> = {
+      '/port/monitor':'/port/process/fog',
+      '/port/water':'/water/stats',
+      '/port/operations':'/alarm/realtime',
+      '/port/assets':'/equipment/list',
+      '/port/analysis':'/ai/chat',
+    }
+    for (const [from,to] of Object.entries(redirects)) {
+      expect(router.resolve(from).matched[router.resolve(from).matched.length - 1]?.redirect,from).toEqual(to)
+    }
+  })
   it('六套工艺复用固定SystemId及父模块', () => {
-    expect(tanggangMenus.find((x) => x.id === 'monitor')?.children?.slice(1).map((x) => x.id))
+    expect(tanggangMenus.find((x) => x.id === 'monitor')?.children?.map((x) => x.id))
       .toEqual(['fog', 'middle', 'mineral', 'rain', 'pool', 'domestic'])
     for (const id of ['fog', 'middle', 'mineral', 'rain', 'pool', 'domestic']) {
       expect(tanggangGroupForPath('/port/process/' + id)).toBe('monitor')

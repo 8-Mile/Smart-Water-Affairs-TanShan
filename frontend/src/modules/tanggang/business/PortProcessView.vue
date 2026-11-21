@@ -17,7 +17,7 @@ const unique=computed(()=>Array.from(new Map(facilities.value.map(o=>[o.device!.
   <main class="tg-biz page-fill">
     <div class="tg-biz-head">
       <div><h1>{{system?.name || '专业工艺监测'}}</h1><p class="tg-biz-sub">工程设施清单 · 设计参数 · 数据采集准备 · 跨系统关联</p></div>
-      <div class="tg-biz-actions"><ElButton @click="router.push('/port/monitor')">全部专业系统</ElButton><ElButton type="primary" plain @click="router.push('/dashboard')">返回三维首页</ElButton></div>
+      <div class="tg-biz-actions"><ElButton type="primary" plain @click="router.push('/dashboard')">返回三维首页</ElButton></div>
     </div>
     <div v-if="error" class="tg-biz-empty">{{error}}</div>
     <div v-else-if="!catalog" class="tg-biz-empty">正在读取工程数据…</div>
@@ -49,8 +49,8 @@ const unique=computed(()=>Array.from(new Map(facilities.value.map(o=>[o.device!.
           </div>
           <p style="margin-top:17px">本页和首页共用同一系统ID：<strong>{{system.id}}</strong>。一个设施可属于多个系统，但在设备台账中只能有一条主记录。</p>
           <div class="tg-biz-actions" style="margin-top:15px">
-            <ElButton @click="router.push('/port/operations')">运行处置</ElButton>
-            <ElButton @click="router.push('/port/water')">水资源关联</ElButton>
+            <ElButton @click="router.push('/alarm/realtime')">运行处置</ElButton>
+            <ElButton @click="router.push('/water/stats')">水资源关联</ElButton>
           </div>
         </section>
       </div>

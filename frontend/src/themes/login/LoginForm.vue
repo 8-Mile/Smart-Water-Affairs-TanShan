@@ -68,9 +68,10 @@ const user = useUserStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 
+// 仅开发演示环境预填指定账号；生产构建不预填弱口令，也不会自动提交。
 const form = reactive({
-  username: '',
-  password: '',
+  username: import.meta.env.DEV ? 'leader' : '',
+  password: import.meta.env.DEV ? '123456' : '',
   remember: false,
   autoLogin: false,
 })
