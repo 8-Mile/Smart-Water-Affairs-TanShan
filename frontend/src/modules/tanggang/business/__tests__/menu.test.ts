@@ -19,6 +19,21 @@ describe('唐港首页/侧边栏统一菜单契约', () => {
       }
     }
   })
+  it('删除废弃工作台及无用跳转，保留原有整合Tab路由', () => {
+    for (const oldPath of [
+      '/dashboard/workbench', '/energy/records', '/dispatch/audit',
+      '/dispatch/tasks', '/repair/approve', '/repair/process', '/repair/accept',
+      '/equipment/running-status', '/equipment/run-log', '/equipment/manufacturers',
+    ]) {
+      expect(router.resolve(oldPath).name, oldPath).toBe('exception-404')
+    }
+    for (const preserved of [
+      '/water/plans', '/inspection/records', '/alarm/rules',
+      '/alarm/history', '/system/menus', '/energy/fee',
+    ]) {
+      expect(router.resolve(preserved).name, preserved).not.toBe('exception-404')
+    }
+  })
   it('六套工艺复用固定SystemId及父模块', () => {
     expect(tanggangMenus.find((x) => x.id === 'monitor')?.children?.slice(1).map((x) => x.id))
       .toEqual(['fog', 'middle', 'mineral', 'rain', 'pool', 'domestic'])

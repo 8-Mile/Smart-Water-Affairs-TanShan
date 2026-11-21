@@ -47,13 +47,6 @@ const router = createRouter({
       // 默认首页为 /dashboard，内容即唐港港区总览
       redirect: '/dashboard',
       children: [
-        {
-          // 原泵站工作台：/dashboard 让位给港区总览后，改由此地址继续访问
-          path: 'dashboard/workbench',
-          name: 'dashboard-workbench',
-          component: () => import('@/views/dashboard/DashboardView.vue'),
-          meta: { title: '泵站首页总览', perm: 'dashboard:view' },
-        },
         // 唐港专业业务入口：CAD工程参考页面面向已登录用户（不涉及生产控制）；
         // 既有5175正式业务页继续遵守各自的 meta.perm 与后台API鉴权。
         {
@@ -170,10 +163,6 @@ const router = createRouter({
           meta: { title: '能耗分析', perm: 'energy:stats' },
         },
         {
-          path: 'energy/records',
-          redirect: '/energy/stats',
-        },
-        {
           path: 'energy/fee',
           redirect: '/energy/stats',
         },
@@ -191,14 +180,6 @@ const router = createRouter({
           name: 'dispatch-stats',
           component: () => import('@/views/dispatch/StatsView.vue'),
           meta: { title: '调度指令', perm: 'dispatch:stats' },
-        },
-        {
-          path: 'dispatch/audit',
-          redirect: '/dispatch/stats',
-        },
-        {
-          path: 'dispatch/tasks',
-          redirect: '/dispatch/stats',
         },
         // inspection
         {
@@ -231,18 +212,6 @@ const router = createRouter({
           redirect: '/maintenance/plans',
         },
         // repair
-        {
-          path: 'repair/approve',
-          redirect: '/repair/list',
-        },
-        {
-          path: 'repair/process',
-          redirect: '/repair/list',
-        },
-        {
-          path: 'repair/accept',
-          redirect: '/repair/list',
-        },
         {
           path: 'repair/list',
           name: 'repair-list',
@@ -292,10 +261,6 @@ const router = createRouter({
           meta: { title: '设备台账', perm: 'eq:list' },
         },
         {
-          path: 'equipment/running-status',
-          redirect: '/equipment/list',
-        },
-        {
           path: 'equipment/detail/:id',
           name: 'equipment-detail',
           component: () => import('@/views/equipment/UnitDetailView.vue'),
@@ -306,14 +271,6 @@ const router = createRouter({
           name: 'equipment-maintenance-vendors',
           component: () => import('@/views/equipment/MaintenanceVendorsView.vue'),
           meta: { title: '厂商管理', perm: 'eq:maintainer:list' },
-        },
-        {
-          path: 'equipment/manufacturers',
-          redirect: '/equipment/maintenance-vendors',
-        },
-        {
-          path: 'equipment/run-log',
-          redirect: '/equipment/list',
         },
       ],
     },

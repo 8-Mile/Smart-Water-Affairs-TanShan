@@ -1,0 +1,100 @@
+/*
+ * 唐港业务区域统一磨砂玻璃皮肤。
+ * 有意仅作用于 EmberLayout 下的 #app-main，绝不覆盖 TRAE 的全屏 Three.js 首页。
+ * 透明度/模糊度分层：主业务卡 0.60±，数据表透明，辅助提示更轻。
+ */
+#app-main .page-content {
+  --tg-glass-surface: linear-gradient(150deg,rgba(255,255,255,.69) 0%,rgba(244,250,255,.59) 49%,rgba(231,242,251,.56) 100%);
+  --tg-glass-border:rgba(255,255,255,.70);
+  --tg-glass-outline:rgba(108,159,194,.22);
+  --tg-glass-shadow:0 8px 25px rgba(39,89,135,.095),inset 0 1px 0 rgba(255,255,255,.58);
+}
+#app-main .page-content :is(
+  .tg-biz-card,
+  .art-card,
+  .art-card-sm,
+  .art-card-xs,
+  .art-table-card,
+  .el-card,
+  .kpi-card,
+  .kpi-panel,
+  .pro-search-bar,
+  .panel,
+  .tree-card,
+  .doc-type-card,
+  .table-card
+) {
+  background:var(--tg-glass-surface)!important;
+  background-color:transparent!important;
+  border:1px solid var(--tg-glass-outline)!important;
+  border-radius:calc(var(--custom-radius,9px) + 4px)!important;
+  box-shadow:var(--tg-glass-shadow)!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.3);
+  backdrop-filter:blur(14px) saturate(1.3);
+}
+/* 分区内的 KPI / 图表允许保留原有布局与装饰图，卡片表面仍保持半透明。 */
+#app-main .page-content :is(.tg-biz-card,.kpi-card,.el-card) {
+  transition:border-color .22s ease,box-shadow .22s ease,transform .22s ease;
+}
+#app-main .page-content :is(.tg-biz-card,.kpi-card,.el-card):hover {
+  border-color:rgba(95,164,207,.40)!important;
+}
+#app-main .page-content :is(.tg-biz-note,.tg-biz-empty) {
+  background:rgba(241,249,253,.56)!important;
+  border-color:rgba(141,192,216,.35)!important;
+  -webkit-backdrop-filter:blur(9px);
+  backdrop-filter:blur(9px);
+}
+/* 表格不是二次实色白板：容器磨砂，内容采用透明行与淡色表头以保证可读性。 */
+#app-main .page-content .el-card {
+  --el-card-bg-color:transparent;
+}
+#app-main .page-content .el-card :is(.el-card__header,.el-card__body) {
+  background-color:transparent;
+}
+#app-main .page-content .el-table {
+  --el-table-bg-color:transparent;
+  --el-table-tr-bg-color:transparent;
+  --el-table-header-bg-color:rgba(240,247,252,.62);
+  --el-table-row-hover-bg-color:rgba(218,239,249,.52);
+  background-color:transparent!important;
+}
+#app-main .page-content .el-table tr {
+  background-color:transparent;
+}
+#app-main .page-content :is(.el-table__inner-wrapper,.el-table__body-wrapper) {
+  background:transparent;
+}
+html.dark #app-main .page-content {
+  --tg-glass-surface:linear-gradient(155deg,rgba(27,42,64,.78),rgba(20,31,51,.69));
+  --tg-glass-border:rgba(149,187,214,.25);
+  --tg-glass-outline:rgba(149,187,214,.22);
+  --tg-glass-shadow:0 8px 25px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.08);
+}
+html.dark #app-main .page-content :is(.tg-biz-note,.tg-biz-empty) {
+  background:rgba(28,43,61,.59)!important;
+}
+html.dark #app-main .page-content .el-table {
+  --el-table-header-bg-color:rgba(45,58,78,.62);
+  --el-table-row-hover-bg-color:rgba(66,91,121,.48);
+}
+/* 模糊不被设备支持时提升不透明度，避免低对比度和透明白板 */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  #app-main .page-content {
+    --tg-glass-surface:linear-gradient(160deg,rgba(250,253,255,.94),rgba(239,248,254,.92));
+  }
+}
+@media (prefers-reduced-transparency:reduce) {
+  #app-main .page-content {
+    --tg-glass-surface:linear-gradient(150deg,rgba(255,255,255,.96),rgba(243,249,253,.95));
+  }
+  #app-main .page-content :is(.el-card,.tg-biz-card,.art-card,.kpi-card) {
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  #app-main .page-content :is(.el-card,.tg-biz-card,.kpi-card) {
+    transition:none;
+  }
+}
