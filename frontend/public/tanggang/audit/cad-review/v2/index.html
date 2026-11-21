@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<title>唐港 51/52 泊位智慧水务 · CAD总控梳理图 V2</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#29475e;background:#eff5f9}
+*{box-sizing:border-box}body{margin:0;overflow:hidden}
+header{height:82px;background:#fff;border-bottom:1px solid #d8e7ef;display:flex;align-items:center;justify-content:space-between;padding:0 26px;gap:18px}
+.logo{height:44px;width:7px;border-radius:8px;background:linear-gradient(#22b5bc,#3081bd);flex:none}
+.title{display:flex;gap:16px;align-items:center;min-width:0}
+.title h1{font-size:19px;margin:0;font-weight:760;white-space:nowrap}
+.title p{margin:6px 0 0;color:#7b98ac;font-size:11px}
+.actions{display:flex;gap:9px;align-items:center}
+button,.action{cursor:pointer;border:1px solid #d8e7ef;background:#fff;padding:9px 12px;border-radius:10px;color:#4f829d;font-family:inherit;font-size:12px;text-decoration:none;white-space:nowrap}
+button:hover,.action:hover{border-color:#97cbdd;background:#edf9fc}
+main{height:calc(100vh - 82px);display:grid;grid-template-columns:minmax(630px,1fr) 335px}
+section{min-width:0;display:flex;flex-direction:column;min-height:0}
+.tabs{padding:16px 20px 14px;display:flex;gap:9px;align-items:center;background:#f9fcfe;border-bottom:1px solid #dfeaf1;flex:none}
+.tab{padding:11px 18px;font-size:12px;font-weight:700}
+.tab.active{background:#e5f6fa;border-color:#86c8dd;color:#267d9c}
+.tab-note{margin-left:auto;color:#7e9cad;font-size:11px}
+.toolbar{display:flex;align-items:center;gap:9px;padding:10px 20px;background:#f7fbfd;border-bottom:1px solid #e1edf2;flex:none}
+.toolbar span{font-size:11px;color:#7793a6;flex:1}
+#canvas{flex:1;min-height:0;position:relative;overflow:hidden;background:radial-gradient(ellipse,#fff,#eef5f9);cursor:grab;touch-action:none}
+#canvas:active{cursor:grabbing}
+#image{display:block;position:absolute;top:0;left:0;width:5600px;height:4200px;max-width:none;transform-origin:0 0;user-select:none;-webkit-user-drag:none}
+#zoom{font-size:11px;color:#66889d;min-width:48px;text-align:center}
+.info-bottom{height:43px;border-top:1px solid #dceaf1;color:#7e98a8;background:#fff;display:flex;justify-content:space-between;padding:12px 20px;gap:15px;overflow:hidden;white-space:nowrap;font-size:11px;flex:none}
+aside{border-left:1px solid #d8e7ef;background:#fff;display:flex;flex-direction:column;min-height:0}
+.side-head{padding:20px 17px 16px;border-bottom:1px solid #e6eef3}
+.side-head h2{font-size:16px;margin:0 0 8px;color:#274d66}
+.side-head p{font-size:11px;line-height:1.7;margin:0;color:#8099aa}
+#search{width:100%;margin-top:12px;border-radius:9px;border:1px solid #dce8f0;padding:10px 11px;font:12px inherit;color:#365770;outline:none}
+.side-list{flex:1;overflow-y:auto;padding:8px}
+.card{background:transparent;border:1px solid transparent;text-align:left;display:flex;align-items:flex-start;gap:10px;width:100%;border-radius:9px;margin:3px 0;padding:10px;color:#45677d;white-space:normal}
+.card:hover,.card.sel{background:#edf7fb;border-color:#cbe5ef}
+.number{flex:none;display:inline-flex;align-items:center;justify-content:center;background:#e8f3f8;border-radius:8px;color:#398eb0;font-size:10px;font-weight:750;min-width:41px;height:31px}
+.number.yard{background:#fff2dc;color:#a97b37}
+.row-name{font-size:12px;font-weight:700;color:#3b5f77;margin:1px 0 6px}
+.row-desc{font-size:10px;color:#8a9fae;line-height:1.6}
+.details{padding:16px 17px;border-top:1px solid #e2ecf1;background:#f9fcfe;max-height:33vh;overflow-y:auto;font-size:11px;line-height:1.8}
+.details h3{margin:0 0 8px;font-size:15px}
+.details dl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:5px;margin:0}
+.details dt{color:#89a2b3}.details dd{margin:0;color:#4a7189;overflow-wrap:anywhere}
+.details a{display:inline-block;margin-top:11px;padding:8px 10px;border:1px solid #b7dbe7;background:#eaf8fd;border-radius:8px;text-decoration:none;color:#2f86a1}
+.warning{padding:11px 17px 13px;color:#9d7662;font-size:10px;border-top:1px solid #f0e5dc;background:#fffcf9;line-height:1.6}
+@media(max-width:950px){main{grid-template-columns:minmax(400px,1fr) 250px}.title h1{font-size:15px}.title p{display:none}.actions a:nth-child(2){display:none}.tabs{flex-wrap:wrap}.tab{padding:8px 10px}.tab-note{display:none}}
+</style>
+</head>
+<body>
+<header>
+ <div class="title"><div class="logo"></div><div><h1>唐港51、52号泊位智慧水务 · CAD总控梳理图 V2</h1><p>源图元 + 主体设施 + 三专业分图 + Three.js L1对象表 | 5188原有卡片不变</p></div></div>
+ <div class="actions">
+ <a class="action" href="../index.html">原CAD交互核对</a>
+ <a class="action" href="../network-evidence-v1.2.html">设计水路关系</a>
+ <a class="action" href="./唐港5152_CAD总控与三专业分图_V2交付包.zip">下载V2全套资料</a>
+ </div>
+</header>
+<main>
+ <section>
+  <div class="tabs">
+    <button class="tab active" data-view="0">总控梳理图</button>
+    <button class="tab" data-view="1">A · 供水除尘</button>
+    <button class="tab" data-view="2">B · 雨污水与污泥</button>
+    <button class="tab" data-view="3">C · 消防生活水</button>
+    <span class="tab-note">CAD图面按堆场长轴旋转约35°，并非原始正北方向</span>
+  </div>
+  <div class="toolbar">
+   <button id="fit">适应窗口</button><button id="plus">放大</button><button id="minus">缩小</button>
+   <span id="description">四张图采用同一套DWG坐标和专业管线筛选规则。</span><span id="zoom">100%</span>
+   <a class="action" id="svg" target="_blank" href="./唐港5152_智慧水务CAD总控梳理图_V2.svg">打开可缩放SVG</a>
+   <a class="action" id="png" target="_blank" href="./唐港5152_智慧水务CAD总控梳理图_V2.png">高清PNG</a>
+  </div>
+  <div id="canvas"><img id="image" alt="唐港智慧水务CAD总控梳理图" draggable="false" src="./唐港5152_智慧水务CAD总控梳理图_V2.png"></div>
+  <div class="info-bottom"><span>彩色实线＝V5管线候选（不是已验收的水力连通）；2D标注及待核图元均保留原始来源。</span><span>拖动平移 · 滚轮缩放 · 源图元可追溯</span></div>
+ </section>
+ <aside>
+  <div class="side-head"><h2>Three.js L1 场景对象清单</h2><p>42个对象级记录，区分CAD文字点、池体待定位对象和专业管网候选。点击查看来源，或在原CAD中复核。</p><input id="search" placeholder="查找堆场、池组、管线或CAD Handle"></div>
+  <div class="side-list" id="list"></div>
+  <div class="details" id="detail"><h3>选择设施或管网系统</h3>对象尚未通过几何/拓扑验收时，只可进行来源核查，不生成假定的真实空间关系。</div>
+  <div class="warning">“100%还原”是有效设计完整性验收目标，不是V2已达成的结论。1#—8#堆场边界、南5北2池体边界及管网连通仍列入待核事项。</div>
+ </aside>
+</main>
+<script>
+(async()=>{
+const files=[
+ ['唐港5152_智慧水务CAD总控梳理图_V2','总控：8个堆场文字点、主体设施、管线系统候选'],
+ ['唐港5152_分图A_供水除尘回用_V2','供水：中水/自来水、回用水、除尘供水及泵房'],
+ ['唐港5152_分图B_排水污水污泥_V2','排水：雨水、排水沟、南北集水池、含矿污水和污泥管'],
+ ['唐港5152_分图C_消防生活水_V2','消防：室内外消防与生活污水，办公水量仅展示']
+];
+let manifest;
+try{const r=await fetch('./manifest-v2.json',{cache:'no-store'});if(!r.ok)throw Error(r.status);manifest=await r.json();}
+catch(e){document.getElementById('detail').textContent='V2 CAD数据加载失败';return;}
+const w=5600,h=4200,container=document.getElementById('canvas'),img=document.getElementById('image');
+const label=document.getElementById('zoom'),description=document.getElementById('description');
+let scale=1,tx=0,ty=0,viewIndex=0,dragging=false,lastX=0,lastY=0;
+function display(){img.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';label.textContent=Math.round(scale*100)+'%'}
+function fit(){const ww=container.clientWidth,hh=container.clientHeight;scale=Math.min(ww/w,hh/h)*.98;tx=(ww-w*scale)/2;ty=(hh-h*scale)/2;display()}
+function zoom(f,x=container.clientWidth/2,y=container.clientHeight/2){const next=Math.max(.05,Math.min(3.4,scale*f));const ratio=next/scale;tx=x-(x-tx)*ratio;ty=y-(y-ty)*ratio;scale=next;display()}
+function show(i){viewIndex=i;img.src='./'+files[i][0]+'.png';img.alt=files[i][1];description.textContent=files[i][1];document.getElementById('svg').href='./'+files[i][0]+'.svg';document.getElementById('png').href='./'+files[i][0]+'.png';document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',+b.dataset.view===i));fit()}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>show(+b.dataset.view)));
+document.getElementById('fit').onclick=fit;
+document.getElementById('plus').onclick=()=>zoom(1.28);
+document.getElementById('minus').onclick=()=>zoom(1/1.28);
+container.addEventListener('wheel',e=>{e.preventDefault();const b=container.getBoundingClientRect();zoom(Math.exp(-e.deltaY*.0013),e.clientX-b.left,e.clientY-b.top)},{passive:false});
+container.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;container.setPointerCapture(e.pointerId)});
+container.addEventListener('pointermove',e=>{if(!dragging)return;tx+=e.clientX-lastX;ty+=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;display()});
+container.addEventListener('pointerup',()=>dragging=false);
+container.addEventListener('pointercancel',()=>dragging=false);
+new ResizeObserver(()=>fit()).observe(container);
+const list=document.getElementById('list'),detail=document.getElementById('detail');
+const input=document.getElementById('search');
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+let selected='';
+function select(o){
+ selected=o.objectId;renderList();
+ detail.innerHTML='<h3>'+esc(o.name)+'</h3><dl>'+
+ '<dt>对象ID</dt><dd>'+esc(o.objectId)+'</dd>'+
+ '<dt>类别</dt><dd>'+esc(o.type)+'</dd>'+
+ '<dt>系统</dt><dd>'+esc(o.system)+'</dd>'+
+ '<dt>源图层</dt><dd>'+esc(o.sourceLayer||'待核')+'</dd>'+
+ '<dt>源Handle</dt><dd>'+esc(o.sourceHandle||'无（系统级/未定位）')+'</dd>'+
+ '<dt>原CAD坐标</dt><dd>'+((o.xCAD!=null&&o.yCAD!=null)?Number(o.xCAD).toFixed(2)+' / '+Number(o.yCAD).toFixed(2):'尚未定位')+'</dd>'+
+ '<dt>L1表现</dt><dd>'+esc(o.modelHint)+'</dd>'+
+ '<dt>审核状态</dt><dd>'+esc(o.status)+'</dd>'+
+ '<dt>备注</dt><dd>'+esc(o.reviewNote||'无')+'</dd></dl>'+
+ (o.objectId.startsWith('TG-CAD-')?'<a href="../index.html?focus='+encodeURIComponent(o.objectId.slice(7))+'" target="_blank">在原CAD定位文字</a>':'<a href="./V2_CAD图层覆盖对账.csv" target="_blank">查看图层覆盖对账</a>');
+}
+function renderList(){
+ let q=input.value.trim().toLowerCase();list.replaceChildren();
+ const rows=manifest.objects.filter(o=>(o.objectId+o.name+o.system+o.sourceHandle+o.sourceLayer).toLowerCase().includes(q));
+ for(const o of rows){
+  const item=document.createElement('button');item.className='card'+(selected===o.objectId?' sel':'');
+  const number=o.objectId.startsWith('TG-CAD-')?o.objectId.slice(7):o.objectId.replace('TG-','');
+  const isYard=o.type==='堆场';
+  item.innerHTML='<span class="number '+(isYard?'yard':'')+'">'+esc(number)+'</span><span><div class="row-name">'+esc(o.name)+'</div><div class="row-desc">'+esc(o.status)+'</div></span>';
+  item.onclick=()=>select(o);list.appendChild(item);
+ }
+ if(!rows.length)list.textContent='没有匹配对象';
+}
+input.addEventListener('input',renderList);renderList();requestAnimationFrame(fit);
+})();
+</script></body></html>

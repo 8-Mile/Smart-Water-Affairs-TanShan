@@ -1,0 +1,2049 @@
+{
+  "schema": "tanggang-hydraulic-source-evidence-v1.2",
+  "title": "唐港水务设计关系核对（非物理管线平面路径）",
+  "sourceSpecs": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx",
+  "specVersionTag": "第四分册洒水除尘、排水、污水处理及消防系统",
+  "sourceCAD": "51 52陆域平面 管综260917(2)(2).dwg",
+  "rules": [
+    "箭头是规格书描述的工艺/水路逻辑，不是经过测量的地下管线走向。",
+    "“或”“可”“根据水质”表示备选/条件路径，不可当成并列运行的已建管线。",
+    "设施数量是设计技术要求，平面文字锚点不是每个构筑物的物理坐标。",
+    "泵房提资图使用局部坐标和详图，不能未经统一控制点配准投到总平面。",
+    "办公生活用水按需求仅做计量展示；未提供实际水表接口，不展示假数据。"
+  ],
+  "nodes": [
+    {
+      "id": "yard",
+      "name": "1#—8#堆场/码头作业区",
+      "group": "collect",
+      "subtitle": "雨污水源",
+      "anchor": "01",
+      "hint": "8个堆场标签来自CAD；不代表8个集水设施"
+    },
+    {
+      "id": "ditch",
+      "name": "堆场/码头排水沟",
+      "group": "collect",
+      "subtitle": "含矿雨污水汇集",
+      "anchor": null,
+      "hint": "排水沟位置需要逐井编号核定"
+    },
+    {
+      "id": "north",
+      "name": "北侧集水池组",
+      "group": "collect",
+      "subtitle": "设计2座",
+      "anchor": "09",
+      "hint": "CAD只有集水池文字点，2座单体轮廓尚未完成校核"
+    },
+    {
+      "id": "south",
+      "name": "南侧集水池组",
+      "group": "collect",
+      "subtitle": "设计5座，单座≥2,700m³",
+      "anchor": "10",
+      "hint": "5座具体池位未通过CAD逐一验收"
+    },
+    {
+      "id": "wash",
+      "name": "洗车台系统",
+      "group": "collect",
+      "subtitle": "规格书称6套；布置文字共计4套",
+      "anchor": "13",
+      "hint": "第四分册1.4写6套，第5章布置又写共计4套；可能为双车道折算，尚未核对设备统计口径与安装点位"
+    },
+    {
+      "id": "washsed",
+      "name": "洗车台三级沉淀/污水池",
+      "group": "collect",
+      "subtitle": "洗车污水预处理",
+      "anchor": null,
+      "hint": "技术规格书描述工艺；实体坐标待核"
+    },
+    {
+      "id": "sewage",
+      "name": "含矿污水处理站",
+      "group": "treat",
+      "subtitle": "设计处理能力500m³/h",
+      "anchor": "11",
+      "hint": "CAD文字“污水处理场”原位；工艺和产能来自规格书"
+    },
+    {
+      "id": "purifier",
+      "name": "高效净水器",
+      "group": "treat",
+      "subtitle": "絮凝沉淀+过滤",
+      "anchor": null,
+      "hint": "技术规格书工艺单元，不作建筑点位"
+    },
+    {
+      "id": "sludge",
+      "name": "污泥池/压滤机",
+      "group": "treat",
+      "subtitle": "脱水外运",
+      "anchor": null,
+      "hint": "处理站内部流程，坐标待核"
+    },
+    {
+      "id": "clear",
+      "name": "含矿污水站清水池",
+      "group": "reuse",
+      "subtitle": "设计容积≥2,000m³",
+      "anchor": null,
+      "hint": "与除尘泵房两座除尘水池不能混淆"
+    },
+    {
+      "id": "eco",
+      "name": "生态空间储水设施",
+      "group": "reuse",
+      "subtitle": "盈余达标水存储/条件回输",
+      "anchor": "14",
+      "hint": "生态蓄水池CAD文字，方案状态与实体边界待确认"
+    },
+    {
+      "id": "dusttank",
+      "name": "除尘泵房水池",
+      "group": "supply",
+      "subtitle": "设计2座×3,000m³",
+      "anchor": "12",
+      "hint": "图上位置为除尘泵房CAD文字；水池单体未定位"
+    },
+    {
+      "id": "municipal",
+      "name": "市政自来水",
+      "group": "source",
+      "subtitle": "除尘水池进水来源",
+      "anchor": null,
+      "hint": "场区总管线位置可审查，入口点未确认"
+    },
+    {
+      "id": "reclaimed",
+      "name": "市政中水",
+      "group": "source",
+      "subtitle": "除尘水池进水来源",
+      "anchor": null,
+      "hint": "场区总管线位置可审查，入口点未确认"
+    },
+    {
+      "id": "midpump",
+      "name": "中压除尘给水泵组",
+      "group": "supply",
+      "subtitle": "设计4台：3用1备（暂定）",
+      "anchor": "12",
+      "hint": "以泵房文字位置定位泵房，不代表泵组安装点"
+    },
+    {
+      "id": "fogpump",
+      "name": "射雾器供水泵组",
+      "group": "supply",
+      "subtitle": "设计2台：1用1备（暂定）",
+      "anchor": "12",
+      "hint": "与消防室外管网共用部分管路，须校核阀位"
+    },
+    {
+      "id": "firepump",
+      "name": "室内/室外消防泵组",
+      "group": "supply",
+      "subtitle": "消防泵组独立控制",
+      "anchor": "12",
+      "hint": "消防水量必须优先保留，消防联动按规范"
+    },
+    {
+      "id": "machine",
+      "name": "堆场/码头设备及冲洗",
+      "group": "demand",
+      "subtitle": "堆取料机、卸船机、加水点等",
+      "anchor": null,
+      "hint": "具体末端点位待管线图和设备表确认"
+    },
+    {
+      "id": "fog",
+      "name": "堆场射雾器",
+      "group": "demand",
+      "subtitle": "由射雾泵组供水",
+      "anchor": null,
+      "hint": "设备位置需CAD/清单校核"
+    },
+    {
+      "id": "fire",
+      "name": "室内/室外消防设施",
+      "group": "demand",
+      "subtitle": "消防专用",
+      "anchor": null,
+      "hint": "接入点数量及设备坐标待核"
+    },
+    {
+      "id": "life",
+      "name": "生活污水系统",
+      "group": "separate",
+      "subtitle": "与含矿污水系统分开",
+      "anchor": null,
+      "hint": "不能把生活污水处理混入含矿污水主链"
+    },
+    {
+      "id": "lifetreat",
+      "name": "一体化生活污水处理设施",
+      "group": "separate",
+      "subtitle": "另有既有场接入文字",
+      "anchor": "16",
+      "hint": "同时存在既有污水处理场接入注记，实际实施模式待核"
+    },
+    {
+      "id": "office",
+      "name": "办公/生活用水",
+      "group": "separate",
+      "subtitle": "按需求仅展示水量",
+      "anchor": null,
+      "hint": "不虚构实时计量、水表位置或闭环调度"
+    }
+  ],
+  "edges": [
+    {
+      "id": "L01",
+      "from": "yard",
+      "to": "ditch",
+      "label": "雨污水经排水沟收集",
+      "status": "design",
+      "sources": [
+        "A01",
+        "A03"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L02",
+      "from": "ditch",
+      "to": "north",
+      "label": "北侧排水沟收集入池",
+      "status": "design",
+      "sources": [
+        "A03",
+        "A08"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L03",
+      "from": "ditch",
+      "to": "south",
+      "label": "南侧排水沟收集入池",
+      "status": "design",
+      "sources": [
+        "A06",
+        "A07"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L04",
+      "from": "wash",
+      "to": "washsed",
+      "label": "清洗污水 → 三级沉淀",
+      "status": "design",
+      "sources": [
+        "A20",
+        "A32"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L05",
+      "from": "washsed",
+      "to": "south",
+      "label": "沉淀后污水池提升至南侧池",
+      "status": "design",
+      "sources": [
+        "A20",
+        "A07"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L06",
+      "from": "north",
+      "to": "sewage",
+      "label": "北侧集水池提升至含矿站",
+      "status": "design",
+      "sources": [
+        "A02",
+        "A08",
+        "D01"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L07",
+      "from": "south",
+      "to": "north",
+      "label": "备选：南池压力提升至北池",
+      "status": "alternative",
+      "sources": [
+        "A06",
+        "A08",
+        "D03"
+      ],
+      "view": "collection",
+      "note": "设计允许接北池或污水站，实际阀位/启用路线待核"
+    },
+    {
+      "id": "L08",
+      "from": "south",
+      "to": "sewage",
+      "label": "备选：南池直接到污水站",
+      "status": "alternative",
+      "sources": [
+        "A06",
+        "A08",
+        "D03"
+      ],
+      "view": "collection",
+      "note": "设计中属于可选择路线，不可同时声称均常开"
+    },
+    {
+      "id": "L09",
+      "from": "sewage",
+      "to": "purifier",
+      "label": "絮凝沉淀/过滤",
+      "status": "design",
+      "sources": [
+        "A04"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L10",
+      "from": "sewage",
+      "to": "sludge",
+      "label": "沉淀污泥 → 脱水",
+      "status": "design",
+      "sources": [
+        "A05"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L11",
+      "from": "purifier",
+      "to": "clear",
+      "label": "处理上清液进入清水池",
+      "status": "design",
+      "sources": [
+        "A27"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L12",
+      "from": "clear",
+      "to": "dusttank",
+      "label": "达标清水优先回用除尘水池",
+      "status": "design",
+      "sources": [
+        "A10",
+        "A28"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L13",
+      "from": "clear",
+      "to": "eco",
+      "label": "过量达标水送生态空间储存",
+      "status": "conditional",
+      "sources": [
+        "A10"
+      ],
+      "view": "collection",
+      "note": "超过除尘需求、水质达标且路径可用时"
+    },
+    {
+      "id": "L14",
+      "from": "eco",
+      "to": "dusttank",
+      "label": "生态空间水条件回输除尘水池",
+      "status": "conditional",
+      "sources": [
+        "A12",
+        "A26",
+        "D06"
+      ],
+      "view": "collection",
+      "note": "双向管路、阀门控制、水质要求均需工程校核"
+    },
+    {
+      "id": "S01",
+      "from": "municipal",
+      "to": "dusttank",
+      "label": "市政自来水补给除尘池",
+      "status": "design",
+      "sources": [
+        "A15"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S02",
+      "from": "reclaimed",
+      "to": "dusttank",
+      "label": "市政中水补给除尘池",
+      "status": "design",
+      "sources": [
+        "A15"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S03",
+      "from": "clear",
+      "to": "dusttank",
+      "label": "含矿处理回用水进入除尘池",
+      "status": "design",
+      "sources": [
+        "A15",
+        "A28"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S04",
+      "from": "dusttank",
+      "to": "midpump",
+      "label": "水池供给中压泵组",
+      "status": "design",
+      "sources": [
+        "A13",
+        "A17"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S05",
+      "from": "dusttank",
+      "to": "fogpump",
+      "label": "水池供给射雾泵组",
+      "status": "design",
+      "sources": [
+        "A13",
+        "A16"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S06",
+      "from": "dusttank",
+      "to": "firepump",
+      "label": "水池保障消防泵组",
+      "status": "design",
+      "sources": [
+        "A14",
+        "A18",
+        "A19"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S07",
+      "from": "midpump",
+      "to": "wash",
+      "label": "中压供水用于洗车台冲洗",
+      "status": "design",
+      "sources": [
+        "A17",
+        "A21",
+        "A32"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S08",
+      "from": "midpump",
+      "to": "machine",
+      "label": "中压水用于装卸机械和场地冲洗",
+      "status": "design",
+      "sources": [
+        "A17"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S09",
+      "from": "fogpump",
+      "to": "fog",
+      "label": "射雾器专项供水",
+      "status": "design",
+      "sources": [
+        "A16"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S10",
+      "from": "firepump",
+      "to": "fire",
+      "label": "室内外消防供水",
+      "status": "design",
+      "sources": [
+        "A18",
+        "A19"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "X01",
+      "from": "life",
+      "to": "lifetreat",
+      "label": "生活污水独立处理去向需确认",
+      "status": "cad_note",
+      "sources": [
+        "D13",
+        "D14",
+        "D15"
+      ],
+      "view": "separate",
+      "note": "CAD有既有设施接入与一体化设施两种注记，不能凭文字选择实施版本"
+    }
+  ],
+  "evidence": {
+    "A01": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "1.2.1 污水处理系统",
+      "paragraph": 90,
+      "original": "本工程条形仓外道路分别设置排水沟收集含矿雨污水。堆场南北两侧设置集水池，排水沟分别向南北两侧接入集水池。通过压力管道提升至新建含矿污水处理站处理达标。",
+      "match": "本工程条形仓外道路分别设置排水沟收集含矿雨污水",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A02": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "1.2.1 污水处理系统",
+      "paragraph": 645,
+      "original": "堆场北侧新建含矿污水处理站1座，处理能力500m3/h，一次降雨完成后，北侧集水池内含矿污水提升至含矿污水处理站处理，南侧集水池内设置提升泵组，通过压力管道提升至北侧，根据北侧集水池处理情况，接入北侧集水池或接入污水处理站直接处理。",
+      "match": "堆场北侧新建含矿污水处理站1座",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A03": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "1.2.1 污水处理系统",
+      "paragraph": 643,
+      "original": "本工程堆场及码头前沿设置排水沟收集含矿雨污水。堆场南北两侧设置集水池，排水沟分别向南北两侧接入集水池。一次降雨过程中，堆场区雨水通过排水沟接入南北两端的集水池,通过压力管道提升至新建含矿污水处理站处理达标。",
+      "match": "堆场南北两侧设置集水池",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A04": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.4.2 污水处理工艺",
+      "paragraph": 674,
+      "original": "污水经调节沉淀预处理后的上清液输送到高效净水器。高效净水器由混凝沉淀区和过滤区构成。在进入高效净水器的进水管道中投加混凝剂、助凝剂，通过反应池中设置的搅拌器的作用，污水中产生絮体，该絮体可以吸附较细小的颗粒或胶体。处理后的上清液进入清水池。",
+      "match": "污水经调节沉淀预处理后的上清液输送到高效净水器",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A05": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.4.2 污水处理工艺",
+      "paragraph": 675,
+      "original": "所有的污泥均排至污泥池，污泥在污泥池沉淀浓缩后由机械清理，采用隔膜式板框压滤机。矿泥可以回收利用。",
+      "match": "所有的污泥均排至污泥池",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A06": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.5.1 南侧集水池",
+      "paragraph": 802,
+      "original": "南侧集水池设置5座，单座容积不小于2700m³。每座设置吸泥泵，其中2座设置机械刮泥设备及搅拌设备，保证清泥效果。",
+      "match": "南侧集水池设置5座，单座容积不小于2700",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A07": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.5.1 南侧集水池",
+      "paragraph": 788,
+      "original": "南侧集水池设置5座，单座容积不小于2700m³。南侧集水池主要收集码头排水沟、堆场排水沟、洗车台污水池内的含矿污水，污水通过压力管道提升至后方污水处理站或北侧集水池。",
+      "match": "南侧集水池主要收集码头排水沟、堆场排水沟、洗车台污水池",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A08": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.4.2 污水处理工艺",
+      "paragraph": 672,
+      "original": "工程区域内的污水分为两部分收集：一部分由堆场排水沟收集后进入北侧集水池后经提升泵提升进入含矿污水处理站；另一部分由排水沟收集进入堆场南侧集水池，经提升泵提升，通过压力管道输送至北侧集水池或南侧人工湖或直接进入含矿污水处理站。",
+      "match": "工程区域内的污水分为两部分收集",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A09": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.5.4 压力污水管",
+      "paragraph": 811,
+      "original": "集水池提升井至污水处理站采用压力污水管。管道沿两座条形仓之间埋地敷设，管材采用钢丝网骨架聚乙烯复合管，每隔200m设置检查井，并应设置管道泄空及冲洗装置，避免管道堵塞。",
+      "match": "集水池提升井至污水处理站采用压力污水管",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A10": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "1.2.1 污水处理系统",
+      "paragraph": 646,
+      "original": "污水处理站设置清水池1座，清水池出水接入除尘水池回用，同时设置加水点可供洒水车加水。含矿污水处理站处理达标水优先接至除尘水池,过量达标水通过清水池内提升泵组提升至唐山港智慧中心前方人工湖存储，非雨季时，人工湖储水可根据水质不同接至除尘水池或污水处理站，压力雨水管道通过电动阀及止回阀实现双向输水。",
+      "match": "污水处理站设置清水池1座",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A11": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "1.2.1 污水处理系统",
+      "paragraph": 646,
+      "original": "污水处理站设置清水池1座，清水池出水接入除尘水池回用，同时设置加水点可供洒水车加水。含矿污水处理站处理达标水优先接至除尘水池,过量达标水通过清水池内提升泵组提升至唐山港智慧中心前方人工湖存储，非雨季时，人工湖储水可根据水质不同接至除尘水池或污水处理站，压力雨水管道通过电动阀及止回阀实现双向输水。",
+      "match": "污水处理站设置清水池1座",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A12": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "1.2.1 污水处理系统",
+      "paragraph": 94,
+      "original": "污水处理站设置清水池1座，清水池出水可供洒水车加水，也可接入除尘水池回用于洒水除尘。含矿污水处理站处理达标水优先接至除尘水池,过量达标水通过清水池内提升泵组提升至唐山港智慧中心前方生态空间存储，非雨季时，生态空间储水可根据水质不同接至除尘水池或污水处理站压力雨水管道通过电动阀及止回阀实现双向输水。",
+      "match": "生态空间储水可根据水质不同接至除尘水池或污水处理站",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A13": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "1.1 洒水除尘排水消防",
+      "paragraph": 85,
+      "original": "本洒水除尘、消防供水系统设置除尘泵房，泵房设置除尘水池两座，每座水池容积为3000m³，水源为市政自来水、市政中水及含矿污水处理站回用水。泵房包含洒水除尘和消防系统。射雾器供水泵组专为堆场射雾器洒水供水。除尘中压泵组专为斗轮堆取料机、卸船机、卸料小车等单机提供除尘用水、为加水点提供环保水车用水、为洗车台提供冲洗用水、为转接机房、取制样塔、驱动站、码头、廊道等提供地面冲洗用水。室外消火栓泵组为码头、堆场、辅建区提供室外消防用水。室内消火栓兼自喷泵组为唐山港智慧中心、物资仓库及TG1机房、TG2机房等提供室内消火栓及自喷用水。船舶上水系统为51、52号泊位提供船舶上水功能。",
+      "match": "本洒水除尘、消防供水系统设置除尘泵房",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A14": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "2.4 除尘水池",
+      "paragraph": 167,
+      "original": "2.4.1 本工程除尘水池为两座钢筋混凝土矩形水池，地上式，水池设计标高应满足水泵自灌吸水要求。每座水池容积为3000m³，深4.0m。水池土建部分不属于投标方供货范围，但投标方需要根据使用要求提供水池工艺设计图纸。投标方必须采取可靠措施，保证水池内存有足够的消防水量（暂定为1620m³），并保证在非消防状态此部分储水不得它用，且保证消防状态下能实现自灌式启泵。本工程洒水除尘系统水源为市政自来水、市政中水及污水处理厂回用水。所有水池进水管道上应设置可自动清洗的管道过滤器。",
+      "match": "每座水池容积为3000m³",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A15": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "2.4 除尘水池",
+      "paragraph": 167,
+      "original": "2.4.1 本工程除尘水池为两座钢筋混凝土矩形水池，地上式，水池设计标高应满足水泵自灌吸水要求。每座水池容积为3000m³，深4.0m。水池土建部分不属于投标方供货范围，但投标方需要根据使用要求提供水池工艺设计图纸。投标方必须采取可靠措施，保证水池内存有足够的消防水量（暂定为1620m³），并保证在非消防状态此部分储水不得它用，且保证消防状态下能实现自灌式启泵。本工程洒水除尘系统水源为市政自来水、市政中水及污水处理厂回用水。所有水池进水管道上应设置可自动清洗的管道过滤器。",
+      "match": "本工程洒水除尘系统水源为市政自来水、市政中水及污水处理厂回用水",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A16": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "2.5.3 除尘泵房泵组",
+      "paragraph": 182,
+      "original": "（1）射雾器供水泵组及备用泵：专为射雾器供水，采用成套泵组，并采用变频调速控制。",
+      "match": "射雾器供水泵组及备用泵",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A17": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "2.5.3 除尘泵房泵组",
+      "paragraph": 183,
+      "original": "（2）除尘中压泵组及备用泵：专为堆取料机、卸船机、卸料小车等单机提供除尘用水、为加水点提供环保水车用水、为洗车台提供冲洗用水、为带式输送机转接机房、取制样塔、驱动站、码头等提供地面冲洗用水。泵组应配套设置气压罐，并应采用变频调速控制。",
+      "match": "除尘中压泵组及备用泵",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A18": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "2.5.3 除尘泵房泵组",
+      "paragraph": 184,
+      "original": "（3）室外消火栓泵组及备用泵：为码头、堆场、辅建区提供室外消防用水。泵组满足现行国家标准对消防泵组的要求。室外消火栓泵组设置稳压泵及气压罐。",
+      "match": "室外消火栓泵组及备用泵",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A19": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "2.5.3 除尘泵房泵组",
+      "paragraph": 185,
+      "original": "（4）室内消火栓兼自喷泵组及备用泵：为辅建区调度楼、物资仓库及TG1机房、TG2机房等提供室内消火栓及自喷用水。泵组满足现行国家标准对消防泵组的要求。",
+      "match": "室内消火栓兼自喷泵组及备用泵",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A20": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "5.1 洗车台系统",
+      "paragraph": 1261,
+      "original": "洗车台产生的污泥、污水经过排水沟至洗车台沉淀池，沉淀池经过三级沉淀，污水进入污水池。沉淀池设置抓斗，可通过抓斗抓取污泥至集泥池，污泥通过铲车清理，污水池内污水通过渣浆泵排至南方集水池。",
+      "match": "洗车台产生的污泥、污水经过排水沟至洗车台沉淀池",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A21": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "5.1 洗车台系统",
+      "paragraph": 1262,
+      "original": "洗车台供水由除尘泵房通过中压管道供水，污水由含矿污水处理系统处理。",
+      "match": "洗车台供水由除尘泵房通过中压管道供水",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A22": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.7 北侧蓄水沟",
+      "paragraph": 841,
+      "original": "3.7.4投标方应提供满足将北侧2座集水池提升的污水提升至蓄水沟的全部配管、配件、附件、管托管架、阀门、液位计、压力计、流量计等整套设备。",
+      "match": "北侧2座集水池提升的污水提升至蓄水沟",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A23": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.4 污水处理控制",
+      "paragraph": 733,
+      "original": "（1）本工程污水处理有三种控制方式:自动控制方式、手动控制方式和远程控制方式。",
+      "match": "污水处理有三种控制方式",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A24": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.4.1 含矿污水处理",
+      "paragraph": 665,
+      "original": "污水接收能力按50529m3设计，处理能力按500m3/h设计，需要保证能够连续运行72小时。",
+      "match": "污水接收能力按50529m3设计",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A25": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.4.1 含矿污水处理",
+      "paragraph": 664,
+      "original": "（1）设计水量：",
+      "match": "设计水量：",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A26": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.6 生态空间回输",
+      "paragraph": 822,
+      "original": "3.6.1用途：将生态空间内中水接至集水池或除尘水池。",
+      "match": "生态空间内中水接至集水池或除尘水池",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A27": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.4.2 污水处理工艺",
+      "paragraph": 674,
+      "original": "污水经调节沉淀预处理后的上清液输送到高效净水器。高效净水器由混凝沉淀区和过滤区构成。在进入高效净水器的进水管道中投加混凝剂、助凝剂，通过反应池中设置的搅拌器的作用，污水中产生絮体，该絮体可以吸附较细小的颗粒或胶体。处理后的上清液进入清水池。",
+      "match": "处理后的上清液进入清水池",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A28": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.4.3 清水池",
+      "paragraph": 716,
+      "original": "池内设置清水泵，至少设置一台备用。容积不小于2000m³，清水池存水主要供应除尘泵房水池使用，清水泵的启停应和除尘水池水位联动，当除尘水池到达高液位时，清水泵停止工作。清水泵出水干管设置一台电磁流量计。",
+      "match": "清水池存水主要供应除尘泵房水池使用",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A29": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "1.1 洒水除尘排水消防",
+      "paragraph": 85,
+      "original": "本洒水除尘、消防供水系统设置除尘泵房，泵房设置除尘水池两座，每座水池容积为3000m³，水源为市政自来水、市政中水及含矿污水处理站回用水。泵房包含洒水除尘和消防系统。射雾器供水泵组专为堆场射雾器洒水供水。除尘中压泵组专为斗轮堆取料机、卸船机、卸料小车等单机提供除尘用水、为加水点提供环保水车用水、为洗车台提供冲洗用水、为转接机房、取制样塔、驱动站、码头、廊道等提供地面冲洗用水。室外消火栓泵组为码头、堆场、辅建区提供室外消防用水。室内消火栓兼自喷泵组为唐山港智慧中心、物资仓库及TG1机房、TG2机房等提供室内消火栓及自喷用水。船舶上水系统为51、52号泊位提供船舶上水功能。",
+      "match": "船舶上水系统为51、52号泊位提供船舶上水功能",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A30": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "1.4 洗车台系统",
+      "paragraph": 101,
+      "original": "本工程共配置洗车台系统6套，每套洗车台主要包括入口地面硬化颠簸区、地槽式智能清洗区（含冲洗区）、沥水区及沉淀池等。集成防撞装置，同时考虑排水、警示、夜间示宽灯等。车辆先进入入口地面硬化颠簸区，再清洗车轮及全面冲洗，然后沥水，防止污水带出。",
+      "match": "本工程共配置洗车台系统6套",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "A31": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "3.4 污水处理站",
+      "paragraph": 749,
+      "original": "北侧集水池内设置机械刮泥设备，配套就地控制箱，可远程控制启停。设置一套雷达液位计。",
+      "match": "北侧集水池内设置机械刮泥设备",
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx"
+    },
+    "D01": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "337618",
+      "original": "北侧集水池出水管，DN350，至污水处理站/预留接口",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D02": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "337651",
+      "original": "南侧集水池、北侧集水池、人工湖接至污水站",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D03": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "33767B",
+      "original": "南侧集水池至污水处理站/北侧初期雨水池",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D04": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "337676",
+      "original": "人工湖/南侧集水池接至北侧初期雨水池",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D05": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "337612",
+      "original": "DN350,人工湖出水至北侧两个集水池/污水处理站/除尘水池，或清水池出水至生态空间/除尘水池（管道共用）",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D06": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "337653",
+      "original": "人工湖/清水池接至除尘水池",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D07": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "337619",
+      "original": "南侧雨水池出水管，DN350，至北侧初期集水池/污水处理站/人工湖",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D08": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "33710A",
+      "original": "南侧集水池排泥管，DN100",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D09": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "33710E",
+      "original": "北侧集水池排泥管，DN100",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D10": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "13E02B",
+      "original": "接中压除尘给水泵组",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D11": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "13E5BD",
+      "original": "接高压除尘给水泵组",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D12": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "13FCAE",
+      "original": "接除尘水池进水管",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D13": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "139AA4",
+      "original": "接入既有生活污水处理场",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D14": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "139AAA",
+      "original": "一体化生活污水处理设施",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D15": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "13FDE3",
+      "original": "接入邻近工程已建生活污水处理场",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "D16": {
+      "sourceType": "原始DWG文字标注",
+      "handle": "139320",
+      "original": "DN300（中压除尘标注；尚待管道中心线确认）",
+      "sourceFile": "51 52陆域平面 管综260917(2)(2).dwg"
+    },
+    "A32": {
+      "sourceType": "第四分册技术规格书",
+      "chapter": "5.1 洗车台系统布置",
+      "paragraph": 1258,
+      "sourceFile": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx",
+      "match": "主要包括6套洗车台",
+      "original": "主要包括6套洗车台，其中疏港路主干道2套（双车道），1#和2#条形仓出口（内部）各布设1套洗车台（共计4套）。"
+    }
+  },
+  "anchorSource": "唐港5152_平面图来源核验_V1.1.json",
+  "anchorIndex": {
+    "01": {
+      "id": "01",
+      "label": "1#堆场",
+      "sourceText": "1#堆场",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "10B795",
+      "xy": [
+        448781039.11755604,
+        4545663594.684821
+      ],
+      "kind": "堆场",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "02": {
+      "id": "02",
+      "label": "2#堆场",
+      "sourceText": "2#堆场",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "10B796",
+      "xy": [
+        448727907.8123118,
+        4545621790.393432
+      ],
+      "kind": "堆场",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "03": {
+      "id": "03",
+      "label": "3#堆场",
+      "sourceText": "3#堆场",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "10B6F2",
+      "xy": [
+        448645879.0242127,
+        4545568954.581443
+      ],
+      "kind": "堆场",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "04": {
+      "id": "04",
+      "label": "4#堆场",
+      "sourceText": "4#堆场",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "10B6F3",
+      "xy": [
+        448590585.9865703,
+        4545530237.564288
+      ],
+      "kind": "堆场",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "05": {
+      "id": "05",
+      "label": "5#堆场",
+      "sourceText": "5#堆场",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "10B64F",
+      "xy": [
+        448510718.9308696,
+        4545474314.478064
+      ],
+      "kind": "堆场",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "06": {
+      "id": "06",
+      "label": "6#堆场",
+      "sourceText": "6#堆场",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "10B650",
+      "xy": [
+        448455425.89322716,
+        4545435597.460909
+      ],
+      "kind": "堆场",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "07": {
+      "id": "07",
+      "label": "7#堆场",
+      "sourceText": "7#堆场",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "E4FD1",
+      "xy": [
+        448375558.8375259,
+        4545379674.374685
+      ],
+      "kind": "堆场",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "08": {
+      "id": "08",
+      "label": "8#堆场",
+      "sourceText": "8#堆场",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "E4FD2",
+      "xy": [
+        448320265.7998835,
+        4545340957.357531
+      ],
+      "kind": "堆场",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "09": {
+      "id": "09",
+      "label": "北部集水池（原图“集水池”）",
+      "sourceText": "集水池",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "FAC60",
+      "xy": [
+        448639603.5066274,
+        4545724329.613658
+      ],
+      "kind": "水务设施",
+      "grade": "关联北侧说明，南北名称需工程复核",
+      "comment": ""
+    },
+    "10": {
+      "id": "10",
+      "label": "南部集水池（原图“集水池”）",
+      "sourceText": "集水池",
+      "sourceLayer": "$管综-雨水",
+      "sourceHandle": "10AE0B",
+      "xy": [
+        448921015.37279695,
+        4544867177.661356
+      ],
+      "kind": "水务设施",
+      "grade": "由位置与南侧排泥说明推定，待设计复核",
+      "comment": ""
+    },
+    "11": {
+      "id": "11",
+      "label": "污水处理场",
+      "sourceText": "污水处理场",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "FAC62",
+      "xy": [
+        448433149.88910604,
+        4545566520.247763
+      ],
+      "kind": "水务设施",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "12": {
+      "id": "12",
+      "label": "除尘泵房",
+      "sourceText": "除尘泵房",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "116712",
+      "xy": [
+        448567409.9508417,
+        4545668735.309999
+      ],
+      "kind": "水务设施",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "13": {
+      "id": "13",
+      "label": "洗车台区",
+      "sourceText": "洗车台区",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "FAE1D",
+      "xy": [
+        448463362.4980203,
+        4545037796.021767
+      ],
+      "kind": "生产设施",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "14": {
+      "id": "14",
+      "label": "生态蓄水池",
+      "sourceText": "生态蓄水池",
+      "sourceLayer": "$pm单体",
+      "sourceHandle": "10340E",
+      "xy": [
+        448567022.87273,
+        4545737216.393735
+      ],
+      "kind": "水务设施",
+      "grade": "原图存在方案层，是否当前实施待核",
+      "comment": ""
+    },
+    "15": {
+      "id": "15",
+      "label": "生态空间提升泵站",
+      "sourceText": "生态空间提升泵站",
+      "sourceLayer": "$管综-雨水",
+      "sourceHandle": "1AFB89",
+      "xy": [
+        449230440.2987774,
+        4545197913.273725
+      ],
+      "kind": "水务设施",
+      "grade": "管综雨水图层标注",
+      "comment": ""
+    },
+    "16": {
+      "id": "16",
+      "label": "一体化生活污水处理设施",
+      "sourceText": "一体化生活污水处理设施",
+      "sourceLayer": "$管综-生活污水",
+      "sourceHandle": "139AAA",
+      "xy": [
+        449253826.7608075,
+        4545330396.034258
+      ],
+      "kind": "水务设施",
+      "grade": "与生产污水处理场不可合并",
+      "comment": ""
+    },
+    "17": {
+      "id": "17",
+      "label": "生活污水接入既有处理场",
+      "sourceText": "接入既有生活污水处理场",
+      "sourceLayer": "$管综-生活污水",
+      "sourceHandle": "139AA4",
+      "xy": [
+        448808177.05752504,
+        4545799841.924308
+      ],
+      "kind": "管网接点",
+      "grade": "文字指示接口，非建筑定位",
+      "comment": ""
+    },
+    "18": {
+      "id": "18",
+      "label": "生态空间补水接口",
+      "sourceText": "接入生态空间补水",
+      "sourceLayer": "$管综-市政中水",
+      "sourceHandle": "13993C",
+      "xy": [
+        449316955.57147753,
+        4545264307.352451
+      ],
+      "kind": "管网接点",
+      "grade": "文字指示接口，非水泵位置",
+      "comment": ""
+    },
+    "19": {
+      "id": "19",
+      "label": "51#泊位",
+      "sourceText": "51#泊位",
+      "sourceLayer": "00-码头布置（东侧）",
+      "sourceHandle": "A148B",
+      "xy": [
+        449032787.66787344,
+        4544802419.216122
+      ],
+      "kind": "泊位",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "20": {
+      "id": "20",
+      "label": "52#泊位",
+      "sourceText": "52#泊位",
+      "sourceLayer": "00-码头布置（东侧）",
+      "sourceHandle": "A148D",
+      "xy": [
+        449401711.3212966,
+        4545055194.939121
+      ],
+      "kind": "泊位",
+      "grade": "原图文字坐标",
+      "comment": ""
+    },
+    "21": {
+      "id": "21",
+      "label": "北侧集水池排泥管 DN100",
+      "sourceText": "北侧集水池排泥管，DN100",
+      "sourceLayer": "$管综-污泥管",
+      "sourceHandle": "33710E",
+      "xy": [
+        448495486.6138482,
+        4545661346.335443
+      ],
+      "kind": "设计文字（非设施中心）",
+      "grade": "标注位置，不代表实体设施位置",
+      "comment": ""
+    },
+    "22": {
+      "id": "22",
+      "label": "南侧集水池排泥管 DN100",
+      "sourceText": "南侧集水池排泥管，DN100",
+      "sourceLayer": "$管综-污泥管",
+      "sourceHandle": "33710A",
+      "xy": [
+        449063695.1789444,
+        4544984086.294487
+      ],
+      "kind": "设计文字（非设施中心）",
+      "grade": "标注位置，不代表实体设施位置",
+      "comment": ""
+    },
+    "23": {
+      "id": "23",
+      "label": "市政水源关联说明",
+      "sourceText": "接市政自来水,中水管线",
+      "sourceLayer": "$管综-室内消防",
+      "sourceHandle": "139716",
+      "xy": [
+        448874827.9225104,
+        4546030248.134779
+      ],
+      "kind": "设计文字（非设施中心）",
+      "grade": "标注位置，不代表实体设施位置",
+      "comment": ""
+    },
+    "24": {
+      "id": "24",
+      "label": "消防水池补水管 DN200",
+      "sourceText": "消防水池补水管，DN200,设置水表井",
+      "sourceLayer": "$管综-雨水",
+      "sourceHandle": "344AD8",
+      "xy": [
+        448273736.7922395,
+        4544770925.59385
+      ],
+      "kind": "设计文字（非设施中心）",
+      "grade": "标注位置，不代表实体设施位置",
+      "comment": ""
+    },
+    "25": {
+      "id": "25",
+      "label": "污水站设备间补水管 DN65",
+      "sourceText": "污水站设备间补水管，DN65",
+      "sourceLayer": "$管综-雨水",
+      "sourceHandle": "344AD0",
+      "xy": [
+        448301486.47706676,
+        4545938353.489775
+      ],
+      "kind": "设计文字（非设施中心）",
+      "grade": "标注位置，不代表实体设施位置",
+      "comment": ""
+    },
+    "26": {
+      "id": "26",
+      "label": "清水池补水管 DN100",
+      "sourceText": "清水池补水管，DN100",
+      "sourceLayer": "$管综-雨水",
+      "sourceHandle": "344AD1",
+      "xy": [
+        448222732.3887903,
+        4545883123.836692
+      ],
+      "kind": "设计文字（非设施中心）",
+      "grade": "标注位置，不代表实体设施位置",
+      "comment": ""
+    }
+  },
+  "designNumbers": [
+    {
+      "name": "南侧集水池",
+      "value": "5座",
+      "source": "A06",
+      "note": ""
+    },
+    {
+      "name": "南侧集水池单池容积",
+      "value": "≥2,700m³",
+      "source": "A06",
+      "note": ""
+    },
+    {
+      "name": "北侧集水池",
+      "value": "2座",
+      "source": "A22",
+      "note": ""
+    },
+    {
+      "name": "含矿污水处理能力",
+      "value": "500m³/h",
+      "source": "A24",
+      "note": ""
+    },
+    {
+      "name": "除尘水池",
+      "value": "2座 × 3,000m³",
+      "source": "A14",
+      "note": ""
+    },
+    {
+      "name": "洗车台系统",
+      "value": "6套",
+      "source": "A30",
+      "note": "第5章布置共计4套，设备统计口径冲突待核"
+    }
+  ],
+  "openIssues": [
+    {
+      "severity": "高",
+      "name": "洗车台数量口径",
+      "desc": "第四分册1.4为6套；第5章布置2套双车道+两个出口各1套，标为共计4套；不能直接认定为6个独立位置",
+      "refs": [
+        "A30",
+        "A32"
+      ]
+    },
+    {
+      "severity": "高",
+      "name": "南北集水池实体位置",
+      "desc": "设计南5北2；现有总平定位仅有两个“集水池”文字锚点，需落实7个单池边界和泵井",
+      "refs": [
+        "A06",
+        "A22",
+        "D01",
+        "D08",
+        "D09"
+      ]
+    },
+    {
+      "severity": "高",
+      "name": "南池压力管分流",
+      "desc": "设计存在南池→北池/污水站/南侧人工湖可选路径；需按设计最终版与阀井清单确认启用状态",
+      "refs": [
+        "A08",
+        "D03",
+        "D04",
+        "D07"
+      ]
+    },
+    {
+      "severity": "高",
+      "name": "清水池与除尘水池区别",
+      "desc": "污水处理站清水池独立于泵房2座除尘水池；不能混画",
+      "refs": [
+        "A10",
+        "A14",
+        "A28"
+      ]
+    },
+    {
+      "severity": "中",
+      "name": "生态空间回输",
+      "desc": "设计存在水质和阀门条件的双向供水；不能在平面图中默认视作常开的单向管",
+      "refs": [
+        "A12",
+        "A26",
+        "D05"
+      ]
+    },
+    {
+      "severity": "高",
+      "name": "两份DWG坐标配准",
+      "desc": "泵房提资图含局部坐标及多视图，尚无统一控制点与误差核验",
+      "refs": [
+        "A13"
+      ]
+    },
+    {
+      "severity": "高",
+      "name": "生活污水方式",
+      "desc": "CAD同时有接入既有场与一体化设施的文字标注，最终建设模式待确认",
+      "refs": [
+        "D13",
+        "D14",
+        "D15"
+      ]
+    }
+  ],
+  "spatialNearestByAnchor": {
+    "09": {
+      "facility": "北部集水池（原图“集水池”）",
+      "sourceHandle": "FAC60",
+      "facilityXY": [
+        448639603.5066274,
+        4545724329.613658
+      ],
+      "candidates": [
+        {
+          "handle": "337658",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 6400.5,
+          "lengthRaw": 14765.3,
+          "status": "pipe_candidate_medium",
+          "originalColor": "3",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 77401.36
+          }
+        },
+        {
+          "handle": "33765A",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 11139.9,
+          "lengthRaw": 13572.6,
+          "status": "pipe_candidate_medium",
+          "originalColor": "3",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 91542.12
+          }
+        },
+        {
+          "handle": "33765B",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 11650.4,
+          "lengthRaw": 14766.1,
+          "status": "pipe_candidate_medium",
+          "originalColor": "3",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 71065.29
+          }
+        },
+        {
+          "handle": "1AFB8C",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 12079.9,
+          "lengthRaw": 23590.4,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 91827.82
+          }
+        },
+        {
+          "handle": "33765D",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 12347.5,
+          "lengthRaw": 11138.4,
+          "status": "pipe_candidate_medium",
+          "originalColor": "3",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 85386.14
+          }
+        },
+        {
+          "handle": "1AFF35",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 17165.4,
+          "lengthRaw": 173930.4,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 55478.6
+          }
+        },
+        {
+          "handle": "139728",
+          "layer": "$管综-室内消防",
+          "cadDistanceRaw": 17953.3,
+          "lengthRaw": 1488203.8,
+          "status": "pipe_candidate_strong",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "337FB7",
+            "text": "DN250",
+            "distanceCADUnits": 691.83
+          }
+        },
+        {
+          "handle": "1AFB99",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 20159.1,
+          "lengthRaw": 295931.5,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 86697.34
+          }
+        }
+      ],
+      "caveat": "原始CAD图纸坐标的几何最近距离，不等于距离单位为米、实际接入、阀门联通或管网拓扑已验收"
+    },
+    "10": {
+      "facility": "南部集水池（原图“集水池”）",
+      "sourceHandle": "10AE0B",
+      "facilityXY": [
+        448921015.37279695,
+        4544867177.661356
+      ],
+      "candidates": [
+        {
+          "handle": "139317",
+          "layer": "$管综-中压除尘",
+          "cadDistanceRaw": 8125.4,
+          "lengthRaw": 335930.2,
+          "status": "pipe_candidate_medium",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "1D4072",
+            "text": "DN300",
+            "distanceCADUnits": 100988.57
+          }
+        },
+        {
+          "handle": "2E48B0",
+          "layer": "$管综-污泥管",
+          "cadDistanceRaw": 13983.6,
+          "lengthRaw": 258307.3,
+          "status": "pipe_candidate_strong",
+          "originalColor": "2",
+          "nearestSizeLabel": {
+            "id": "3378A1",
+            "text": "DN100",
+            "distanceCADUnits": 848.63
+          }
+        },
+        {
+          "handle": "1AFB77",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 14883.4,
+          "lengthRaw": 459846.8,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE5A4",
+            "text": "D400",
+            "distanceCADUnits": 143488.25
+          }
+        },
+        {
+          "handle": "3375E9",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 14883.6,
+          "lengthRaw": 592374.6,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE5A4",
+            "text": "D400",
+            "distanceCADUnits": 101628.92
+          }
+        },
+        {
+          "handle": "2E4A0D",
+          "layer": "$管综-中压除尘",
+          "cadDistanceRaw": 16307.5,
+          "lengthRaw": 49304.7,
+          "status": "pipe_candidate_medium",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "1D4072",
+            "text": "DN300",
+            "distanceCADUnits": 141759.77
+          }
+        },
+        {
+          "handle": "1C27B1",
+          "layer": "$管综-中压除尘",
+          "cadDistanceRaw": 17637.7,
+          "lengthRaw": 849493.0,
+          "status": "pipe_candidate_strong",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "1D4081",
+            "text": "DN200",
+            "distanceCADUnits": 4294.99
+          }
+        },
+        {
+          "handle": "3301E9",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 36526.5,
+          "lengthRaw": 90303.3,
+          "status": "pipe_candidate_medium",
+          "originalColor": "1",
+          "nearestSizeLabel": {
+            "id": "1DF26B",
+            "text": "DN200",
+            "distanceCADUnits": 14149.96
+          }
+        },
+        {
+          "handle": "1DF2EF",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 49840.6,
+          "lengthRaw": 99999.5,
+          "status": "pipe_candidate_medium",
+          "originalColor": "1",
+          "nearestSizeLabel": {
+            "id": "1DF26C",
+            "text": "DN200",
+            "distanceCADUnits": 17203.82
+          }
+        }
+      ],
+      "caveat": "原始CAD图纸坐标的几何最近距离，不等于距离单位为米、实际接入、阀门联通或管网拓扑已验收"
+    },
+    "11": {
+      "facility": "污水处理场",
+      "sourceHandle": "FAC62",
+      "facilityXY": [
+        448433149.88910604,
+        4545566520.247763
+      ],
+      "candidates": [
+        {
+          "handle": "337605",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 2132.9,
+          "lengthRaw": 12659.6,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": null,
+            "text": "",
+            "distanceCADUnits": null
+          }
+        },
+        {
+          "handle": "1AFF2F",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 6312.6,
+          "lengthRaw": 44100.5,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": null,
+            "text": "",
+            "distanceCADUnits": null
+          }
+        },
+        {
+          "handle": "139728",
+          "layer": "$管综-室内消防",
+          "cadDistanceRaw": 7100.5,
+          "lengthRaw": 1488203.8,
+          "status": "pipe_candidate_strong",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "337FB7",
+            "text": "DN250",
+            "distanceCADUnits": 691.83
+          }
+        },
+        {
+          "handle": "337606",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 10691.1,
+          "lengthRaw": 48079.0,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": null,
+            "text": "",
+            "distanceCADUnits": null
+          }
+        },
+        {
+          "handle": "1AFB99",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 10691.4,
+          "lengthRaw": 295931.5,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 86697.34
+          }
+        },
+        {
+          "handle": "33764B",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 11172.1,
+          "lengthRaw": 243409.3,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 96842.42
+          }
+        },
+        {
+          "handle": "1AFF22",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 11228.2,
+          "lengthRaw": 42864.8,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": null,
+            "text": "",
+            "distanceCADUnits": null
+          }
+        },
+        {
+          "handle": "139320",
+          "layer": "$管综-中压除尘",
+          "cadDistanceRaw": 11313.0,
+          "lengthRaw": 989314.8,
+          "status": "pipe_candidate_strong",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "1D40AC",
+            "text": "DN300",
+            "distanceCADUnits": 1822.62
+          }
+        }
+      ],
+      "caveat": "原始CAD图纸坐标的几何最近距离，不等于距离单位为米、实际接入、阀门联通或管网拓扑已验收"
+    },
+    "12": {
+      "facility": "除尘泵房",
+      "sourceHandle": "116712",
+      "facilityXY": [
+        448567409.9508417,
+        4545668735.309999
+      ],
+      "candidates": [
+        {
+          "handle": "139728",
+          "layer": "$管综-室内消防",
+          "cadDistanceRaw": 13821.7,
+          "lengthRaw": 1488203.8,
+          "status": "pipe_candidate_strong",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "337FB7",
+            "text": "DN250",
+            "distanceCADUnits": 691.83
+          }
+        },
+        {
+          "handle": "33764B",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 17412.2,
+          "lengthRaw": 243409.3,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 96842.42
+          }
+        },
+        {
+          "handle": "1AFB99",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 17412.9,
+          "lengthRaw": 295931.5,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 86697.34
+          }
+        },
+        {
+          "handle": "139320",
+          "layer": "$管综-中压除尘",
+          "cadDistanceRaw": 18034.4,
+          "lengthRaw": 989314.8,
+          "status": "pipe_candidate_strong",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "1D40AC",
+            "text": "DN300",
+            "distanceCADUnits": 1822.62
+          }
+        },
+        {
+          "handle": "3375E3",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 18608.3,
+          "lengthRaw": 447376.0,
+          "status": "pipe_candidate_strong",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 7864.58
+          }
+        },
+        {
+          "handle": "1AFB71",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 18635.5,
+          "lengthRaw": 377207.1,
+          "status": "pipe_candidate_strong",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 7857.83
+          }
+        },
+        {
+          "handle": "139322",
+          "layer": "$管综-中压除尘",
+          "cadDistanceRaw": 19627.9,
+          "lengthRaw": 10982.9,
+          "status": "pipe_candidate_strong",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "1D4381",
+            "text": "DN300",
+            "distanceCADUnits": 10970.26
+          }
+        },
+        {
+          "handle": "1AFB56",
+          "layer": "$管综-雨水",
+          "cadDistanceRaw": 19832.6,
+          "lengthRaw": 326678.2,
+          "status": "pipe_candidate_medium",
+          "originalColor": "6",
+          "nearestSizeLabel": {
+            "id": "DE582",
+            "text": "DN350",
+            "distanceCADUnits": 70860.18
+          }
+        }
+      ],
+      "caveat": "原始CAD图纸坐标的几何最近距离，不等于距离单位为米、实际接入、阀门联通或管网拓扑已验收"
+    },
+    "13": {
+      "facility": "洗车台区",
+      "sourceHandle": "FAE1D",
+      "facilityXY": [
+        448463362.4980203,
+        4545037796.021767
+      ],
+      "candidates": [
+        {
+          "handle": "2EB135",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 7461.0,
+          "lengthRaw": 30599.7,
+          "status": "pipe_candidate_medium",
+          "originalColor": "8",
+          "nearestSizeLabel": {
+            "id": "2EB3CF",
+            "text": "DN150",
+            "distanceCADUnits": 1597.48
+          }
+        },
+        {
+          "handle": "2EAF50",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 11404.3,
+          "lengthRaw": 14999.4,
+          "status": "pipe_candidate_medium",
+          "originalColor": "8",
+          "nearestSizeLabel": {
+            "id": "2EB3CF",
+            "text": "DN150",
+            "distanceCADUnits": 3276.6
+          }
+        },
+        {
+          "handle": "139882",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 20321.5,
+          "lengthRaw": 43122.6,
+          "status": "pipe_candidate_strong",
+          "originalColor": "1",
+          "nearestSizeLabel": {
+            "id": "2EB3CF",
+            "text": "DN150",
+            "distanceCADUnits": 3924.0
+          }
+        },
+        {
+          "handle": "2EB427",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 21817.7,
+          "lengthRaw": 11362.7,
+          "status": "pipe_candidate_medium",
+          "originalColor": "8",
+          "nearestSizeLabel": {
+            "id": "2EB3CF",
+            "text": "DN150",
+            "distanceCADUnits": 2427.67
+          }
+        },
+        {
+          "handle": "2EB422",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 21817.9,
+          "lengthRaw": 6098.9,
+          "status": "pipe_candidate_medium",
+          "originalColor": "8",
+          "nearestSizeLabel": {
+            "id": "2EB3CF",
+            "text": "DN150",
+            "distanceCADUnits": 2681.71
+          }
+        },
+        {
+          "handle": "2EB3C9",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 22194.8,
+          "lengthRaw": 7876.0,
+          "status": "pipe_candidate_medium",
+          "originalColor": "8",
+          "nearestSizeLabel": {
+            "id": "2EB3CF",
+            "text": "DN150",
+            "distanceCADUnits": 2427.68
+          }
+        },
+        {
+          "handle": "2EB009",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 26317.9,
+          "lengthRaw": 8700.2,
+          "status": "pipe_candidate_medium",
+          "originalColor": "8",
+          "nearestSizeLabel": {
+            "id": "2EB3CF",
+            "text": "DN150",
+            "distanceCADUnits": 2072.32
+          }
+        },
+        {
+          "handle": "2EAF56",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 26354.8,
+          "lengthRaw": 15000.0,
+          "status": "pipe_candidate_medium",
+          "originalColor": "8",
+          "nearestSizeLabel": {
+            "id": "2EB3CF",
+            "text": "DN150",
+            "distanceCADUnits": 3876.94
+          }
+        }
+      ],
+      "caveat": "原始CAD图纸坐标的几何最近距离，不等于距离单位为米、实际接入、阀门联通或管网拓扑已验收"
+    },
+    "14": {
+      "facility": "生态蓄水池",
+      "sourceHandle": "10340E",
+      "facilityXY": [
+        448567022.87273,
+        4545737216.393735
+      ],
+      "candidates": [
+        {
+          "handle": "1DF154",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 2914.3,
+          "lengthRaw": 106000.7,
+          "status": "pipe_candidate_medium",
+          "originalColor": "1",
+          "nearestSizeLabel": {
+            "id": "1DF276",
+            "text": "DN200",
+            "distanceCADUnits": 25364.7
+          }
+        },
+        {
+          "handle": "139944",
+          "layer": "$管综-市政中水",
+          "cadDistanceRaw": 10487.3,
+          "lengthRaw": 414631.3,
+          "status": "pipe_candidate_medium",
+          "originalColor": "121",
+          "nearestSizeLabel": {
+            "id": null,
+            "text": "",
+            "distanceCADUnits": null
+          }
+        },
+        {
+          "handle": "13987B",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 11987.7,
+          "lengthRaw": 3122800.0,
+          "status": "pipe_candidate_strong",
+          "originalColor": "1",
+          "nearestSizeLabel": {
+            "id": "1DF605",
+            "text": "DN200",
+            "distanceCADUnits": 571.34
+          }
+        },
+        {
+          "handle": "139728",
+          "layer": "$管综-室内消防",
+          "cadDistanceRaw": 13043.9,
+          "lengthRaw": 1488203.8,
+          "status": "pipe_candidate_strong",
+          "originalColor": "256",
+          "nearestSizeLabel": {
+            "id": "337FB7",
+            "text": "DN250",
+            "distanceCADUnits": 691.83
+          }
+        },
+        {
+          "handle": "1DF2FB",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 14959.1,
+          "lengthRaw": 68901.5,
+          "status": "pipe_candidate_medium",
+          "originalColor": "1",
+          "nearestSizeLabel": {
+            "id": "1DF276",
+            "text": "DN200",
+            "distanceCADUnits": 14150.02
+          }
+        },
+        {
+          "handle": "13987A",
+          "layer": "$管综-室外消防",
+          "cadDistanceRaw": 15484.9,
+          "lengthRaw": 960164.9,
+          "status": "pipe_candidate_strong",
+          "originalColor": "1",
+          "nearestSizeLabel": {
+            "id": "2EC208",
+            "text": "DN150",
+            "distanceCADUnits": 2859.71
+          }
+        },
+        {
+          "handle": "1399D8",
+          "layer": "$管综-市政自来水 生活给水",
+          "cadDistanceRaw": 17487.3,
+          "lengthRaw": 296406.6,
+          "status": "pipe_candidate_medium",
+          "originalColor": "3",
+          "nearestSizeLabel": {
+            "id": null,
+            "text": "",
+            "distanceCADUnits": null
+          }
+        },
+        {
+          "handle": "139AA7",
+          "layer": "$管综-生活污水",
+          "cadDistanceRaw": 19487.5,
+          "lengthRaw": 496114.7,
+          "status": "pipe_candidate_medium",
+          "originalColor": "30",
+          "nearestSizeLabel": {
+            "id": null,
+            "text": "",
+            "distanceCADUnits": null
+          }
+        }
+      ],
+      "caveat": "原始CAD图纸坐标的几何最近距离，不等于距离单位为米、实际接入、阀门联通或管网拓扑已验收"
+    }
+  }
+}

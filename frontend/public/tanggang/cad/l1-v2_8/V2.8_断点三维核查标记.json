@@ -1,0 +1,4115 @@
+{
+  "schema": "tanggang-v2.8-visual-continuity-diagnostics",
+  "sourceDWGSHA256": "de51fe02e029c880f9cee8e9ff0bc060e449603f4c213aef485ad161f3accd47",
+  "summary": {
+    "endpointTotal": 1098,
+    "touchingAnotherVisible": 770,
+    "nearVisibleGap": 7,
+    "hiddenSourceContinuation": 64,
+    "unmatchedVisibleEndpoints": 257,
+    "atSceneClipBoundary": 0,
+    "shortIsolatedCandidateHandles": 58,
+    "sourcePipeHandlesApproved": 550,
+    "sourceHandleAwaitingReview": 2692,
+    "renderingSkippedForOverlength": 0,
+    "verifiedHydraulicEdges": 0,
+    "countOfCandidateLocations": 129
+  },
+  "issues": [
+    {
+      "id": "DP-001",
+      "kind": "visible_gap_candidate",
+      "severity": "high",
+      "layer": "$管综-室内消防",
+      "handle": "13F33C",
+      "pointXZ": [
+        -50.3628,
+        41.75224
+      ],
+      "reason": "两段已批准源图元的端点接近、方向相对，但在2D几何上存在可见间隙。必须复查源CAD的实际标高/接口。",
+      "relatedHandles": [
+        "13971F"
+      ],
+      "sourcePipeIsApproved": true,
+      "gapDisplayUnits": 0.3775,
+      "reviewOnlyGeometry": {
+        "handle": "13971F",
+        "status": "approved_other_end",
+        "sourceLayer": "$管综-室内消防",
+        "displayPoints": [
+          [
+            -50.73948,
+            41.72668
+          ],
+          [
+            -52.87228,
+            41.72671
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-002",
+      "kind": "visible_gap_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7E3",
+      "pointXZ": [
+        4.64381,
+        -9.73018
+      ],
+      "reason": "两段已批准源图元的端点接近、方向相对，但在2D几何上存在可见间隙。必须复查源CAD的实际标高/接口。",
+      "relatedHandles": [
+        "2EB60A"
+      ],
+      "sourcePipeIsApproved": true,
+      "gapDisplayUnits": 0.8267,
+      "reviewOnlyGeometry": {
+        "handle": "2EB60A",
+        "status": "approved_other_end",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.1564,
+            -10.39786
+          ],
+          [
+            4.1563,
+            -11.89788
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-003",
+      "kind": "visible_gap_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EB81F",
+      "pointXZ": [
+        4.64372,
+        -30.43021
+      ],
+      "reason": "两段已批准源图元的端点接近、方向相对，但在2D几何上存在可见间隙。必须复查源CAD的实际标高/接口。",
+      "relatedHandles": [
+        "2EB65E"
+      ],
+      "sourcePipeIsApproved": true,
+      "gapDisplayUnits": 0.8267,
+      "reviewOnlyGeometry": {
+        "handle": "2EB65E",
+        "status": "approved_other_end",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.1563,
+            -31.09789
+          ],
+          [
+            4.15634,
+            -32.59788
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-004",
+      "kind": "visible_gap_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE91",
+      "pointXZ": [
+        -11.85623,
+        -9.73023
+      ],
+      "reason": "两段已批准源图元的端点接近、方向相对，但在2D几何上存在可见间隙。必须复查源CAD的实际标高/接口。",
+      "relatedHandles": [
+        "2EBCB8"
+      ],
+      "sourcePipeIsApproved": true,
+      "gapDisplayUnits": 0.8266,
+      "reviewOnlyGeometry": {
+        "handle": "2EBCB8",
+        "status": "approved_other_end",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -12.34359,
+            -10.39783
+          ],
+          [
+            -12.34369,
+            -11.89785
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-005",
+      "kind": "visible_gap_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EBECD",
+      "pointXZ": [
+        -11.85627,
+        -30.43017
+      ],
+      "reason": "两段已批准源图元的端点接近、方向相对，但在2D几何上存在可见间隙。必须复查源CAD的实际标高/接口。",
+      "relatedHandles": [
+        "2EBD0C"
+      ],
+      "sourcePipeIsApproved": true,
+      "gapDisplayUnits": 0.8267,
+      "reviewOnlyGeometry": {
+        "handle": "2EBD0C",
+        "status": "approved_other_end",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -12.34368,
+            -31.09785
+          ],
+          [
+            -12.34364,
+            -32.59785
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-006",
+      "kind": "visible_gap_candidate",
+      "severity": "high",
+      "layer": "$管综-雨水",
+      "handle": "3375E9",
+      "pointXZ": [
+        23.8106,
+        -45.00334
+      ],
+      "reason": "两段已批准源图元的端点接近、方向相对，但在2D几何上存在可见间隙。必须复查源CAD的实际标高/接口。",
+      "relatedHandles": [
+        "33768E"
+      ],
+      "sourcePipeIsApproved": true,
+      "gapDisplayUnits": 0.2008,
+      "reviewOnlyGeometry": {
+        "handle": "33768E",
+        "status": "approved_other_end",
+        "sourceLayer": "$管综-雨水",
+        "displayPoints": [
+          [
+            24.01137,
+            -45.00341
+          ],
+          [
+            25.08227,
+            -45.00335
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-007",
+      "kind": "visible_gap_candidate",
+      "severity": "high",
+      "layer": "$管综-雨水",
+      "handle": "33768E",
+      "pointXZ": [
+        24.01137,
+        -45.00341
+      ],
+      "reason": "两段已批准源图元的端点接近、方向相对，但在2D几何上存在可见间隙。必须复查源CAD的实际标高/接口。",
+      "relatedHandles": [
+        "3375E9"
+      ],
+      "sourcePipeIsApproved": true,
+      "gapDisplayUnits": 0.2008,
+      "reviewOnlyGeometry": {
+        "handle": "3375E9",
+        "status": "approved_other_end",
+        "sourceLayer": "$管综-雨水",
+        "displayPoints": [
+          [
+            -35.42687,
+            -45.00322
+          ],
+          [
+            23.8106,
+            -45.00334
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-008",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-中压除尘",
+      "handle": "1D2E70",
+      "pointXZ": [
+        15.80574,
+        37.24671
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "1D319C"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "1D319C",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-中压除尘",
+        "displayPoints": [
+          [
+            15.80578,
+            37.34422
+          ],
+          [
+            20.10577,
+            37.34412
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-009",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-中压除尘",
+      "handle": "2E4A0D",
+      "pointXZ": [
+        -16.95516,
+        -47.898
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2E494A"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2E494A",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-中压除尘",
+        "displayPoints": [
+          [
+            -17.46367,
+            -47.89791
+          ],
+          [
+            -16.99444,
+            -47.89796
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-010",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-中压除尘",
+      "handle": "2E4B54",
+      "pointXZ": [
+        -4.26721,
+        -47.89791
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2E4959"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2E4959",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-中压除尘",
+        "displayPoints": [
+          [
+            -4.46163,
+            -47.89802
+          ],
+          [
+            -6.99436,
+            -47.898
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-011",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-中压除尘",
+      "handle": "2E4B54",
+      "pointXZ": [
+        -3.4315,
+        -47.89797
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2E48C2"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2E48C2",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-中压除尘",
+        "displayPoints": [
+          [
+            -3.37197,
+            -47.89802
+          ],
+          [
+            -0.93065,
+            -47.89801
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-012",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAEA8",
+      "pointXZ": [
+        -45.34325,
+        34.00275
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAEA2"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAEA2",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34324,
+            35.50283
+          ],
+          [
+            -45.34325,
+            34.00275
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-013",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAEA8",
+      "pointXZ": [
+        -45.34321,
+        32.50276
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAEAE"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAEAE",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34321,
+            32.50276
+          ],
+          [
+            -45.34325,
+            31.00282
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-014",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAED2",
+      "pointXZ": [
+        -45.34327,
+        22.00278
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAED8"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAED8",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34327,
+            22.00278
+          ],
+          [
+            -45.34323,
+            20.50279
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-015",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAEFC",
+      "pointXZ": [
+        -45.34329,
+        13.30281
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAEF6"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAEF6",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34325,
+            14.80275
+          ],
+          [
+            -45.34329,
+            13.30281
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-016",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAF26",
+      "pointXZ": [
+        -45.34331,
+        1.30284
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAF2C"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAF2C",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34331,
+            1.30284
+          ],
+          [
+            -45.34333,
+            -0.19724
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-017",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAF26",
+      "pointXZ": [
+        -45.34327,
+        2.80278
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAF20"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAF20",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34331,
+            4.30278
+          ],
+          [
+            -45.34327,
+            2.80278
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-018",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAF50",
+      "pointXZ": [
+        -45.3433,
+        -7.39727
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAF4A"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAF4A",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34329,
+            -5.89719
+          ],
+          [
+            -45.3433,
+            -7.39727
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-019",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAF56",
+      "pointXZ": [
+        -45.3433,
+        -10.39721
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAF5C"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAF5C",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.3433,
+            -10.39721
+          ],
+          [
+            -45.34326,
+            -11.8972
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-020",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAF7A",
+      "pointXZ": [
+        -45.34337,
+        -17.89724
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAF74"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAF74",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34335,
+            -16.39716
+          ],
+          [
+            -45.34337,
+            -17.89724
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-021",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAF80",
+      "pointXZ": [
+        -45.34336,
+        -20.89718
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAF86"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAF86",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34336,
+            -20.89718
+          ],
+          [
+            -45.34332,
+            -22.39718
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-022",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAFA4",
+      "pointXZ": [
+        -45.34334,
+        -28.09721
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAF9E"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAF9E",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34338,
+            -26.59722
+          ],
+          [
+            -45.34334,
+            -28.09721
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-023",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAFAA",
+      "pointXZ": [
+        -45.3434,
+        -31.09723
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAFB0"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAFB0",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.3434,
+            -31.09723
+          ],
+          [
+            -45.34335,
+            -32.59723
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-024",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAFCE",
+      "pointXZ": [
+        -45.3434,
+        -38.59719
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAFC8"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAFC8",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34337,
+            -37.09725
+          ],
+          [
+            -45.3434,
+            -38.59719
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-025",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EAFCE",
+      "pointXZ": [
+        -45.34336,
+        -40.09718
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EAFD4"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EAFD4",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34336,
+            -40.09718
+          ],
+          [
+            -45.34338,
+            -41.59726
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-026",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB0E7",
+      "pointXZ": [
+        -44.85578,
+        36.32784
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB0E1"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB0E1",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85582,
+            36.2678
+          ],
+          [
+            -44.85578,
+            37.31288
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-027",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB0ED",
+      "pointXZ": [
+        -44.85587,
+        30.26785
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB0F3"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB0F3",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85583,
+            30.32788
+          ],
+          [
+            -44.85578,
+            27.26785
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-028",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB0FF",
+      "pointXZ": [
+        -44.85584,
+        21.2679
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB105"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB105",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85585,
+            21.32785
+          ],
+          [
+            -44.85589,
+            18.26788
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-029",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB0FF",
+      "pointXZ": [
+        -44.8558,
+        24.32787
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB0F9"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB0F9",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85588,
+            27.32786
+          ],
+          [
+            -44.85584,
+            24.26783
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-030",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB111",
+      "pointXZ": [
+        -44.85582,
+        15.32784
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB10B"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB10B",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85585,
+            18.32791
+          ],
+          [
+            -44.85586,
+            15.2678
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-031",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB117",
+      "pointXZ": [
+        -44.85592,
+        9.26785
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB11D"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB11D",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85588,
+            9.32788
+          ],
+          [
+            -44.85583,
+            6.26785
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-032",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB129",
+      "pointXZ": [
+        -44.85588,
+        0.26789
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB147"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB147",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.8559,
+            0.32785
+          ],
+          [
+            -44.85594,
+            -2.73212
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-033",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB129",
+      "pointXZ": [
+        -44.85585,
+        3.32787
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB123"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB123",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85593,
+            6.32786
+          ],
+          [
+            -44.85589,
+            3.26783
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-034",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB135",
+      "pointXZ": [
+        -44.85589,
+        -9.72953
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB153"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB153",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.8559,
+            -9.66958
+          ],
+          [
+            -44.85594,
+            -12.72955
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-035",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB135",
+      "pointXZ": [
+        -44.85585,
+        -6.66956
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB14D"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB14D",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85588,
+            -3.97162
+          ],
+          [
+            -44.85589,
+            -6.72959
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-036",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB159",
+      "pointXZ": [
+        -44.85595,
+        -15.66953
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB13B"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB13B",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.8559,
+            -12.66951
+          ],
+          [
+            -44.85586,
+            -15.72954
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-037",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB15F",
+      "pointXZ": [
+        -44.85597,
+        -21.72958
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB165"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB165",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85592,
+            -21.66955
+          ],
+          [
+            -44.85596,
+            -24.72952
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-038",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB171",
+      "pointXZ": [
+        -44.85598,
+        -30.42955
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB249"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB249",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85594,
+            -30.36952
+          ],
+          [
+            -44.8559,
+            -33.42955
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-039",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB171",
+      "pointXZ": [
+        -44.85594,
+        -27.36958
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB16B"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB16B",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85598,
+            -24.66957
+          ],
+          [
+            -44.85593,
+            -27.42953
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-040",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB17D",
+      "pointXZ": [
+        -44.85684,
+        -41.15957
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB183"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB183",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.8568,
+            -41.09954
+          ],
+          [
+            -44.85676,
+            -44.15957
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-041",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB17D",
+      "pointXZ": [
+        -44.8568,
+        -38.0996
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB177"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB177",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85675,
+            -35.09958
+          ],
+          [
+            -44.85678,
+            -38.15956
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-042",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB694",
+      "pointXZ": [
+        3.91647,
+        37.00209
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBF08"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBF08",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            3.73143,
+            37.07709
+          ],
+          [
+            3.73146,
+            37.90842
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-043",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB795",
+      "pointXZ": [
+        4.64384,
+        36.32724
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB78F"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB78F",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64388,
+            36.26715
+          ],
+          [
+            4.64392,
+            37.31223
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-044",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB79B",
+      "pointXZ": [
+        4.64383,
+        30.2672
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB7A1"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7A1",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64387,
+            30.32723
+          ],
+          [
+            4.64383,
+            27.26726
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-045",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7AD",
+      "pointXZ": [
+        4.6438,
+        21.26716
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB7B3"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7B3",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64384,
+            21.3272
+          ],
+          [
+            4.64381,
+            18.26723
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-046",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7AD",
+      "pointXZ": [
+        4.6439,
+        24.32722
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB7A7"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7A7",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64381,
+            27.32721
+          ],
+          [
+            4.64386,
+            24.26718
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-047",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7BF",
+      "pointXZ": [
+        4.64379,
+        15.32724
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB7B9"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7B9",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64379,
+            18.32718
+          ],
+          [
+            4.64383,
+            15.26715
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-048",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7C5",
+      "pointXZ": [
+        4.64378,
+        9.26719
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB7CB"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7CB",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64382,
+            9.32723
+          ],
+          [
+            4.64387,
+            6.2672
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-049",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7D7",
+      "pointXZ": [
+        4.64381,
+        0.26724
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB7F5"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7F5",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.6438,
+            0.32719
+          ],
+          [
+            4.64376,
+            -2.73278
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-050",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7D7",
+      "pointXZ": [
+        4.64385,
+        3.32721
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB7D1"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7D1",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64377,
+            6.32721
+          ],
+          [
+            4.64381,
+            3.26718
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-051",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7E3",
+      "pointXZ": [
+        4.64377,
+        -6.67015
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB7FB"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7FB",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64382,
+            -3.97228
+          ],
+          [
+            4.64381,
+            -6.73024
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-052",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB807",
+      "pointXZ": [
+        4.64374,
+        -15.67019
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB7E9"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7E9",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64374,
+            -12.67025
+          ],
+          [
+            4.6437,
+            -15.73022
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-053",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB80D",
+      "pointXZ": [
+        4.64373,
+        -21.73023
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB813"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB813",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64377,
+            -21.6702
+          ],
+          [
+            4.64373,
+            -24.73017
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-054",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB81F",
+      "pointXZ": [
+        4.64375,
+        -27.37024
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB819"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB819",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64372,
+            -24.67022
+          ],
+          [
+            4.64377,
+            -27.43019
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-055",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB82B",
+      "pointXZ": [
+        4.64286,
+        -41.16023
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB831"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB831",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.6429,
+            -41.10019
+          ],
+          [
+            4.64288,
+            -44.1603
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-056",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB82B",
+      "pointXZ": [
+        4.6429,
+        -38.10026
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EB825"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EB825",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64295,
+            -35.10024
+          ],
+          [
+            4.64291,
+            -38.16021
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-057",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE43",
+      "pointXZ": [
+        -11.85615,
+        36.32728
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBE3D"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE3D",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85619,
+            36.26724
+          ],
+          [
+            -11.85615,
+            37.31232
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-058",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE49",
+      "pointXZ": [
+        -11.85616,
+        30.26723
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBE4F"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE4F",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85612,
+            30.32726
+          ],
+          [
+            -11.85621,
+            27.26721
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-059",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE5B",
+      "pointXZ": [
+        -11.85618,
+        21.2672
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBE61"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE61",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85614,
+            21.32723
+          ],
+          [
+            -11.85618,
+            18.26726
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-060",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE5B",
+      "pointXZ": [
+        -11.85615,
+        24.32717
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBE55"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE55",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85617,
+            27.32724
+          ],
+          [
+            -11.85613,
+            24.26722
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-061",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE6D",
+      "pointXZ": [
+        -11.85619,
+        15.32727
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBE67"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE67",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.8562,
+            18.32721
+          ],
+          [
+            -11.85615,
+            15.26718
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-062",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE73",
+      "pointXZ": [
+        -11.85621,
+        9.26723
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBE79"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE79",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85616,
+            9.32726
+          ],
+          [
+            -11.8562,
+            6.26729
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-063",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE85",
+      "pointXZ": [
+        -11.85623,
+        0.26719
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBEA3"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBEA3",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85619,
+            0.32723
+          ],
+          [
+            -11.85623,
+            -2.73274
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-064",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE85",
+      "pointXZ": [
+        -11.85619,
+        3.32716
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBE7F"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE7F",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85622,
+            6.32724
+          ],
+          [
+            -11.85618,
+            3.26721
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-065",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE91",
+      "pointXZ": [
+        -11.85628,
+        -6.6702
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBEA9"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBEA9",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85625,
+            -3.97218
+          ],
+          [
+            -11.85626,
+            -6.73015
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-066",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBEB5",
+      "pointXZ": [
+        -11.85624,
+        -15.67015
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBE97"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE97",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85625,
+            -12.67021
+          ],
+          [
+            -11.85628,
+            -15.73018
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-067",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBEBB",
+      "pointXZ": [
+        -11.85625,
+        -21.7302
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBEC1"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBEC1",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85621,
+            -21.67017
+          ],
+          [
+            -11.85625,
+            -24.73014
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-068",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBECD",
+      "pointXZ": [
+        -11.85623,
+        -27.3702
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBEC7"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBEC7",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85627,
+            -24.67018
+          ],
+          [
+            -11.85622,
+            -27.43015
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-069",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBED9",
+      "pointXZ": [
+        -11.85713,
+        -41.16019
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBEDF"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBEDF",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85715,
+            -41.10024
+          ],
+          [
+            -11.8571,
+            -44.16027
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-070",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBED9",
+      "pointXZ": [
+        -11.85709,
+        -38.10022
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "2EBED3"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "2EBED3",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85712,
+            -35.10015
+          ],
+          [
+            -11.85713,
+            -38.16026
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-071",
+      "kind": "filtered_continuation_candidate",
+      "severity": "review",
+      "layer": "$管综-雨水",
+      "handle": "1AFB8C",
+      "pointXZ": [
+        7.12385,
+        37.83724
+      ],
+      "reason": "已显示线端连接方向上存在同图层被筛掉的原始图元；需要核对其是否真实中心线，不能直接恢复为水力管道。",
+      "relatedHandles": [
+        "33760E"
+      ],
+      "sourcePipeIsApproved": true,
+      "hiddenAlignment": 1.0,
+      "reviewOnlyGeometry": {
+        "handle": "33760E",
+        "status": "other_line_pending",
+        "sourceLayer": "$管综-雨水",
+        "displayPoints": [
+          [
+            7.24106,
+            37.57279
+          ],
+          [
+            7.24069,
+            37.9471
+          ]
+        ],
+        "isApprovedPipeline": false
+      }
+    },
+    {
+      "id": "DP-072",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-中压除尘",
+      "handle": "2E4A0D",
+      "pointXZ": [
+        -14.48993,
+        -47.898
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2E4A0D",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-中压除尘",
+        "displayPoints": [
+          [
+            -16.95516,
+            -47.898
+          ],
+          [
+            -12.0247,
+            -47.89801
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-073",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-中压除尘",
+      "handle": "2E4B54",
+      "pointXZ": [
+        -3.84936,
+        -47.89794
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2E4B54",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-中压除尘",
+        "displayPoints": [
+          [
+            -3.4315,
+            -47.89797
+          ],
+          [
+            -4.26721,
+            -47.89791
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-074",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "139873",
+      "pointXZ": [
+        -28.69496,
+        -39.49761
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "139873",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -27.90116,
+            -39.49762
+          ],
+          [
+            -29.48876,
+            -39.4976
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-075",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "139878",
+      "pointXZ": [
+        -28.69562,
+        23.20235
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "139878",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -27.91468,
+            23.20237
+          ],
+          [
+            -29.47657,
+            23.20233
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-076",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "13ED0B",
+      "pointXZ": [
+        -28.68149,
+        33.70235
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "13ED0B",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -27.82622,
+            33.70234
+          ],
+          [
+            -29.53676,
+            33.70237
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-077",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2843D8",
+      "pointXZ": [
+        -29.14434,
+        -48.94324
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2843D8",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -29.14433,
+            -50.18325
+          ],
+          [
+            -29.14435,
+            -47.70323
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-078",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EAEA8",
+      "pointXZ": [
+        -45.34323,
+        33.25276
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EAEA8",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34325,
+            34.00275
+          ],
+          [
+            -45.34321,
+            32.50276
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-079",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EAF26",
+      "pointXZ": [
+        -45.34329,
+        2.05281
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EAF26",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.34327,
+            2.80278
+          ],
+          [
+            -45.34331,
+            1.30284
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-080",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EAFCE",
+      "pointXZ": [
+        -45.34338,
+        -39.34718
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EAFCE",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -45.3434,
+            -38.59719
+          ],
+          [
+            -45.34336,
+            -40.09718
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-081",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB0FF",
+      "pointXZ": [
+        -44.85582,
+        22.79789
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB0FF",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.8558,
+            24.32787
+          ],
+          [
+            -44.85584,
+            21.2679
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-082",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB129",
+      "pointXZ": [
+        -44.85586,
+        1.79788
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB129",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85585,
+            3.32787
+          ],
+          [
+            -44.85588,
+            0.26789
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-083",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB135",
+      "pointXZ": [
+        -44.85587,
+        -8.19955
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB135",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85585,
+            -6.66956
+          ],
+          [
+            -44.85589,
+            -9.72953
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-084",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB171",
+      "pointXZ": [
+        -44.85596,
+        -28.89956
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB171",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.85594,
+            -27.36958
+          ],
+          [
+            -44.85598,
+            -30.42955
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-085",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB17D",
+      "pointXZ": [
+        -44.85682,
+        -39.62959
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB17D",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -44.8568,
+            -38.0996
+          ],
+          [
+            -44.85684,
+            -41.15957
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-086",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EB459",
+      "pointXZ": [
+        -29.13777,
+        12.55273
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB459",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -29.48887,
+            12.55271
+          ],
+          [
+            -28.78666,
+            12.55275
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-087",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EB4A6",
+      "pointXZ": [
+        -29.13783,
+        -39.64724
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB4A6",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -29.48894,
+            -39.64726
+          ],
+          [
+            -28.78673,
+            -39.64723
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-088",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EB69E",
+      "pointXZ": [
+        4.14142,
+        28.00212
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB69E",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.57644,
+            28.00211
+          ],
+          [
+            3.70641,
+            28.00214
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-089",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EB6B9",
+      "pointXZ": [
+        4.14133,
+        -11.8979
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB6B9",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.57634,
+            -11.89792
+          ],
+          [
+            3.70632,
+            -11.89788
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-090",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EB6C7",
+      "pointXZ": [
+        4.14133,
+        -32.59787
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB6C7",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.57631,
+            -32.59786
+          ],
+          [
+            3.70636,
+            -32.59788
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-091",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7AD",
+      "pointXZ": [
+        4.64385,
+        22.79719
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7AD",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.6439,
+            24.32722
+          ],
+          [
+            4.6438,
+            21.26716
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-092",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7D7",
+      "pointXZ": [
+        4.64383,
+        1.79723
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7D7",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64385,
+            3.32721
+          ],
+          [
+            4.64381,
+            0.26724
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-093",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB7E3",
+      "pointXZ": [
+        4.64379,
+        -8.20017
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB7E3",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64377,
+            -6.67015
+          ],
+          [
+            4.64381,
+            -9.73018
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-094",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB81F",
+      "pointXZ": [
+        4.64373,
+        -28.90022
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB81F",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.64375,
+            -27.37024
+          ],
+          [
+            4.64372,
+            -30.43021
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-095",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EB82B",
+      "pointXZ": [
+        4.64288,
+        -39.63025
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EB82B",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            4.6429,
+            -38.10026
+          ],
+          [
+            4.64286,
+            -41.16023
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-096",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EBD4C",
+      "pointXZ": [
+        -12.35856,
+        28.00216
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EBD4C",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.92355,
+            28.00215
+          ],
+          [
+            -12.79357,
+            28.00218
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-097",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EBD67",
+      "pointXZ": [
+        -12.35866,
+        -11.89786
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EBD67",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.92364,
+            -11.89788
+          ],
+          [
+            -12.79367,
+            -11.89785
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-098",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "2EBD75",
+      "pointXZ": [
+        -12.35869,
+        -32.59781
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EBD75",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.92368,
+            -32.59782
+          ],
+          [
+            -12.7937,
+            -32.59779
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-099",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE5B",
+      "pointXZ": [
+        -11.85617,
+        22.79718
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE5B",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85615,
+            24.32717
+          ],
+          [
+            -11.85618,
+            21.2672
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-100",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE85",
+      "pointXZ": [
+        -11.85621,
+        1.79717
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE85",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85619,
+            3.32716
+          ],
+          [
+            -11.85623,
+            0.26719
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-101",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBE91",
+      "pointXZ": [
+        -11.85626,
+        -8.20022
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EBE91",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85628,
+            -6.6702
+          ],
+          [
+            -11.85623,
+            -9.73023
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-102",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBECD",
+      "pointXZ": [
+        -11.85625,
+        -28.90019
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EBECD",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85623,
+            -27.3702
+          ],
+          [
+            -11.85627,
+            -30.43017
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-103",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-室外消防",
+      "handle": "2EBED9",
+      "pointXZ": [
+        -11.85711,
+        -39.63021
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "2EBED9",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.85709,
+            -38.10022
+          ],
+          [
+            -11.85713,
+            -41.16019
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-104",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D8A",
+      "pointXZ": [
+        -28.65508,
+        12.70239
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D8A",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -27.8741,
+            12.70238
+          ],
+          [
+            -29.43607,
+            12.7024
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-105",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D8B",
+      "pointXZ": [
+        -28.6551,
+        2.20239
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D8B",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -27.87416,
+            2.20241
+          ],
+          [
+            -29.43605,
+            2.20237
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-106",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D8C",
+      "pointXZ": [
+        -12.15513,
+        2.20235
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D8C",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.37418,
+            2.20237
+          ],
+          [
+            -12.93607,
+            2.20233
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-107",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D8D",
+      "pointXZ": [
+        -12.15509,
+        12.70236
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D8D",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.37411,
+            12.70235
+          ],
+          [
+            -12.93608,
+            12.70236
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-108",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D8E",
+      "pointXZ": [
+        -12.19561,
+        23.20235
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D8E",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.41469,
+            23.20233
+          ],
+          [
+            -12.97652,
+            23.20237
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-109",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D8F",
+      "pointXZ": [
+        -12.21953,
+        33.70234
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D8F",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.43854,
+            33.70233
+          ],
+          [
+            -13.00051,
+            33.70234
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-110",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D90",
+      "pointXZ": [
+        4.28049,
+        33.70234
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D90",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            5.06145,
+            33.70229
+          ],
+          [
+            3.49953,
+            33.70239
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-111",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D91",
+      "pointXZ": [
+        4.30438,
+        23.20232
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D91",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            5.0853,
+            23.2023
+          ],
+          [
+            3.52346,
+            23.20234
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-112",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D92",
+      "pointXZ": [
+        4.34494,
+        12.70229
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D92",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            5.12588,
+            12.70231
+          ],
+          [
+            3.56399,
+            12.70227
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-113",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D93",
+      "pointXZ": [
+        4.34487,
+        2.20232
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D93",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            5.12581,
+            2.20234
+          ],
+          [
+            3.56392,
+            2.2023
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-114",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D94",
+      "pointXZ": [
+        -28.6521,
+        -29.09761
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D94",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -27.85827,
+            -29.09758
+          ],
+          [
+            -29.44593,
+            -29.09764
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-115",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D95",
+      "pointXZ": [
+        -28.6521,
+        -18.79762
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D95",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -27.85826,
+            -18.79765
+          ],
+          [
+            -29.44595,
+            -18.79758
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-116",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D96",
+      "pointXZ": [
+        -28.65208,
+        -8.29761
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D96",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -27.85828,
+            -8.29762
+          ],
+          [
+            -29.44588,
+            -8.2976
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-117",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D97",
+      "pointXZ": [
+        -12.15209,
+        -8.29765
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D97",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.35829,
+            -8.29766
+          ],
+          [
+            -12.9459,
+            -8.29764
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-118",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D98",
+      "pointXZ": [
+        -12.15211,
+        -18.79765
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D98",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.35827,
+            -18.79769
+          ],
+          [
+            -12.94596,
+            -18.79761
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-119",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D99",
+      "pointXZ": [
+        -12.15212,
+        -29.09764
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D99",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.35828,
+            -29.09761
+          ],
+          [
+            -12.94595,
+            -29.09768
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-120",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D9A",
+      "pointXZ": [
+        -12.14231,
+        -39.49765
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D9A",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            -11.34846,
+            -39.49769
+          ],
+          [
+            -12.93615,
+            -39.49761
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-121",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D9B",
+      "pointXZ": [
+        4.35768,
+        -39.49769
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D9B",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            5.15152,
+            -39.49773
+          ],
+          [
+            3.56384,
+            -39.49765
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-122",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D9C",
+      "pointXZ": [
+        4.32346,
+        -29.09767
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D9C",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            5.11729,
+            -29.09764
+          ],
+          [
+            3.52963,
+            -29.09771
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-123",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D9D",
+      "pointXZ": [
+        4.30349,
+        -18.8058
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D9D",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            5.09734,
+            -18.80584
+          ],
+          [
+            3.50965,
+            -18.80576
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-124",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-室外消防",
+      "handle": "336D9E",
+      "pointXZ": [
+        4.3479,
+        -8.29768
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "336D9E",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-室外消防",
+        "displayPoints": [
+          [
+            5.1417,
+            -8.29769
+          ],
+          [
+            3.55409,
+            -8.29767
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-125",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-生活污水",
+      "handle": "13A587",
+      "pointXZ": [
+        40.47145,
+        -15.81086
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "13A587",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-生活污水",
+        "displayPoints": [
+          [
+            40.47145,
+            -17.09335
+          ],
+          [
+            40.47146,
+            -14.52838
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-126",
+      "kind": "short_orphan_candidate",
+      "severity": "review",
+      "layer": "$管综-雨水",
+      "handle": "1AFB8C",
+      "pointXZ": [
+        7.12385,
+        39.01676
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "1AFB8C",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-雨水",
+        "displayPoints": [
+          [
+            7.12385,
+            37.83724
+          ],
+          [
+            7.12384,
+            40.19628
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-127",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-雨水",
+      "handle": "3375F9",
+      "pointXZ": [
+        25.7917,
+        -38.58788
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "3375F9",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-雨水",
+        "displayPoints": [
+          [
+            26.5258,
+            -38.5879
+          ],
+          [
+            25.0576,
+            -38.58786
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-128",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-雨水",
+      "handle": "337675",
+      "pointXZ": [
+        -23.94719,
+        38.41524
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "337675",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-雨水",
+        "displayPoints": [
+          [
+            -24.68545,
+            38.41725
+          ],
+          [
+            -23.20893,
+            38.41323
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    },
+    {
+      "id": "DP-129",
+      "kind": "short_orphan_candidate",
+      "severity": "high",
+      "layer": "$管综-雨水",
+      "handle": "33768E",
+      "pointXZ": [
+        24.54682,
+        -45.00338
+      ],
+      "reason": "短管段两端都未与其他已显示源图元贴合；不一定是错误，应核实是否为末端管口、接管符号或被筛掉的后续线。",
+      "relatedHandles": [],
+      "sourcePipeIsApproved": true,
+      "reviewOnlyGeometry": {
+        "handle": "33768E",
+        "status": "approved_short_candidate",
+        "sourceLayer": "$管综-雨水",
+        "displayPoints": [
+          [
+            24.01137,
+            -45.00341
+          ],
+          [
+            25.08227,
+            -45.00335
+          ]
+        ],
+        "isApprovedPipeline": true
+      }
+    }
+  ],
+  "validation": "geometry_review_only_not_pipe_topology",
+  "palette": {
+    "visible_gap_candidate": "#e05959",
+    "filtered_continuation_candidate": "#e6a247",
+    "short_orphan_candidate": "#9762d1"
+  },
+  "notes": [
+    "Red means two approved geometry ends near but not touching; not proof they should connect.",
+    "Amber dashed means excluded source CAD line appears collinear with visible pipe; not a verified pipe.",
+    "Purple means approved isolated short segment; it could be a valid equipment stub.",
+    "All debug source references preserve original CAD Handles. This dataset is never merged into the operational pipe geometry."
+  ]
+}

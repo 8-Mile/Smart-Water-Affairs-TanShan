@@ -1,0 +1,330 @@
+{
+  "schema": "tanggang-business-systems-v2.5",
+  "originCADSHA256": "de51fe02e029c880f9cee8e9ff0bc060e449603f4c213aef485ad161f3accd47",
+  "sourceScene": "/cad/l1-v2_2/scene-v2.2.json",
+  "sourceRegions": "/cad/l1-v2_3/region-equipment-v2.3.json",
+  "systems": [
+    {
+      "id": "fog",
+      "name": "射雾器除尘",
+      "subtitle": "室内射雾 / 供水设备",
+      "accent": "#20a5c0",
+      "focusPipeLayers": [],
+      "referencePipeLayers": [
+        "$管综-室外消防"
+      ],
+      "areaEquipment": [
+        {
+          "regionId": "REG-YARD",
+          "equipmentIds": [
+            "EQ-Y-FOG"
+          ]
+        },
+        {
+          "regionId": "REG-PUMP",
+          "equipmentIds": [
+            "EQ-P-FOG",
+            "EQ-P-PLC"
+          ]
+        }
+      ],
+      "primaryRegionId": "REG-YARD",
+      "focusAnchorIds": [
+        "TG-CAD-03",
+        "TG-CAD-12"
+      ],
+      "intro": "关注堆场室内射雾区域、供水泵组及控制设备。规格书提及射雾供水与室外消防支管的设计关系。",
+      "disclaimer": "当前没有可独立确认的射雾器专属管线或单台设备坐标；室外消防管只做低亮度设计参照，不能宣称其就是射雾器供水专线。",
+      "sourceAssurance": "layers_exact;hydraulic_topology_unverified",
+      "type": "business",
+      "visibleSourceHandlesByFocusLayer": {},
+      "visibleSourceHandlesByReferenceLayer": {
+        "$管综-室外消防": 330
+      }
+    },
+    {
+      "id": "middle",
+      "name": "中压供水",
+      "subtitle": "堆场 / 码头中压除尘",
+      "accent": "#14b4c9",
+      "focusPipeLayers": [
+        "$管综-中压除尘"
+      ],
+      "referencePipeLayers": [],
+      "areaEquipment": [
+        {
+          "regionId": "REG-YARD",
+          "equipmentIds": [
+            "EQ-Y-DUST",
+            "EQ-Y-WATER"
+          ]
+        },
+        {
+          "regionId": "REG-PUMP",
+          "equipmentIds": [
+            "EQ-P-MID",
+            "EQ-P-METER",
+            "EQ-P-PLC"
+          ]
+        },
+        {
+          "regionId": "REG-WASH",
+          "equipmentIds": [
+            "EQ-WASH-PUMP"
+          ]
+        },
+        {
+          "regionId": "REG-BERTH",
+          "equipmentIds": [
+            "EQ-BERTH-FLUSH"
+          ]
+        }
+      ],
+      "primaryRegionId": "REG-YARD",
+      "focusAnchorIds": [
+        "TG-CAD-03",
+        "TG-CAD-12"
+      ],
+      "intro": "高亮CAD中压除尘图层，展示堆场、泵房、洗车与码头供水的设计设备。",
+      "disclaimer": "中压主管原图元可高亮，但阀门、三通、支路、水力方向和各个设备接口尚未逐一验收。",
+      "sourceAssurance": "layers_exact;hydraulic_topology_unverified",
+      "type": "business",
+      "visibleSourceHandlesByFocusLayer": {
+        "$管综-中压除尘": 28
+      },
+      "visibleSourceHandlesByReferenceLayer": {}
+    },
+    {
+      "id": "mineral",
+      "name": "含矿污水处理",
+      "subtitle": "收集 / 处理 / 回用",
+      "accent": "#9b80bd",
+      "focusPipeLayers": [
+        "$管综-污泥管"
+      ],
+      "referencePipeLayers": [
+        "$管综-雨水"
+      ],
+      "areaEquipment": [
+        {
+          "regionId": "REG-NPOOL",
+          "equipmentIds": [
+            "EQ-NPOOL-LIFT",
+            "EQ-NPOOL-LIFT2",
+            "EQ-NPOOL-GRID",
+            "EQ-NPOOL-RADAR"
+          ]
+        },
+        {
+          "regionId": "REG-SPOOL",
+          "equipmentIds": [
+            "EQ-SPOOL-LIFT",
+            "EQ-SPOOL-LIFT2",
+            "EQ-SPOOL-SUCTION"
+          ]
+        },
+        {
+          "regionId": "REG-WWT",
+          "equipmentIds": [
+            "EQ-WWT-PURIFIER",
+            "EQ-WWT-DOSING",
+            "EQ-WWT-SLUDGE",
+            "EQ-WWT-FILTER",
+            "EQ-WWT-CLEAN",
+            "EQ-WWT-WQ",
+            "EQ-WWT-PLC"
+          ]
+        },
+        {
+          "regionId": "REG-ECO",
+          "equipmentIds": [
+            "EQ-ECO-PUMP",
+            "EQ-ECO-VALVE"
+          ]
+        }
+      ],
+      "primaryRegionId": "REG-WWT",
+      "focusAnchorIds": [
+        "TG-CAD-11",
+        "TG-CAD-09",
+        "TG-CAD-10"
+      ],
+      "intro": "以含矿污水处理场为中心，关联南北集水池、提升设备、物化处理设备和污泥管。",
+      "disclaimer": "仅确认污泥专业候选线可直接高亮；收集提升压力管及污水处理至回用水池的完整真实路由尚未验收。雨水专业图层仅低亮度参照。",
+      "sourceAssurance": "layers_exact;hydraulic_topology_unverified",
+      "type": "business",
+      "visibleSourceHandlesByFocusLayer": {
+        "$管综-污泥管": 22
+      },
+      "visibleSourceHandlesByReferenceLayer": {
+        "$管综-雨水": 90
+      }
+    },
+    {
+      "id": "rain",
+      "name": "雨水收集",
+      "subtitle": "堆场汇水 / 排水沟 / 集水池",
+      "accent": "#4f97ca",
+      "focusPipeLayers": [
+        "$管综-雨水"
+      ],
+      "referencePipeLayers": [],
+      "areaEquipment": [
+        {
+          "regionId": "REG-YARD",
+          "equipmentIds": [
+            "EQ-Y-DRAIN"
+          ]
+        },
+        {
+          "regionId": "REG-NPOOL",
+          "equipmentIds": [
+            "EQ-NPOOL-POOL",
+            "EQ-NPOOL-LIFT",
+            "EQ-NPOOL-RADAR",
+            "EQ-NPOOL-GATE"
+          ]
+        },
+        {
+          "regionId": "REG-SPOOL",
+          "equipmentIds": [
+            "EQ-SPOOL-POOL",
+            "EQ-SPOOL-LIFT",
+            "EQ-SPOOL-RADAR",
+            "EQ-SPOOL-GATE"
+          ]
+        },
+        {
+          "regionId": "REG-BERTH",
+          "equipmentIds": [
+            "EQ-BERTH-DRAIN"
+          ]
+        }
+      ],
+      "primaryRegionId": "REG-NPOOL",
+      "focusAnchorIds": [
+        "TG-CAD-03",
+        "TG-CAD-09",
+        "TG-CAD-10"
+      ],
+      "intro": "显示已提取的雨水管线候选图元和堆场、南北集水池的空间关系。",
+      "disclaimer": "雨水管线、地面排水沟与压力污水管不是同一种设施；当前雨水专业线不能冒充已核实的全部排水沟流向。",
+      "sourceAssurance": "layers_exact;hydraulic_topology_unverified",
+      "type": "business",
+      "visibleSourceHandlesByFocusLayer": {
+        "$管综-雨水": 90
+      },
+      "visibleSourceHandlesByReferenceLayer": {}
+    },
+    {
+      "id": "pool",
+      "name": "水池供水",
+      "subtitle": "除尘水池 / 市政补水 / 回用",
+      "accent": "#28ad96",
+      "focusPipeLayers": [
+        "$管综-市政中水",
+        "$管综-市政自来水 生活给水"
+      ],
+      "referencePipeLayers": [],
+      "areaEquipment": [
+        {
+          "regionId": "REG-DPOOL",
+          "equipmentIds": [
+            "EQ-DP-TANK",
+            "EQ-DP-RADAR",
+            "EQ-DP-VALVE",
+            "EQ-DP-METER"
+          ]
+        },
+        {
+          "regionId": "REG-PUMP",
+          "equipmentIds": [
+            "EQ-P-FOG",
+            "EQ-P-MID",
+            "EQ-P-METER"
+          ]
+        },
+        {
+          "regionId": "REG-WWT",
+          "equipmentIds": [
+            "EQ-WWT-CLEAN"
+          ]
+        },
+        {
+          "regionId": "REG-ECO",
+          "equipmentIds": [
+            "EQ-ECO-PUMP",
+            "EQ-ECO-LEVEL",
+            "EQ-ECO-METER"
+          ]
+        }
+      ],
+      "primaryRegionId": "REG-DPOOL",
+      "focusAnchorIds": [
+        "TG-CAD-12",
+        "TG-CAD-11",
+        "TG-CAD-14"
+      ],
+      "intro": "高亮市政中水和市政自来水/生活给水候选管线，关联除尘水池、泵房及回用设计。",
+      "disclaimer": "这些CAD线是水源专业候选，不等于已经确认每条管段实际连接两座除尘水池。两座池单体位置尚未核定，不能编造水池几何。",
+      "sourceAssurance": "layers_exact;hydraulic_topology_unverified",
+      "type": "business",
+      "visibleSourceHandlesByFocusLayer": {
+        "$管综-市政中水": 11,
+        "$管综-市政自来水 生活给水": 25
+      },
+      "visibleSourceHandlesByReferenceLayer": {}
+    },
+    {
+      "id": "domestic",
+      "name": "生活污水处理",
+      "subtitle": "生活污水 / 办公水量",
+      "accent": "#a181b8",
+      "focusPipeLayers": [
+        "$管综-生活污水"
+      ],
+      "referencePipeLayers": [],
+      "areaEquipment": [
+        {
+          "regionId": "REG-DOMESTIC",
+          "equipmentIds": [
+            "EQ-DOM-SEWAGE",
+            "EQ-DOM-LINK",
+            "EQ-DOM-METER"
+          ]
+        }
+      ],
+      "primaryRegionId": "REG-DOMESTIC",
+      "focusAnchorIds": [
+        "TG-CAD-16",
+        "TG-CAD-17"
+      ],
+      "intro": "重点显示生活污水管线及设计处理设施。办公室生活水量只在信息面板显示，不添加未经核定的设备点。",
+      "disclaimer": "一体化生活污水处理与接入既有处理场两种标识是否同时有效尚未确认；办公用水量没有实时计量数据，必须显示“未接入”。",
+      "sourceAssurance": "layers_exact;hydraulic_topology_unverified",
+      "type": "business",
+      "visibleSourceHandlesByFocusLayer": {
+        "$管综-生活污水": 16
+      },
+      "visibleSourceHandlesByReferenceLayer": {}
+    }
+  ],
+  "independentTechnicalOverlay": {
+    "id": "fire",
+    "name": "消防专业图层",
+    "notSeventhBusinessSystem": true,
+    "pipeLayers": [
+      "$管综-室外消防",
+      "$管综-室内消防"
+    ],
+    "defaultOn": false,
+    "disclaimer": "消防是独立安全专业叠加图层，不计入本页面六套业务系统。"
+  },
+  "constraints": [
+    "业务系统的可视化选择≠已证实水力连通。无专用源图层的系统以CAD文字锚点/设计设备关联表示。",
+    "低亮度参照图层不能解释为业务系统的专属管道。",
+    "所有设计设备仍未完成物理安装点位与PLC测点验收。",
+    "选择子系统后，不得由CAD短线图元相交自动推断设备/阀门实际连接。",
+    "消防为独立专业叠加图层而不是第七个业务子系统。"
+  ]
+}

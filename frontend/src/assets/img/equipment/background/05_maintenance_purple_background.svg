@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="360" viewBox="0 0 1600 360" preserveAspectRatio="none" fill="none">
+  <title>检修中设备背景 - 透明底无边框紫色波纹</title>
+  <defs>
+    <linearGradient id="wave" x1="135" y1="235" x2="1480" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C7B0FF" stop-opacity="0.04" />
+      <stop offset="0.50" stop-color="#8B67DD" stop-opacity="0.10" />
+      <stop offset="1" stop-color="#8B67DD" stop-opacity="0.30" />
+    </linearGradient>
+    <linearGradient id="wave2" x1="400" y1="310" x2="1490" y2="345" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B67DD" stop-opacity="0.01" />
+      <stop offset="0.65" stop-color="#C7B0FF" stop-opacity="0.13" />
+      <stop offset="1" stop-color="#C7B0FF" stop-opacity="0.29" />
+    </linearGradient>
+  </defs>
+  <path d="M0 305 C190 257 330 328 505 282 C705 226 832 320 1048 255 C1290 186 1425 214 1600 155 L1600 360 L0 360Z" fill="url(#wave)" />
+  <path d="M0 342 C235 307 400 358 610 317 C830 272 1000 329 1210 266 C1408 220 1460 265 1600 225 L1600 360 L0 360Z" fill="url(#wave2)" />
+</svg>

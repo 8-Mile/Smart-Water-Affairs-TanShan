@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 384 384" role="img" aria-label="三级告警 · 文档">
+ <title>三级告警 · 文档</title>
+ <defs>
+  <radialGradient id="outerHalo" cx="50%" cy="52%" r="52%">
+   <stop offset="0%" stop-color="#7BC2FF" stop-opacity=".56"/>
+   <stop offset="62%" stop-color="#D9F0FF" stop-opacity=".77"/>
+   <stop offset="82%" stop-color="#D9F0FF" stop-opacity=".55"/>
+   <stop offset="100%" stop-color="#D9F0FF" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="ringGlow" cx="47%" cy="43%" r="64%">
+   <stop offset="0%" stop-color="white" stop-opacity="0"/>
+   <stop offset="67%" stop-color="white" stop-opacity="0"/>
+   <stop offset="84%" stop-color="#7BC2FF" stop-opacity=".30"/>
+   <stop offset="100%" stop-color="#D9F0FF" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="centerDisc" x1=".08" y1=".04" x2=".84" y2="1">
+   <stop offset="0" stop-color="#7BC2FF"/>
+   <stop offset=".30" stop-color="#268AFE"/>
+   <stop offset=".66" stop-color="#0874EE"/>
+   <stop offset="1" stop-color="#268AFE"/>
+  </linearGradient>
+  <radialGradient id="discLight" cx=".31" cy=".16" r="1">
+   <stop offset="0" stop-color="white" stop-opacity=".18"/>
+   <stop offset=".6" stop-color="white" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="softHalo" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="4"/></filter>
+  <filter id="discShadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+  <filter id="iconShadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="2" stdDeviation="2.7" flood-color="#0874EE" flood-opacity=".25"/></filter>
+ </defs>
+ <!-- Genuine vector paths and gradients: no embedded bitmap images -->
+ <circle cx="192" cy="199" r="164" fill="url(#outerHalo)"/>
+ <circle cx="192" cy="200" r="152" fill="#D9F0FF" opacity=".19" filter="url(#softHalo)"/>
+ <circle cx="192" cy="199" r="147" fill="url(#ringGlow)" opacity=".66"/>
+ <circle cx="192" cy="204" r="103" fill="#0874EE" opacity=".22" filter="url(#discShadow)"/>
+ <circle cx="192" cy="202" r="101" fill="url(#centerDisc)"/>
+ <circle cx="192" cy="202" r="101" fill="url(#discLight)"/>
+ <circle cx="192" cy="202" r="102" fill="none" stroke="white" stroke-opacity=".31" stroke-width="2.2"/>
+ <circle cx="191" cy="76" r="6.5" fill="#80C3FF" opacity=".35" filter="url(#softHalo)"/>
+ <circle cx="191" cy="76" r="3.3" fill="#80C3FF" opacity=".33"/>
+ <circle cx="292" cy="96" r="6.2" fill="#80C3FF" opacity=".38" filter="url(#softHalo)"/>
+ <circle cx="292" cy="96" r="3.8" fill="#80C3FF" opacity=".53"/>
+ <circle cx="291" cy="304" r="5.8" fill="#80C3FF" opacity=".27" filter="url(#softHalo)"/>
+ <circle cx="291" cy="304" r="3.2" fill="#80C3FF" opacity=".34"/>
+ <circle cx="93" cy="104" r="4.5" fill="#80C3FF" opacity=".23"/>
+ <circle cx="67" cy="202" r="3.1" fill="#80C3FF" opacity=".23"/>
+ 
+  <g filter="url(#iconShadow)">
+    <path d="M166 156 Q163 156 163 163 L163 240 Q163 247 170 247 H230 Q237 247 237 240 V173 Q237 169 232 164 L224 156 Z" fill="white" />
+    <path d="M223 156 V170 Q223 175 229 175 H237" fill="none" stroke="#BFE3FF" stroke-width="3"/>
+    <rect x="180" y="183" width="40" height="6.5" rx="3.2" fill="#2388F5"/>
+    <rect x="180" y="202" width="40" height="6.5" rx="3.2" fill="#2388F5"/>
+    <rect x="180" y="221" width="33" height="6.5" rx="3.2" fill="#2388F5"/>
+  </g>
+
+</svg>

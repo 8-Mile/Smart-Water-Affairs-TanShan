@@ -1,0 +1,69 @@
+{
+  "schema": "tanggang-chain-bucket-cad-label-v2.7",
+  "sourceDWGSHA256": "de51fe02e029c880f9cee8e9ff0bc060e449603f4c213aef485ad161f3accd47",
+  "source": "51 52陆域平面 管综260917(2)(2).dwg",
+  "markers": [
+    {
+      "id": "TG-CHAIN-1058D8",
+      "name": "链斗冲洗池",
+      "kind": "chainBucketWash",
+      "sourceEntityType": "AcDbText",
+      "sourceHandle": "1058D8",
+      "sourceLayer": "$pm单体",
+      "sourceText": "链斗冲洗池",
+      "originalCADXY": [
+        449248399.7237697,
+        4544948704.275672
+      ],
+      "sceneXZ": [
+        13.713269,
+        -58.591398
+      ],
+      "positionStatus": "cad_text_insertion_point_verified",
+      "buildingOrPoolOutlineVerified": false,
+      "pipeConnectionVerified": false,
+      "regionId": "",
+      "relatedBusinessSystem": "middle",
+      "designReference": "堆场设备系统技术规格书第四分册，2.7中压洒水除尘系统",
+      "designRequirements": [
+        "设置冲洗水枪及配套设施",
+        "就近接自中压给水管道",
+        "清洗污水就近接入排水沟"
+      ],
+      "displayStatus": "CAD文字点已核 · 池体及接管待核",
+      "note": "原DWG源Handle=1058D8，源层=$pm单体；规格书明确链斗清洗池设冲洗水枪并由中压给水管道供水、污水入排水沟，但并未查明哪段管线实际接入。图上仅显示原CAD文字点，不虚构池体外形。"
+    }
+  ],
+  "otherEvidence": [
+    {
+      "kind": "source_pipe_annotation",
+      "text": "接链斗清洗池冲洗设备",
+      "handle": "13E025",
+      "layer": "$管综-中压除尘",
+      "coordinateStatus": "block-local_or_non-site_coordinates_unverified",
+      "scenePositionUsed": false
+    },
+    {
+      "kind": "block_reference",
+      "name": "链斗清洗池8.31",
+      "handle": "1B4392",
+      "layer": "$B阶段-皮带机基础",
+      "originalCADXY": [
+        448115380.1983209,
+        4545484963.22206
+      ],
+      "sceneXZ": [
+        -48.339506,
+        50.323808
+      ],
+      "coordinateStatus": "separate_B_stage_block_reference_not_equated_with_primary_text_point",
+      "scenePositionUsed": false
+    }
+  ],
+  "sourceBoundary": "Original CAD includes more than one name or block potentially relating to chain-bucket cleaning. Until final design revision is confirmed, display only the primary source text as a place marker; do not conflate B-stage block 1B4392 with text 1058D8 or assert multiple verified physical pools.",
+  "connectionStatus": {
+    "waterSupply": "design_required_nearby_middle_pressure_supply;original_CAD_pipe_endpoint_not_verified",
+    "wastewater": "design_required_nearby_drainage_ditch;original_CAD_ditch_endpoint_not_verified",
+    "physicalHydraulicEdgeVerified": false
+  }
+}

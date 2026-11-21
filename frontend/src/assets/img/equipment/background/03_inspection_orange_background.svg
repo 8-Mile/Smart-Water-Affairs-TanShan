@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="360" viewBox="0 0 1600 360" preserveAspectRatio="none" fill="none">
+  <title>今日待检设备卡片背景 - 原图渐变与波纹重建</title>
+  <defs>
+    <linearGradient id="base" x1="50" y1="65" x2="1460" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.02" />
+      <stop offset="52%" stop-color="#FFF0DC" stop-opacity="0.13"/>
+      <stop offset="100%" stop-color="#FFD27E" stop-opacity="0.27"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="135" y1="235" x2="1480" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD27E" stop-opacity="0.04"/>
+      <stop offset="0.50" stop-color="#FA8E19" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#FA8E19" stop-opacity="0.30"/>
+    </linearGradient>
+    <linearGradient id="wave2" x1="400" y1="310" x2="1490" y2="345" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FA8E19" stop-opacity="0.01"/>
+      <stop offset="0.65" stop-color="#FFD27E" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#FFD27E" stop-opacity="0.29"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(1280 247) rotate(180) scale(570 280)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD27E" stop-opacity="0.19"/>
+      <stop offset="1" stop-color="#FFD27E" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="line" x1="0" y1="275" x2="1540" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="white" stop-opacity="0"/>
+      <stop offset="0.4" stop-color="white" stop-opacity="0.52"/>
+      <stop offset="1" stop-color="white" stop-opacity="0.17"/>
+    </linearGradient>
+  </defs>
+  <!-- transparent background: NO border, no rounded rectangle, no shadows or outlines -->
+  <path d="M0 0H1600V360H0Z" fill="url(#base)" />
+  <path d="M0 0H1600V360H0Z" fill="url(#glow)" />
+  <path d="M0 305 C190 257 330 328 505 282 C705 226 832 320 1048 255 C1290 186 1425 214 1600 155 L1600 360 L0 360Z" fill="url(#wave)"/>
+  <path d="M0 342 C235 307 400 358 610 317 C830 272 1000 329 1210 266 C1408 220 1460 265 1600 225 L1600 360 L0 360Z" fill="url(#wave2)"/>
+  <path d="M60 329 C240 276 375 354 570 297 C782 234 915 325 1110 268 C1360 204 1480 240 1600 189" stroke="url(#line)" stroke-width="3" opacity="0.43"/>
+  <path d="M350 342 C560 287 720 348 940 302 C1160 255 1300 293 1600 223" stroke="white" stroke-width="2" stroke-opacity="0.25"/>
+</svg>

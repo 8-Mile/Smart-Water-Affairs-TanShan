@@ -1,0 +1,46 @@
+name: Build Windows Package
+
+on:
+  # 不在 push 时自动打包：由用户确认后再手动触发（Actions 页面 Run workflow）
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt "pyinstaller>=6.10"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build Windows package
+        working-directory: backend
+        env:
+          # 显式指定 setup-python 安装的 3.11，避免脚本退回到 runner 默认的 3.13
+          PYTHON_BIN: python
+        run: powershell -ExecutionPolicy Bypass -File packaging\build_windows.ps1
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: WaterOps-Windows
+          path: release/
+          retention-days: 30

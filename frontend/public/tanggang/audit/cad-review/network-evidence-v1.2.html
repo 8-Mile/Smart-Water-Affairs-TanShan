@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<link rel="icon" href="data:,"/>
+<title>唐港水务·设计水路关系与CAD证据核验 V1.2</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;color:#27465a;background:#f4f8fc}
+*{box-sizing:border-box}body{margin:0;overflow:hidden}
+.top{height:76px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 25px;background:#fff;border-bottom:1px solid #dae7ee}
+.logo{width:7px;height:42px;background:linear-gradient(#19b5c4,#4888d0);border-radius:8px;flex:none}
+.brand{display:flex;gap:13px;align-items:center;min-width:0}.brand h1{font-size:19px;margin:0;font-weight:760;white-space:nowrap}
+.brand p{font-size:11px;color:#829baa;margin:5px 0 0}
+.nav{display:flex;align-items:center;gap:9px}.nav a{font-size:12px;text-decoration:none;color:#57829b;padding:9px 13px;border:1px solid #d5e7ef;border-radius:9px;background:#f9fcff;white-space:nowrap}.nav a:hover{background:#eaf7fb}
+.shell{display:grid;grid-template-columns:minmax(680px,1fr) 372px;height:calc(100vh - 76px);min-height:640px}
+.content{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.menu{flex:none;padding:15px 22px 12px;background:linear-gradient(#f8fcfe,#f4f9fc);border-bottom:1px solid #dce9f0;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.tabs{display:flex;align-items:center;gap:8px}
+.tabs button{border:1px solid #d5e6ee;background:#fff;color:#69859a;font-size:12px;font-weight:600;padding:9px 17px;border-radius:10px;cursor:pointer}
+.tabs button.selected{background:#e2f5fa;border-color:#9fd5e3;color:#2784a0;box-shadow:0 2px 9px #6ab3c013}
+.menu .hint{font-size:11px;color:#8ca2af}
+.stats{display:flex;gap:10px;padding:17px 22px;flex:none}
+.metric{flex:1;min-width:0;border-radius:12px;border:1px solid #dceaf2;background:#fff;padding:13px 15px;box-shadow:0 5px 18px #91adc017}
+.metric .k{font-size:10px;color:#89a1b0;letter-spacing:.7px;margin-bottom:4px}
+.metric strong{font-size:21px;font-weight:760;color:#305f7c;white-space:nowrap}
+.metric p{margin:4px 0 0;font-size:10px;color:#91a7b5;line-height:1.4}
+.canvaswrap{flex:1;min-height:0;margin:0 22px 14px;background:radial-gradient(ellipse at center,#ffffff 25%,#f1f8fc);border:1px solid #dbe8ef;border-radius:17px;position:relative;overflow:auto}
+.canvaswrap:before{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#e7f0f54f 1px,transparent 1px),linear-gradient(90deg,#e7f0f54f 1px,transparent 1px);background-size:29px 29px}
+.diagram{width:100%;min-height:520px;min-width:620px;height:100%;position:relative;z-index:2;display:block}
+.diagram .node{cursor:pointer;outline:none}
+.diagram .node rect{fill:#fff;stroke:#dce8ef;stroke-width:1.7;rx:13;filter:url(#nodeShadow)}
+.diagram .node.selected rect{stroke:#2ca0ba;stroke-width:3;fill:#f1fcfe}
+.diagram .node .title{font-size:15px;font-weight:700;fill:#31556d}
+.diagram .node .subtitle{font-size:10px;fill:#859dad}
+.diagram .node .accent{stroke:none;rx:4}
+.diagram .link-vis{fill:none;stroke-width:2.7;opacity:.88;pointer-events:none}
+.diagram .link-hit{fill:none;stroke:transparent;stroke-width:17;cursor:pointer}
+.diagram .link-vis.selected{stroke-width:5;opacity:1;filter:drop-shadow(0px 0px 4px #54bbcc)}
+.diagram .link-text{font:11px sans-serif;fill:#627f96;pointer-events:none}
+.caption{position:absolute;z-index:3;left:16px;bottom:14px;background:#ffffffd9;border:1px solid #e1ebef;border-radius:9px;color:#7a95a9;font-size:11px;padding:9px 11px}
+.keys{display:flex;gap:15px;align-items:center;padding:0 25px 16px;font-size:11px;color:#738b9d}
+.keys span{display:flex;gap:7px;align-items:center}
+.keys i{width:25px;height:2px;background:#4a95b7}.keys i.alt{background:#cf9d56;height:3px;background:repeating-linear-gradient(90deg,#cf9d56 0px,#cf9d56 6px,transparent 6px,transparent 11px)}.keys i.cond{background:#21aba4}
+.side{border-left:1px solid #dce8f0;background:#fff;min-height:0;display:flex;flex-direction:column;box-shadow:-10px 0 35px #dce8ef21}
+.sideheader{padding:20px 20px 14px;border-bottom:1px solid #e4ebf0}
+.sideheader h2{margin:0 0 8px;font-size:16px}.sideheader p{margin:0;font-size:11px;color:#8ca0ac;line-height:1.7}
+.evidence{padding:16px 18px;min-height:0;flex:1;overflow-y:auto}
+.evidence .smalltag{font-size:10px;color:#5a92ab;letter-spacing:1px;font-weight:760}
+.evidence h3{font-size:17px;margin:8px 0;color:#284d66;line-height:1.45}
+.evidence .desc{font-size:12px;color:#7290a2;line-height:1.7;margin:0 0 14px}
+.status{display:inline-flex;align-items:center;border-radius:6px;background:#eaf8f8;color:#278b89;font-size:11px;padding:5px 9px;font-weight:700}
+.status.alternative{background:#fff3e2;color:#a87531}.status.conditional{background:#e5f9f3;color:#299784}.status.cad_note{background:#f2edfb;color:#79649c}
+.source{border:1px solid #e1ebf1;background:#f8fbfd;border-radius:11px;padding:13px;margin:14px 0}
+.source h4{margin:0 0 8px;font-size:12px;color:#426d86}
+.source p{margin:0;color:#566f80;line-height:1.75;font-size:11px}
+.source .refs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
+.ref{font-size:10px;border:1px solid #d5e6ee;padding:4px 6px;border-radius:5px;background:#fff;color:#67889f}
+.fact{margin-top:12px;color:#7692a4;font-size:11px;line-height:1.7}
+.locate{display:inline-block;text-decoration:none;color:#277d9b;border:1px solid #bbdce6;background:#edf9fc;font-size:12px;padding:8px 11px;border-radius:8px;margin-top:10px}
+.audit{margin:0;padding:12px 18px;border-top:1px solid #e5edf3;background:#fffcf8;font-size:11px;line-height:1.75;color:#98735b}
+.empty{padding:40px 30px;color:#7e99ab}
+#isolated{display:none;padding:36px}
+.summaryCard{max-width:720px;margin:5vh auto 0;background:#fff;border:1px solid #dceaf2;border-radius:18px;padding:32px 38px;box-shadow:0 8px 35px #9bbccc1a}
+.summaryCard h2{color:#315870;margin:0 0 18px;font-size:24px}
+.summaryCard p{color:#67859a;font-size:14px;line-height:1.9}
+.displayOnly{background:#eef9fb;border:1px dashed #9ac8da;padding:19px;margin-top:22px;border-radius:10px;font-size:16px;color:#2e7e98;font-weight:700}
+@media(max-width:1050px){.shell{grid-template-columns:minmax(500px,1fr) 300px}.brand h1{font-size:15px}.nav a{font-size:10px;padding:7px}.menu{flex-wrap:wrap}.metrics{overflow:hidden}.metric{padding:9px}.metric strong{font-size:15px}.tabs button{padding:8px}.hint{display:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><div class="logo"></div><div><h1>唐港51、52号泊位 · 水路关系与CAD证据核查</h1><p>V1.2 · 依据第四分册技术规格书和DWG原图标注 · 设计关系图并非管线实测路径</p></div></div>
+  <nav class="nav"><a href="./index.html">返回CAD平面定位</a><a href="./唐港5152_水务设施CAD平面定位图_V1.1.png" target="_blank">高清平面图</a><a href="./water-relations-v1.2.csv">关系证据台账</a></nav>
+</header>
+<div class="shell">
+ <div class="content">
+   <div class="menu"><div class="tabs">
+      <button data-view="collection" class="selected">收集 · 污水处理 · 回用</button>
+      <button data-view="supply">多水源 · 除尘与消防供水</button>
+      <button data-view="separate">生活/办公用水边界</button>
+   </div><span class="hint">点击节点或箭头，核查设计原文、版本条件和CAD来源</span></div>
+   <div class="stats" id="stats"></div>
+   <div class="canvaswrap" id="canvaswrap">
+     <svg id="diagram" class="diagram" viewBox="0 0 1850 750" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="水路连接关系图，箭头表示技术规格书中的业务与工艺联系"></svg>
+     <section id="isolated"></section>
+     <div class="caption" id="caption">逻辑水路 · 非物理管线走向 · 箭头支持核对证据</div>
+   </div>
+   <div class="keys" id="keys"><span><i></i>规格书明确的设计关系</span><span><i class="alt"></i>设计备选路径（或）</span><span><i class="cond"></i>条件/水质/阀门控制</span></div>
+ </div>
+ <aside class="side">
+   <header class="sideheader"><h2>工程证据核对</h2><p>引用原规格书章节与CAD文字Handle；只展示原文件支持的内容，不推断虚构的管线节点。</p></header>
+   <div class="evidence" id="detail"></div>
+   <div class="audit">工程限制：箭头不是已经校核的管道中心线，也不代表常开阀路。池组数量来自技术规格书，CAD文字锚点不是每座池的实测中心坐标。</div>
+ </aside>
+</div>
+<script>
+(async function(){
+const res=await fetch('./network-evidence-v1.2.json',{cache:'no-store'});
+if(!res.ok){document.getElementById('detail').textContent='水务关系数据无法读取';return}
+const data=await res.json(), nodes=Object.fromEntries(data.nodes.map(n=>[n.id,n]));
+const detail=document.getElementById('detail'),svg=document.getElementById('diagram'),stats=document.getElementById('stats'),isolated=document.getElementById('isolated');
+let view='collection',selected=null;
+const colors={design:'#4295b9',alternative:'#ce9652',conditional:'#26a8a4',cad_note:'#9982b7'};
+const colorsNode={collect:'#59a2c3',treat:'#a18cbd',reuse:'#2aa8a3',supply:'#4e9ac6',source:'#56ada0',demand:'#c39772',separate:'#9c92ad'};
+const coords={
+ collection:{
+ yard:[135,140],ditch:[375,140],north:[620,120],south:[620,435],wash:[135,435],washsed:[375,435],
+ sewage:[885,250],purifier:[1110,250],clear:[1340,250],dusttank:[1580,250],
+ sludge:[1110,545],eco:[1460,555]
+ },
+ supply:{
+ municipal:[160,135],reclaimed:[160,330],clear:[160,525],dusttank:[465,320],
+ midpump:[795,140],fogpump:[795,325],firepump:[795,525],
+ machine:[1135,110],wash:[1135,245],fog:[1135,365],fire:[1135,525]
+ }
+};
+const descriptions={
+ collection:['收集 / 处理 / 回用','南侧集水池 5 座','含矿污水处理 500 m³/h','水池回用与生态储水'],
+ supply:['水源保障与泵组','除尘水池 2 × 3000 m³','中压/射雾/消防独立泵组','中压泵供洗车台'],
+ separate:['生活用水与污水','办公生活用水：仅计量','生活污水系统：分开校核','不编造监测值']
+};
+function el(tag,attrs={},children=''){
+ const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+ for(const [k,v]of Object.entries(attrs))e.setAttribute(k,v);
+ if(typeof children==='string')e.textContent=children;
+ return e;
+}
+function nodeBox(id){
+ const node=nodes[id],p=coords[view][id],x=p[0],y=p[1];
+ const w=207,h=81;return{x,y,w,h,cx:x+w/2,cy:y+h/2};
+}
+function connect(a,b,edge){
+ const aa=nodeBox(a),bb=nodeBox(b);
+ let sx,sy,ex,ey;
+ if(Math.abs(bb.cx-aa.cx)>100){sx=bb.cx>aa.cx?aa.x+aa.w:aa.x;ex=bb.cx>aa.cx?bb.x:bb.x+bb.w;sy=aa.cy;ey=bb.cy}
+ else {sx=aa.cx;ex=bb.cx;sy=bb.cy>aa.cy?aa.y+aa.h:aa.y;ey=bb.cy>aa.cy?bb.y:bb.y+bb.h}
+ const dd=Math.abs(ex-sx);
+ const curve=dd>30? `M${sx},${sy} C${sx+(ex-sx)*.46},${sy} ${ex-(ex-sx)*.46},${ey} ${ex},${ey}` : `M${sx},${sy} C${sx},${sy+(ey-sy)*.5} ${ex},${sy+(ey-sy)*.5} ${ex},${ey}`;
+ return curve;
+}
+function clearDetail(){detail.innerHTML='<div class="empty">选择节点或水路箭头，查看技术规格书的原文依据、管径注记和相关的 CAD 点位。</div>'}
+function evidenceCard(refid){
+ const src=data.evidence[refid];if(!src)return '';
+ const title=src.sourceType==='原始DWG文字标注'?'CAD 源图元 / '+src.handle:src.chapter+' · 段落 '+src.paragraph;
+ const val=src.original||'';
+ return '<div class="source"><div class="refs"><span class="ref">'+escapeHTML(refid)+'</span><span class="ref">'+escapeHTML(src.sourceType)+'</span></div><h4>'+escapeHTML(title)+'</h4><p>'+escapeHTML(val)+'</p></div>';
+}
+function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function selectEdge(e){
+ selected={type:'edge',id:e.id};renderSelection();
+ const titleLabel=e.status==='design'?'规格书明确':e.status==='alternative'?'备选路径':e.status==='conditional'?'附条件路径':'DWG注记线索';
+ detail.innerHTML='<div class="smalltag">RELATION '+escapeHTML(e.id)+'</div><h3>'+escapeHTML(e.label)+'</h3>'+
+ '<span class="status '+escapeHTML(e.status)+'">'+titleLabel+'</span>'+
+ '<p class="desc">'+escapeHTML(e.note||'该箭头表达设计逻辑，不代表实测管线已经连通。')+'</p>'+
+ e.sources.map(evidenceCard).join('')+
+ '<p class="fact">本关系必须与实测CAD管段、阀门及高程配准后，才允许提升为正式管网拓扑。</p>';
+}
+function selectNode(id){
+ const n=nodes[id];selected={type:'node',id};renderSelection();
+ const anchor=n.anchor?data.anchorIndex[n.anchor]:null;
+ let sources=[];
+ for(const e of data.edges){if((e.from===id||e.to===id)&&e.view===view){sources.push(...e.sources)}}
+ sources=[...new Set(sources)].slice(0,4);
+ detail.innerHTML='<div class="smalltag">SYSTEM NODE / '+escapeHTML(id)+'</div><h3>'+escapeHTML(n.name)+'</h3>'+
+ '<p class="desc">'+escapeHTML(n.subtitle)+'。'+escapeHTML(n.hint)+'</p>'+
+ (anchor?'<div class="source"><h4>CAD原图文字位置</h4><p>文字：'+escapeHTML(anchor.sourceText)+'<br>图层：'+escapeHTML(anchor.sourceLayer)+'<br>Handle：'+escapeHTML(anchor.sourceHandle||'')+'<br>XY：'+anchor.xy.map(x=>Number(x).toFixed(2)).join(' / ')+'</p><a class="locate" href="./index.html?focus='+encodeURIComponent(anchor.id)+'" target="_blank">在二维CAD中定位文字</a></div>':
+ '<div class="source"><h4>实体位置尚未定位</h4><p>该节点仅为工艺逻辑单元，不以猜测坐标在CAD图中绘制。</p></div>')+
+ sources.map(evidenceCard).join('')+
+ (anchor&&data.spatialNearestByAnchor?.[anchor.id]?'<div class="source"><h4>附近CAD管线图元 · 仅空间检索，未确认接入</h4><p>下面为原CAD坐标下最近的5个线状候选。没有确认真实管径、节点或水力联通：</p>'+data.spatialNearestByAnchor[anchor.id].candidates.slice(0,5).map(q=>'<p style="margin-top:8px"><a class="locate" href="./index.html?line='+encodeURIComponent(q.handle)+'" target="_blank">查看 '+escapeHTML(q.handle)+'</a> '+escapeHTML(q.layer)+'<br>最近距 '+q.cadDistanceRaw+' CAD原始坐标单位</p>').join('')+'</div>':'');
+}
+function renderSelection(){
+ for(const n of svg.querySelectorAll('.node'))n.classList.toggle('selected',selected?.type==='node'&&n.dataset.id===selected.id);
+ for(const x of svg.querySelectorAll('.link-vis'))x.classList.toggle('selected',selected?.type==='edge'&&x.dataset.id===selected.id);
+}
+function draw(){
+ svg.innerHTML='';isolated.style.display=view==='separate'?'block':'none';svg.style.display=view==='separate'?'none':'block';
+ const defs=el('defs');
+ const shadow=el('filter',{id:'nodeShadow',x:'-15%',y:'-30%',width:'140%',height:'180%'});
+ shadow.append(el('feDropShadow',{dx:'0',dy:'5',stdDeviation:'7','flood-color':'#89b2c3','flood-opacity':'.13'}));defs.append(shadow);
+ for(const [id,c]of Object.entries(colors)){
+ const marker=el('marker',{id:'arr-'+id,markerWidth:'8',markerHeight:'7',refX:'7',refY:'3.5',orient:'auto'});
+ marker.append(el('path',{d:'M0,0 L7,3.5 L0,7',fill:'none',stroke:c,'stroke-width':'1.5'}));defs.append(marker);
+ }
+ svg.append(defs);
+ const activeEdges=data.edges.filter(e=>e.view===view);
+ for(const e of activeEdges){
+  if(!(coords[view]&&coords[view][e.from]&&coords[view][e.to]))continue;
+  const d=connect(e.from,e.to,e);
+  const group=el('g');
+  const v=el('path',{d,class:'link-vis','data-id':e.id,stroke:colors[e.status]||colors.design,'marker-end':'url(#arr-'+e.status+')'});
+  if(e.status!=='design')v.setAttribute('stroke-dasharray',e.status==='alternative'?'9 7':'5 6');
+  group.append(v);
+  const hit=el('path',{d,class:'link-hit',tabindex:'0','aria-label':e.label});
+  hit.addEventListener('click',()=>selectEdge(e));hit.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();selectEdge(e)}});
+  group.append(hit);svg.append(group);
+ }
+ for(const [id,p]of Object.entries(coords[view]||{})){
+ const n=nodes[id];if(!n)continue;
+ const x=p[0],y=p[1],g=el('g',{class:'node',tabindex:'0','data-id':id,role:'button','aria-label':n.name});
+ g.append(el('rect',{x,y,width:'207',height:'81',rx:'13'}));
+ g.append(el('rect',{x:x+13,y:y+18,width:'5',height:'47',rx:'3',fill:colorsNode[n.group]}));
+ const title=el('text',{x:x+30,y:y+33,class:'title'},n.name.length>14?n.name.slice(0,13)+'…':n.name);
+ const subtitle=el('text',{x:x+30,y:y+57,class:'subtitle'},n.subtitle.length>21?n.subtitle.slice(0,20)+'…':n.subtitle);
+ g.append(title,subtitle);
+ g.addEventListener('click',()=>selectNode(id));g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();selectNode(id)}});
+ svg.append(g);
+ }
+ if(view==='separate'){
+  isolated.innerHTML='<div class="summaryCard"><h2>办公生活用水：只显示用水量</h2><p>办公和生活用水不加入含矿污水回用链，也不在CAD中虚构水表或独立供水泵。按要求只预留用水量展示：待收到真实计量点位、接口及累计/瞬时水量后再展示真实数值。</p><div class="displayOnly">办公/生活用水量　　— m³　　<span style="font-size:12px;color:#8ba7b5">待接实际计量数据</span></div><p>原DWG还出现“接入既有生活污水处理场”和“一体化生活污水处理设施”的注记，这两种方式不能未经实施版本确认就合并成一条确定管路。</p></div>'
+ }
+ renderSelection();
+}
+function renderStats(){
+ stats.innerHTML='';
+ let arr=view==='collection'?[['南侧集水池','5座','单池≥2700m³'],['北侧集水池','2座','池组与单体坐标未核'],['含矿污水处理','500m³/h','设计能力'],['处理水优先回用','除尘水池','有条件进入生态空间']]:
+ view==='supply'?[['除尘水池','2座','每座3000m³'],['供水水源','3类','自来水/中水/回用水'],['中压泵组','4台','暂定3用1备'],['射雾泵组','2台','暂定1用1备']]:
+ [['生活用水','只显示水量','不虚构实时水表'],['生活污水','独立系统','不并入含矿污水'],['现有数据','待接入','不显示假数值'],['处理方式','待核实','有两类CAD注记']];
+ for(const [a,b,c] of arr){const p=document.createElement('div');p.className='metric';p.innerHTML='<div class="k">'+a+'</div><strong>'+b+'</strong><p>'+c+'</p>';stats.append(p)}
+}
+document.querySelectorAll('[data-view]').forEach(btn=>btn.onclick=()=>{
+ view=btn.dataset.view;selected=null;
+ for(const x of document.querySelectorAll('[data-view]'))x.classList.toggle('selected',x===btn);
+ document.getElementById('caption').textContent=view==='separate'?'只做用水量计量 · 不构造不存在的闭环':view==='supply'?'供水逻辑与泵组 · 不是泵房设备安装平面':'含矿污水收集、处理与回用 · 备选管路用虚线';
+ renderStats();draw();clearDetail();
+ if(view==='separate'){const e=data.edges.find(e=>e.id==='X01');if(e)selectEdge(e);}
+});
+renderStats();draw();clearDetail();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+/* harbor · 深蓝政务：控制蓝主色 + 行业氛围变量 + 登录背景图。
+   通用组件（按钮/卡片/表格/文字/边框/圆角/阴影）全部回归 art-design-pro 标准规范：
+   见 assets/styles/core/tailwind.css（灰阶与表面色）与 app.scss（卡片形制），
+   主色与色阶由 themes/applyTheme.ts 运行时统一计算。 */
+[data-theme='harbor'] {
+  /* ---- 数据青（实时/图表/大屏科技感，仅业务氛围使用） ---- */
+  --hydro-cyan: #06b6d4;
+  --hydro-cyan-bright: #22d3ee;
+  --hydro-cyan-deep: #0e7490;
+
+  /* ---- 深色玻璃（指挥态势带/大屏） ---- */
+  --hydro-ink-900: #081a2e;
+  --hydro-ink-800: #0d2742;
+  --hydro-ink-700: #12365a;
+
+  /* ---- 氛围网格点（主滚动区背景层 #app-main） ---- */
+  --hydro-grid-dot: rgba(14, 127, 240, 0.09);
+
+  /* ---- 登录页背景 ---- */
+  --app-login-bg: linear-gradient(140deg, #061528 0%, #0a2c4d 42%, #0e5b78 78%, #0a7a8c 100%);
+}

@@ -1,9 +1,50 @@
-node_modules/
+# Python
+backend/.venv/
+backend/.venv-win/
+backend/**/__pycache__/
+backend/**/*.py[cod]
+backend/.env
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/.pytest_cache/
+backend/*.db
+backend/**/*.db
+backend/uploads/
+*.egg-info/
 dist/
-.env
-*.tsbuildinfo
+build/
+release/
 
-.data/
-playwright-report/
-test-results/
-artifacts/
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.log
+.m2/
+
+# Old system / large binaries (keep local, not in git)
+w_system/
+w_system.zip
+decompiled/
+
+# 3D model 源文件（44/45MB，仅保留压缩版 frontend/public/aiRen-small.glb）
+frontend/public/aiRen.glb
+frontend/src/assets/img/aiRen.glb
+frontend/src/assets/img/aiRen.fbx
+
+# Runtime artifacts (SQLite WAL sidecars / test output)
+water_ops.db
+# 迁移开发版不随仓库分发运行时数据库（源库通过 sqlite3 .backup 本地生成）
+backend/*.db
+backend/**/*.db
+*.db-shm
+*.db-wal
+*.db.bak*
+*.db.bak-*
+dogfood-output/

@@ -1,0 +1,52 @@
+{
+  "report": [
+    {
+      "page": "overview-1920x1080",
+      "loading": "",
+      "error": "",
+      "labels": 16,
+      "ok": true,
+      "ms": 12150
+    },
+    {
+      "page": "pick-1920x1080",
+      "card": "选中对象追溯\n\n在场景中点击设施点位或管段，可查看 CAD → 设施追溯链。",
+      "detailPanel": true
+    },
+    {
+      "page": "overview-3840x2160",
+      "loading": "",
+      "error": "",
+      "labels": 20,
+      "ok": true,
+      "ms": 26278
+    },
+    {
+      "page": "pick-3840x2160",
+      "card": "选中对象追溯\n\n在场景中点击设施点位或管段，可查看 CAD → 设施追溯链。",
+      "detailPanel": true
+    },
+    {
+      "page": "after-3-entries",
+      "canvases": 1,
+      "heapMB": 103
+    },
+    {
+      "page": "5188-1920x1080",
+      "loading": "",
+      "error": "",
+      "labels": 23,
+      "ok": true,
+      "ms": 16770
+    },
+    {
+      "page": "5188-3840x2160",
+      "loading": "",
+      "error": "",
+      "labels": 23,
+      "ok": true,
+      "ms": 38822
+    }
+  ],
+  "logs": []
+}

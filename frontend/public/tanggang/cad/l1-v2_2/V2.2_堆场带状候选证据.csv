@@ -1,0 +1,5 @@
+﻿候选编号,对应堆场标签,原图层,左侧Handle,右侧Handle,几何推导宽度CAD原始单位,两侧边界,中间长线源Handle,中线图层及归属,端部边界,8座单体分割,审核说明
+YB-01,1#堆场、2#堆场,0,10B794,10B78C,121999.81,source_geometry_exact,1C27B3,$管综-中压除尘,derived_not_source_geometry,unverified,核证侧边界与堆场文字落入区域；中间长线来自中压除尘管图层，不能把它当成两个堆场之间的分界；端盖为算法构造，不能据此报正式面积。
+YB-02,3#堆场、4#堆场,0,10B6F1,10B6E9,121999.36,source_geometry_exact,1C27B2,$管综-中压除尘,derived_not_source_geometry,unverified,核证侧边界与堆场文字落入区域；中间长线来自中压除尘管图层，不能把它当成两个堆场之间的分界；端盖为算法构造，不能据此报正式面积。
+YB-03,5#堆场、6#堆场,0,10B64E,10B646,122000.08,source_geometry_exact,1C27B1,$管综-中压除尘,derived_not_source_geometry,unverified,核证侧边界与堆场文字落入区域；中间长线来自中压除尘管图层，不能把它当成两个堆场之间的分界；端盖为算法构造，不能据此报正式面积。
+YB-04,7#堆场、8#堆场,0,D71A5,D58A2,130999.46,source_geometry_exact,1C27B0,$管综-中压除尘,derived_not_source_geometry,unverified,核证侧边界与堆场文字落入区域；中间长线来自中压除尘管图层，不能把它当成两个堆场之间的分界；端盖为算法构造，不能据此报正式面积。

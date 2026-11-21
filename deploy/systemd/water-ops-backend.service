@@ -1,0 +1,24 @@
+[Unit]
+Description=Water Ops Backend (FastAPI :8000)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=waterops
+Group=waterops
+WorkingDirectory=/opt/water-ops/backend
+EnvironmentFile=/opt/water-ops/backend/.env
+# 单 worker：SQLite 为单写者，且告警引擎 / WebSocket Hub 是进程内单例，
+# 多 worker 会导致推送分裂与写冲突。后续若迁移 MySQL，可评估提升到 --workers 2+
+ExecStart=/opt/water-ops/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=3
+TimeoutStopSec=15
+# 基础加固（ProtectSystem=full 只锁定 /usr /boot /etc，/opt 下数据库与 uploads 仍可写）
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,216 @@
+{
+  "5175": [
+    {
+      "route": "/dashboard",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 泵站首页总览 "
+    },
+    {
+      "route": "/equipment/list",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 设备台账 设备维护 厂商管理 调度指令 数据统计 设备巡检 档案"
+    },
+    {
+      "route": "/equipment/types",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 设备台账 设备维护 厂商管理 调度指令 数据统计 设备巡检 档案"
+    },
+    {
+      "route": "/alarm/realtime",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 告警中心 更新"
+    },
+    {
+      "route": "/alarm/history",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 告警中心 更新"
+    },
+    {
+      "route": "/repair/list",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 维修工单 更新"
+    },
+    {
+      "route": "/inspection/tasks",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 设备巡检 更新"
+    },
+    {
+      "route": "/maintenance/ledger",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 设备台账 设备维护 厂商管理 调度指令 数据统计 设备巡检 档案"
+    },
+    {
+      "route": "/water/stats",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 供水统计 耗能分析 设备巡检 档案管理 系统"
+    },
+    {
+      "route": "/energy/stats",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 供水统计 耗能分析 设备巡检 档案管理 系统"
+    },
+    {
+      "route": "/dispatch/tasks",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 调度指令 更新"
+    },
+    {
+      "route": "/archive",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 档案管理 更新"
+    },
+    {
+      "route": "/ai/chat",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 智能助手 更新"
+    },
+    {
+      "route": "/system/users",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "运维管理平台 暂无访问权限 您还没有访问该页面的权限，请联系管理员开通后再试。 返回首页"
+    },
+    {
+      "route": "/system/scada",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "运维管理平台 暂无访问权限 您还没有访问该页面的权限，请联系管理员开通后再试。 返回首页"
+    }
+  ],
+  "5190": [
+    {
+      "route": "/dashboard",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 泵站首页总览 "
+    },
+    {
+      "route": "/equipment/list",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 设备台账 设备维护 厂商管理 调度指令 数据统计 设备巡检 档案"
+    },
+    {
+      "route": "/equipment/types",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 设备台账 设备维护 厂商管理 调度指令 数据统计 设备巡检 档案"
+    },
+    {
+      "route": "/alarm/realtime",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 告警中心 更新"
+    },
+    {
+      "route": "/alarm/history",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 告警中心 更新"
+    },
+    {
+      "route": "/repair/list",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 维修工单 更新"
+    },
+    {
+      "route": "/inspection/tasks",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 设备巡检 更新"
+    },
+    {
+      "route": "/maintenance/ledger",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 设备台账 设备维护 厂商管理 调度指令 数据统计 设备巡检 档案"
+    },
+    {
+      "route": "/water/stats",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 供水统计 耗能分析 设备巡检 档案管理 系统"
+    },
+    {
+      "route": "/energy/stats",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 供水统计 耗能分析 设备巡检 档案管理 系统"
+    },
+    {
+      "route": "/dispatch/tasks",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 调度指令 更新"
+    },
+    {
+      "route": "/archive",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 档案管理 更新"
+    },
+    {
+      "route": "/ai/chat",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "生产运维管理系统 工作台 告警中心 维修工单 设备资产 调度指令 数据统计 设备巡检 档案管理 系统管理 智能助手 更新"
+    },
+    {
+      "route": "/system/users",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "运维管理平台 暂无访问权限 您还没有访问该页面的权限，请联系管理员开通后再试。 返回首页"
+    },
+    {
+      "route": "/system/scada",
+      "forbidden": false,
+      "blank": false,
+      "errors": 0,
+      "head": "运维管理平台 暂无访问权限 您还没有访问该页面的权限，请联系管理员开通后再试。 返回首页"
+    }
+  ]
+}

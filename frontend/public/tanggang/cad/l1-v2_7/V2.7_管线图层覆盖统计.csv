@@ -1,0 +1,9 @@
+﻿layer,originalRawEntities,originalDistinctHandles,intersectingDisplayExtentHandles,displayedDistinctHandles,outsideExtentHandles,tooShortInExtentHandles,inExtentButNotDisplayedHandles,displayedSegments
+$管综-中压除尘,316,316,316,28,0,0,288,28
+$管综-室内消防,226,226,226,28,0,0,198,28
+$管综-室外消防,2448,2448,2448,330,0,0,2118,331
+$管综-市政中水,13,13,13,11,0,0,2,11
+$管综-市政自来水 生活给水,29,29,29,25,0,0,4,25
+$管综-污泥管,48,48,48,22,0,0,26,22
+$管综-生活污水,35,35,35,16,0,0,19,16
+$管综-雨水,127,127,127,90,0,0,37,90

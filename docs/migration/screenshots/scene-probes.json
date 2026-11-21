@@ -1,0 +1,174 @@
+[
+  {
+    "label": "scene-lab-1920x1080",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 0,
+    "pipesVisible": 0,
+    "loading": true,
+    "failure": "",
+    "nav": [],
+    "bodyText": "唐港三维场景 · 隔离验证\nCAD 源图元 / GLB / 管网 / 标签 / 六系统聚焦 · 与 5188 源页对比用\n进入唐港首页\nN\n▲\nS\n图纸北向\nCAD DESIGN SOURCE\n51 / 52\n港区水务总览\n\n港区设施总览 · 按系统选择管网与设备 · CAD源图元候选\n\n工具 / 系统核查\n正在加载原始 CAD 三维审查数据…"
+  },
+  {
+    "label": "overview-1920x1080",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 0,
+    "pipesVisible": 0,
+    "loading": true,
+    "failure": "",
+    "nav": [
+      "整体水资源业务链",
+      "射雾器除尘",
+      "中压供水",
+      "含矿污水处理",
+      "雨水收集",
+      "水池供水",
+      "生活污水处理"
+    ],
+    "bodyText": "唐\n唐港智慧水务\n51 / 52 泊位 · 港区水资源业务链\n整体水资源业务链\n射雾器除尘\n中压供水\n含矿污水处理\n雨水收集\n水池供水\n生活污水处理\n场景验证页\n返回运维平台\n演示用户\n场景承载\n\nCAD 源图元驱动的港区三维总览\n\n50\n设计设备类别\n50\n未定位点位\n50\n未接入实时\n数据标注\n实测\n本轮未接入实测\n仿真\n场景仿真值\n设计参考\nCAD / 规格书参考\n未知\n未核实\n\n当前页面不展示伪造实测值；生产远控、PLC 联锁不在本轮范围。\n\n图层与视角\n\n中央场景支持滚轮缩放、拖拽旋转与点击拾取；右侧按系统切换管网与设备聚焦， “整体水资源业务链”保留全部设计图层与六系统证据。\n\n复"
+  },
+  {
+    "label": "scene-lab-1366x768",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 23,
+    "pipesVisible": 7,
+    "loading": false,
+    "failure": "",
+    "nav": [],
+    "bodyText": "唐港三维场景 · 隔离验证\nCAD 源图元 / GLB / 管网 / 标签 / 六系统聚焦 · 与 5188 源页对比用\n进入唐港首页\nN\n▲\nS\n图纸北向\nCAD DESIGN SOURCE\n51 / 52\n港区水务总览\n\n港区设施总览 · 按系统选择管网与设备 · CAD源图元候选\n\n工具 / 系统核查\nA侧8位 · B侧8位\n边线推算\n北池设计2座 / 南池设计5座\n轮廓待核\n链斗冲洗池\nCAD文字已定位\n立体场景 ⇄\n主要标注\n全场灰模\n局部样板\n中压除尘\n雨水\n市政中水\n生活给水\n生活污水\n污泥\n消防\n链斗冲洗池\n北侧集水池 · 设计2座\n南侧集水池 · 设计5座\n1#堆场\n2#堆场"
+  },
+  {
+    "label": "overview-1366x768",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 8,
+    "pipesVisible": 7,
+    "loading": false,
+    "failure": "",
+    "nav": [
+      "整体水资源业务链",
+      "射雾器除尘",
+      "中压供水",
+      "含矿污水处理",
+      "雨水收集",
+      "水池供水",
+      "生活污水处理"
+    ],
+    "bodyText": "唐\n唐港智慧水务\n整体水资源业务链\n射雾器除尘\n中压供水\n含矿污水处理\n雨水收集\n水池供水\n生活污水处理\n场景验证页\n返回运维平台\n演示用户\n场景承载\n\nCAD 源图元驱动的港区三维总览\n\n50\n设计设备类别\n50\n未定位点位\n50\n未接入实时\n数据标注\n实测\n本轮未接入实测\n仿真\n场景仿真值\n设计参考\nCAD / 规格书参考\n未知\n未核实\n\n当前页面不展示伪造实测值；生产远控、PLC 联锁不在本轮范围。\n\n图层与视角\n\n中央场景支持滚轮缩放、拖拽旋转与点击拾取；右侧按系统切换管网与设备聚焦， “整体水资源业务链”保留全部设计图层与六系统证据。\n\n复位摄像机\n整体视角\nN\n▲\nS\n图纸北向\nC"
+  },
+  {
+    "label": "scene-lab-2560x1440",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 0,
+    "pipesVisible": 0,
+    "loading": true,
+    "failure": "",
+    "nav": [],
+    "bodyText": "唐港三维场景 · 隔离验证\nCAD 源图元 / GLB / 管网 / 标签 / 六系统聚焦 · 与 5188 源页对比用\n进入唐港首页\nN\n▲\nS\n图纸北向\nCAD DESIGN SOURCE\n51 / 52\n港区水务总览\n\n港区设施总览 · 按系统选择管网与设备 · CAD源图元候选\n\n工具 / 系统核查\n正在加载原始 CAD 三维审查数据…"
+  },
+  {
+    "label": "overview-2560x1440",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 0,
+    "pipesVisible": 0,
+    "loading": true,
+    "failure": "",
+    "nav": [
+      "整体水资源业务链",
+      "射雾器除尘",
+      "中压供水",
+      "含矿污水处理",
+      "雨水收集",
+      "水池供水",
+      "生活污水处理"
+    ],
+    "bodyText": "唐\n唐港智慧水务\n51 / 52 泊位 · 港区水资源业务链\n整体水资源业务链\n射雾器除尘\n中压供水\n含矿污水处理\n雨水收集\n水池供水\n生活污水处理\n场景验证页\n返回运维平台\n演示用户\n场景承载\n\nCAD 源图元驱动的港区三维总览\n\n50\n设计设备类别\n50\n未定位点位\n50\n未接入实时\n数据标注\n实测\n本轮未接入实测\n仿真\n场景仿真值\n设计参考\nCAD / 规格书参考\n未知\n未核实\n\n当前页面不展示伪造实测值；生产远控、PLC 联锁不在本轮范围。\n\n图层与视角\n\n中央场景支持滚轮缩放、拖拽旋转与点击拾取；右侧按系统切换管网与设备聚焦， “整体水资源业务链”保留全部设计图层与六系统证据。\n\n复"
+  },
+  {
+    "label": "scene-lab-3840x2160",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 0,
+    "pipesVisible": 0,
+    "loading": true,
+    "failure": "",
+    "nav": [],
+    "bodyText": "唐港三维场景 · 隔离验证\nCAD 源图元 / GLB / 管网 / 标签 / 六系统聚焦 · 与 5188 源页对比用\n进入唐港首页\nN\n▲\nS\n图纸北向\nCAD DESIGN SOURCE\n51 / 52\n港区水务总览\n\n港区设施总览 · 按系统选择管网与设备 · CAD源图元候选\n\n工具 / 系统核查\n正在加载原始 CAD 三维审查数据…"
+  },
+  {
+    "label": "overview-3840x2160",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 0,
+    "pipesVisible": 0,
+    "loading": true,
+    "failure": "",
+    "nav": [
+      "整体水资源业务链",
+      "射雾器除尘",
+      "中压供水",
+      "含矿污水处理",
+      "雨水收集",
+      "水池供水",
+      "生活污水处理"
+    ],
+    "bodyText": "唐\n唐港智慧水务\n51 / 52 泊位 · 港区水资源业务链\n整体水资源业务链\n射雾器除尘\n中压供水\n含矿污水处理\n雨水收集\n水池供水\n生活污水处理\n场景验证页\n返回运维平台\n演示用户\n场景承载\n\nCAD 源图元驱动的港区三维总览\n\n50\n设计设备类别\n50\n未定位点位\n50\n未接入实时\n数据标注\n实测\n本轮未接入实测\n仿真\n场景仿真值\n设计参考\nCAD / 规格书参考\n未知\n未核实\n\n当前页面不展示伪造实测值；生产远控、PLC 联锁不在本轮范围。\n\n图层与视角\n\n中央场景支持滚轮缩放、拖拽旋转与点击拾取；右侧按系统切换管网与设备聚焦， “整体水资源业务链”保留全部设计图层与六系统证据。\n\n复"
+  },
+  {
+    "label": "overview-focused",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 16,
+    "pipesVisible": 7,
+    "loading": false,
+    "failure": "",
+    "nav": [
+      "整体水资源业务链",
+      "射雾器除尘",
+      "中压供水",
+      "含矿污水处理",
+      "雨水收集",
+      "水池供水",
+      "生活污水处理"
+    ],
+    "bodyText": "唐\n唐港智慧水务\n51 / 52 泊位 · 港区水资源业务链\n整体水资源业务链\n射雾器除尘\n中压供水\n含矿污水处理\n雨水收集\n水池供水\n生活污水处理\n场景验证页\n返回运维平台\n演示用户\n场景承载\n\nCAD 源图元驱动的港区三维总览\n\n3\n设计设备类别\n3\n未定位点位\n3\n未接入实时\n数据标注\n实测\n本轮未接入实测\n仿真\n场景仿真值\n设计参考\nCAD / 规格书参考\n未知\n未核实\n\n当前页面不展示伪造实测值；生产远控、PLC 联锁不在本轮范围。\n\n图层与视角\n\n中央场景支持滚轮缩放、拖拽旋转与点击拾取；右侧按系统切换管网与设备聚焦， “整体水资源业务链”保留全部设计图层与六系统证据。\n\n复位摄像"
+  },
+  {
+    "label": "5188-1920x1080",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 0,
+    "pipesVisible": 0,
+    "loading": true,
+    "failure": "",
+    "nav": [],
+    "bodyText": "唐港51.52号泊位智慧水务\n综合总览\n1°C\n京唐港 · 晴夜\n19:12:22\n北京时间 · 2026/11/21周六\n领导视角\n角色预览\nN\n▲\nS\n图纸北向\nCAD DESIGN SOURCE\n51 / 52\n港区水务总览\n\n港区设施总览 · 按系统选择管网与设备 · CAD源图元候选\n\n工具 / 系统核查\n正在加载原始 CAD 三维审查数据…"
+  },
+  {
+    "label": "5188-1366x768",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 0,
+    "pipesVisible": 0,
+    "loading": true,
+    "failure": "",
+    "nav": [],
+    "bodyText": "唐港51.52号泊位智慧水务\n综合总览\n1°C\n19:12:44\n领导视角\nN\n▲\nS\n图纸北向\nCAD DESIGN SOURCE\n51 / 52\n港区水务总览\n\n港区设施总览 · 按系统选择管网与设备 · CAD源图元候选\n\n工具 / 系统核查\n正在加载原始 CAD 三维审查数据…"
+  },
+  {
+    "label": "5188-3840x2160",
+    "canvasCount": 1,
+    "gl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "labels": 0,
+    "pipesVisible": 0,
+    "loading": true,
+    "failure": "",
+    "nav": [],
+    "bodyText": "唐港51.52号泊位智慧水务\n综合总览\n1°C\n京唐港 · 晴夜\n19:13:08\n北京时间 · 2026/11/21周六\n领导视角\n角色预览\nN\n▲\nS\n图纸北向\nCAD DESIGN SOURCE\n51 / 52\n港区水务总览\n\n港区设施总览 · 按系统选择管网与设备 · CAD源图元候选\n\n工具 / 系统核查\n正在加载原始 CAD 三维审查数据…"
+  }
+]

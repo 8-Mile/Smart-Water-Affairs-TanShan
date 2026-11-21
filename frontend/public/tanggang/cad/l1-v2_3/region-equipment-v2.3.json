@@ -1,0 +1,1399 @@
+{
+  "schema": "tanggang-areas-equipment-v2.3",
+  "sourceCAD": "/cad-review/v2/manifest-v2.json",
+  "sceneGeometry": "/cad/l1-v2_2/scene-v2.2.json",
+  "primarySpec": "堆场设备系统技术规格书第四分册 洒水除尘、排水、污水处理及消防系统0107.docx",
+  "claims": {
+    "zones": 10,
+    "designEquipmentCategories": 49,
+    "locatedDevicePoints": 0,
+    "activeRealtimeValues": 0,
+    "areaAnchorsCAD": 23,
+    "confirmedIndividualPoolGeometries": 0
+  },
+  "regions": [
+    {
+      "id": "REG-YARD",
+      "name": "堆场作业区",
+      "category": "堆场与除尘",
+      "subtitle": "1#～8#堆场 · 四组带状区域",
+      "summary": "四组原CAD长边候选区覆盖八个堆场文字点。重点展示堆场洒水除尘、消防、排水沟及作业取水关系。",
+      "anchorIds": [
+        "TG-CAD-01",
+        "TG-CAD-02",
+        "TG-CAD-03",
+        "TG-CAD-04",
+        "TG-CAD-05",
+        "TG-CAD-06",
+        "TG-CAD-07",
+        "TG-CAD-08"
+      ],
+      "bandIds": [
+        "YB-01",
+        "YB-02",
+        "YB-03",
+        "YB-04"
+      ],
+      "contourHandles": [],
+      "designFacts": [
+        {
+          "label": "堆场文字锚点",
+          "value": "8个",
+          "source": "DWG $pm单体文字Handle 10B795等",
+          "type": "cad"
+        },
+        {
+          "label": "真实边界候选",
+          "value": "4组长边",
+          "source": "V2.2 YB-01～YB-04；不是8个已验收闭合地块",
+          "type": "cad"
+        },
+        {
+          "label": "射雾器布置",
+          "value": "条形仓室内两侧道路外",
+          "source": "第四分册 §2.6（第205段）",
+          "type": "design"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-Y-FOG",
+          "name": "固定式射雾器及就地控制箱",
+          "designQuantity": "具体台数未明确",
+          "countType": "design",
+          "specSection": "§2.6",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "启停状态",
+            "故障",
+            "温度",
+            "压力"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "设计保护半径暂按70m；不表示当前8个堆场各一台",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-Y-DUST",
+          "name": "中压洒水除尘管网",
+          "designQuantity": "一套专业管网",
+          "countType": "design",
+          "specSection": "§2.7",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "总管压力",
+            "供水流量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "中线CAD图元1C27B3/1C27B2/1C27B1/1C27B0是管道，不是堆场分界",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-Y-FIRE",
+          "name": "室外消火栓及检修阀",
+          "designQuantity": "数量依深化图确定",
+          "countType": "design",
+          "specSection": "§2.8",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "消防管网压力"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "堆场、码头、辅建区覆盖",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-Y-DRAIN",
+          "name": "排水沟、启闭闸门",
+          "designQuantity": "按设计布置",
+          "countType": "design",
+          "specSection": "§3.4",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "闸门状态",
+            "积水液位"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "地面含矿雨污水接南北集水池；沟渠不是压力管道",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-Y-WATER",
+          "name": "环保水车加水点",
+          "designQuantity": "中水2点、自来水2点",
+          "countType": "design",
+          "specSection": "§2.3.13",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "加水量",
+            "远传水表读数"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "设计数量，不是已确认的现场坐标",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "供水/除尘",
+        "雨污水/回用",
+        "消防/生活水"
+      ],
+      "relationships": [
+        {
+          "to": "REG-NPOOL",
+          "description": "地面含矿雨污水经排水沟汇集到北部集水池",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-SPOOL",
+          "description": "地面含矿雨污水经排水沟汇集到南部集水池",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-PUMP",
+          "description": "中压除尘、射雾及消防供水来自泵房对应专业系统",
+          "status": "设计关系"
+        }
+      ],
+      "locationStatus": "原CAD文字位置已核，四个带状区的长边有证据；八个独立分界未核",
+      "focusAnchorId": "TG-CAD-03",
+      "warning": "不得将中压除尘管线当作1#～8#堆场之间的地块分界。"
+    },
+    {
+      "id": "REG-PUMP",
+      "name": "除尘与消防泵房",
+      "category": "供水泵站",
+      "subtitle": "泵房及四类泵组",
+      "summary": "除尘泵房为多系统共用的供水枢纽，分射雾器、中压除尘、室外消防、室内消防兼自喷四类泵组。",
+      "anchorIds": [
+        "TG-CAD-12"
+      ],
+      "bandIds": [],
+      "contourHandles": [
+        "217737"
+      ],
+      "designFacts": [
+        {
+          "label": "泵房轮廓线索",
+          "value": "217737",
+          "source": "DWG $pm单体闭合面包含除尘泵房文字",
+          "type": "cad"
+        },
+        {
+          "label": "泵组种类",
+          "value": "4类",
+          "source": "第四分册 §2.5.3",
+          "type": "design"
+        },
+        {
+          "label": "控制系统",
+          "value": "消防与除尘分开",
+          "source": "第四分册 §2.11.1",
+          "type": "design"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-P-FOG",
+          "name": "射雾器供水泵组",
+          "designQuantity": "暂按2台（1用1备）",
+          "countType": "tentative",
+          "specSection": "§2.5.3～2.5.4",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "泵运行状态",
+            "出口压力",
+            "供水流量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "设计单台18L/s、扬程0.6MPa",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-P-MID",
+          "name": "中压除尘泵组",
+          "designQuantity": "暂按4台（3用1备）",
+          "countType": "tentative",
+          "specSection": "§2.5.3～2.5.4",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "泵运行状态",
+            "出口流量",
+            "出口压力",
+            "故障"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "设计单台50L/s、扬程0.6MPa",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-P-FIREOUT",
+          "name": "室外消火栓泵组",
+          "designQuantity": "暂按2台（1用1备）",
+          "countType": "tentative",
+          "specSection": "§2.5.3～2.5.4",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "泵状态",
+            "消防压力"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "设计单台45L/s、扬程0.6MPa",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-P-FIREIN",
+          "name": "室内消防兼自喷泵组",
+          "designQuantity": "暂按4台（3用1备）",
+          "countType": "tentative",
+          "specSection": "§2.5.3～2.5.4",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "泵状态",
+            "消防压力"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "设计单台65L/s、扬程1.0MPa",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-P-PLC",
+          "name": "泵房PLC/控制柜",
+          "designQuantity": "消防及非消防各1套控制系统",
+          "countType": "design",
+          "specSection": "§2.11.1～2.11.2",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "控制方式",
+            "通讯状态",
+            "报警"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "配电间与控制操作间不等于已定位的独立房间模型",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-P-METER",
+          "name": "出水流量计与压力变送器",
+          "designQuantity": "各相关出水总管配置",
+          "countType": "design",
+          "specSection": "§2.5.5、§2.11.2",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "瞬时流量",
+            "累计流量",
+            "压力"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "尚未获得各仪表设备编号、安装点及PLC测点表",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "供水/除尘",
+        "消防/生活水"
+      ],
+      "relationships": [
+        {
+          "to": "REG-DPOOL",
+          "description": "泵房与两座除尘水池配套，三类水源可接入",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-YARD",
+          "description": "为堆场射雾、单机除尘、冲洗和消防提供对应泵组",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-BERTH",
+          "description": "中压除尘及室外消防支撑码头作业用水",
+          "status": "设计关系"
+        }
+      ],
+      "locationStatus": "DWG文字锚点与一处闭合轮廓存在空间包含；内部泵位未核",
+      "focusAnchorId": "TG-CAD-12",
+      "warning": "泵组数量均为规格书“暂按”，不得作为设备已安装台账。"
+    },
+    {
+      "id": "REG-DPOOL",
+      "name": "除尘水池与补水",
+      "category": "储水设施",
+      "subtitle": "两座除尘水池 · 水源补给",
+      "summary": "设计两座地上式除尘水池，预留消防水量，接入市政自来水、市政中水及处理回用水。",
+      "anchorIds": [],
+      "bandIds": [],
+      "contourHandles": [],
+      "designFacts": [
+        {
+          "label": "水池设计数量",
+          "value": "2座",
+          "source": "第四分册 §2.4.1",
+          "type": "design"
+        },
+        {
+          "label": "设计单池容积",
+          "value": "3000 m³",
+          "source": "第四分册 §2.4.1",
+          "type": "design"
+        },
+        {
+          "label": "消防储水",
+          "value": "暂定1620 m³",
+          "source": "第四分册 §2.4.1，设计口径需确认",
+          "type": "design"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-DP-TANK",
+          "name": "除尘水池",
+          "designQuantity": "2座",
+          "countType": "design",
+          "specSection": "§2.4.1",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "液位",
+            "可用水量",
+            "消防保留水量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "水池精确轮廓仍待由独立提资DWG对应",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-DP-RADAR",
+          "name": "雷达液位计",
+          "designQuantity": "2套",
+          "countType": "design",
+          "specSection": "§2.4.3、§2.11.2",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "实时液位",
+            "高/低/消防液位报警"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-DP-VALVE",
+          "name": "进水电动阀、手动阀、过滤器",
+          "designQuantity": "随各进水管配置",
+          "countType": "design",
+          "specSection": "§2.4.2～2.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "电动阀开度",
+            "开关状态",
+            "故障"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-DP-METER",
+          "name": "进水计量装置",
+          "designQuantity": "各进水点配置",
+          "countType": "design",
+          "specSection": "§2.4.2",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "累计补水量",
+            "进水瞬时流量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "不能把水源比例按设计水量凭空填值",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "供水/除尘",
+        "消防/生活水"
+      ],
+      "relationships": [
+        {
+          "to": "REG-PUMP",
+          "description": "泵房及消防泵组从除尘水池取水",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-WWT",
+          "description": "污水站清水池优先回补除尘水池",
+          "status": "设计关系"
+        }
+      ],
+      "locationStatus": "现有V2.2源图未确认两座除尘池真实单体轮廓；仅作为泵房关联区域资料显示",
+      "focusAnchorId": null,
+      "warning": "没有独立CAD锚点或经过核定的池体边界，本区域不会在三维场景生成两座假水池。"
+    },
+    {
+      "id": "REG-NPOOL",
+      "name": "北侧集水池",
+      "category": "集水与排水",
+      "subtitle": "设计2座 · 含矿雨污水收集",
+      "summary": "堆场北端排水沟和提升井汇水的集水、沉淀、刮泥与二次提升区域。已找到一个包含集水池文字的CAD闭合轮廓，但不是已验证的两座单池。",
+      "anchorIds": [
+        "TG-CAD-09"
+      ],
+      "bandIds": [],
+      "contourHandles": [
+        "2E14C4"
+      ],
+      "designFacts": [
+        {
+          "label": "设计数量",
+          "value": "2座",
+          "source": "第四分册 §3.4.3",
+          "type": "design"
+        },
+        {
+          "label": "单池容积",
+          "value": "≥9000 m³",
+          "source": "第四分册 §3.4.3（北侧）",
+          "type": "design"
+        },
+        {
+          "label": "原CAD轮廓",
+          "value": "2E14C4",
+          "source": "水池图层，原文字点落在闭合多边形内",
+          "type": "cad"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-NPOOL-POOL",
+          "name": "北侧集水池及机械刮泥设备",
+          "designQuantity": "2座池",
+          "countType": "design",
+          "specSection": "§3.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "液位",
+            "刮泥状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "每座需单独验证池体几何",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-NPOOL-LIFT",
+          "name": "进水提升井潜水排污泵组",
+          "designQuantity": "泵总流量≥3000 m³/h",
+          "countType": "design",
+          "specSection": "§3.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "泵启停",
+            "提升井液位",
+            "泵运行时间"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "数量未明确，不能标记每池固定台数",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-NPOOL-GRID",
+          "name": "格栅井、机械格栅",
+          "designQuantity": "按每座集水池进水前设置",
+          "countType": "design",
+          "specSection": "§3.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "格栅运行状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "设计规定；单井定位未核",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-NPOOL-RADAR",
+          "name": "雷达液位计",
+          "designQuantity": "按集水池/井配置",
+          "countType": "design",
+          "specSection": "§3.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "液位",
+            "液位报警"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-NPOOL-LIFT2",
+          "name": "二次提升井泵组",
+          "designQuantity": "至少2用1备",
+          "countType": "design",
+          "specSection": "§3.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "二次提升流量",
+            "运行状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "系统设计流量500m³/h",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-NPOOL-GATE",
+          "name": "排水沟手电两用闸门",
+          "designQuantity": "按5座考虑",
+          "countType": "tentative",
+          "specSection": "§3.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "闸门启闭",
+            "电控状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "雨污水/回用"
+      ],
+      "relationships": [
+        {
+          "to": "REG-WWT",
+          "description": "北侧集水池上清液经二次提升进入含矿污水处理",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-YARD",
+          "description": "由堆场北侧排水沟收集含矿雨污水",
+          "status": "设计关系"
+        }
+      ],
+      "locationStatus": "有源CAD文字点与闭合轮廓包含证据；2座单池轮廓未校核",
+      "focusAnchorId": "TG-CAD-09",
+      "warning": "不要将2E14C4直接拆成两个池子；隔墙和双线须进一步核实。"
+    },
+    {
+      "id": "REG-SPOOL",
+      "name": "南侧集水池",
+      "category": "集水与排水",
+      "subtitle": "设计5座 · 含矿雨污水收集",
+      "summary": "南侧负责码头/堆场排水沟、洗车台污水的收集，提升输送至北侧集水池或处理站。",
+      "anchorIds": [
+        "TG-CAD-10"
+      ],
+      "bandIds": [],
+      "contourHandles": [],
+      "designFacts": [
+        {
+          "label": "设计数量",
+          "value": "5座",
+          "source": "第四分册 §3.5.2",
+          "type": "design"
+        },
+        {
+          "label": "单池容积",
+          "value": "≥2700 m³",
+          "source": "第四分册 §3.5.2",
+          "type": "design"
+        },
+        {
+          "label": "机械刮泥",
+          "value": "其中2座配置",
+          "source": "第四分册 §3.5.3",
+          "type": "design"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-SPOOL-POOL",
+          "name": "南侧集水池",
+          "designQuantity": "5座",
+          "countType": "design",
+          "specSection": "§3.5.2～3.5.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "各池液位"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "尚未逐池对应5个独立几何外轮廓",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-SPOOL-SUCTION",
+          "name": "吸泥泵",
+          "designQuantity": "每座集水池配置",
+          "countType": "design",
+          "specSection": "§3.5.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "运行状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-SPOOL-SCRAPER",
+          "name": "机械刮泥与搅拌设备",
+          "designQuantity": "其中2座配置",
+          "countType": "design",
+          "specSection": "§3.5.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "运行状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "具体是哪两座尚未在图中定位",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-SPOOL-RADAR",
+          "name": "雷达液位计",
+          "designQuantity": "按集水池/提升井配置",
+          "countType": "design",
+          "specSection": "§3.5.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "液位",
+            "报警"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-SPOOL-LIFT",
+          "name": "前端提升井潜水排污泵",
+          "designQuantity": "泵总流量≥2000 m³/h",
+          "countType": "design",
+          "specSection": "§3.5.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "启停",
+            "提升流量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-SPOOL-LIFT2",
+          "name": "二次提升井泵组",
+          "designQuantity": "至少2用1备",
+          "countType": "design",
+          "specSection": "§3.5.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "泵运行状态",
+            "流量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "设计Q=500m³/h",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-SPOOL-GATE",
+          "name": "排水沟闸门",
+          "designQuantity": "按5座考虑",
+          "countType": "tentative",
+          "specSection": "§3.5.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "开闭状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "雨污水/回用"
+      ],
+      "relationships": [
+        {
+          "to": "REG-NPOOL",
+          "description": "压力管道可将南部污水提升至北侧集水池",
+          "status": "设计备选/路径未核"
+        },
+        {
+          "to": "REG-WWT",
+          "description": "也可按工况直接进入含矿污水处理站",
+          "status": "设计备选/路径未核"
+        },
+        {
+          "to": "REG-WASH",
+          "description": "收集洗车台沉淀水",
+          "status": "设计关系"
+        }
+      ],
+      "locationStatus": "原CAD有南部集水池文字点；五个独立池体轮廓未核验",
+      "focusAnchorId": "TG-CAD-10",
+      "warning": "南侧管路的备选流向不能同时假设为常开实际连通。"
+    },
+    {
+      "id": "REG-WWT",
+      "name": "含矿污水处理场",
+      "category": "污水处理与回用",
+      "subtitle": "处理能力500 m³/h · 物化处理",
+      "summary": "含矿污水经提升、混凝沉淀、过滤和清水池回用；污泥浓缩后压滤外运。",
+      "anchorIds": [
+        "TG-CAD-11"
+      ],
+      "bandIds": [],
+      "contourHandles": [
+        "2E23D7"
+      ],
+      "designFacts": [
+        {
+          "label": "设计处理能力",
+          "value": "500 m³/h",
+          "source": "第四分册 §3.4",
+          "type": "design"
+        },
+        {
+          "label": "清水池设计容积",
+          "value": "≥2000 m³",
+          "source": "第四分册 §3.4.3",
+          "type": "design"
+        },
+        {
+          "label": "原CAD闭合轮廓",
+          "value": "2E23D7",
+          "source": "0图层原文字点包含检查",
+          "type": "cad"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-WWT-PURIFIER",
+          "name": "高效净水器",
+          "designQuantity": "不少于2台",
+          "countType": "design",
+          "specSection": "§3.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "进口水量",
+            "出口SS",
+            "故障"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "含混凝、沉淀、过滤和反冲功能",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-WWT-DOSING",
+          "name": "混凝剂/助凝剂加药系统",
+          "designQuantity": "按净水工艺配置",
+          "countType": "design",
+          "specSection": "§3.4.2",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "计量泵状态",
+            "药液液位"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-WWT-SLUDGE",
+          "name": "污泥池及柱塞泵",
+          "designQuantity": "按工艺配置",
+          "countType": "design",
+          "specSection": "§3.4.2～3.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "污泥液位",
+            "污泥泵状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-WWT-FILTER",
+          "name": "隔膜式板框压滤机",
+          "designQuantity": "按压滤系统配置",
+          "countType": "design",
+          "specSection": "§3.4.2",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "压滤运行状态",
+            "故障"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-WWT-CLEAN",
+          "name": "清水池及清水泵",
+          "designQuantity": "1座清水池、清水泵有备用",
+          "countType": "design",
+          "specSection": "§3.4.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "清水池液位",
+            "回用流量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-WWT-WQ",
+          "name": "进出口水质在线仪表",
+          "designQuantity": "pH、SS、氯离子等",
+          "countType": "design",
+          "specSection": "§3.3.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "pH",
+            "SS",
+            "氯离子"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "水质要求是设计指标，不能伪造实时数值",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-WWT-PLC",
+          "name": "污水处理站PLC/控制柜",
+          "designQuantity": "控制系统按设计配置",
+          "countType": "design",
+          "specSection": "§3.3.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "PLC通讯状态",
+            "设备故障",
+            "报警"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "雨污水/回用",
+        "供水/除尘"
+      ],
+      "relationships": [
+        {
+          "to": "REG-NPOOL",
+          "description": "接收北侧集水池二次提升污水",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-DPOOL",
+          "description": "处理达标清水优先接入除尘水池",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-ECO",
+          "description": "多余达标水可输送至生态空间存储",
+          "status": "设计关系"
+        }
+      ],
+      "locationStatus": "DWG闭合图元包含污水处理场文字；内部水池和设备间未逐一核",
+      "focusAnchorId": "TG-CAD-11",
+      "warning": "本阶段只能展示设计设备清单，不能把高效净水器、压滤机均摆入未经确认的位置。"
+    },
+    {
+      "id": "REG-WASH",
+      "name": "洗车台与车辆冲洗",
+      "category": "车辆冲洗",
+      "subtitle": "设计6套 · 三段式清洗",
+      "summary": "港区洗车台由入口颠簸区、地槽式智能清洗区、沥水区、沉淀池等组成，洗车污水汇入收集系统。",
+      "anchorIds": [
+        "TG-CAD-13"
+      ],
+      "bandIds": [],
+      "contourHandles": [],
+      "designFacts": [
+        {
+          "label": "规格书配置",
+          "value": "6套",
+          "source": "第四分册 §1.4",
+          "type": "design"
+        },
+        {
+          "label": "图纸身份",
+          "value": "仅区域文字定位",
+          "source": "V2.2 CAD锚点 FAE1D",
+          "type": "cad"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-WASH-SET",
+          "name": "洗车台清洗装置",
+          "designQuantity": "设计6套",
+          "countType": "design",
+          "specSection": "§1.4、第五章",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "启停",
+            "清洗次数",
+            "故障"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "CAD具体六套设备安装点未完成匹配",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-WASH-POND",
+          "name": "沉淀池及排水设施",
+          "designQuantity": "每套设计配套",
+          "countType": "design",
+          "specSection": "§1.4、第五章",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "沉淀池液位"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-WASH-PUMP",
+          "name": "冲洗供水及电磁阀",
+          "designQuantity": "按洗车台配置",
+          "countType": "design",
+          "specSection": "§2.7、第五章",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "供水流量",
+            "阀门状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "供水/除尘",
+        "雨污水/回用"
+      ],
+      "relationships": [
+        {
+          "to": "REG-PUMP",
+          "description": "由中压除尘泵组提供洗车冲洗供水",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-SPOOL",
+          "description": "洗车台沉淀污水进入南侧雨污水收集系统",
+          "status": "设计关系"
+        }
+      ],
+      "locationStatus": "有洗车台区文字锚点；六套单体位置未核实",
+      "focusAnchorId": "TG-CAD-13",
+      "warning": "规格书6套是设计数量，不宣称已经在CAD上定位6个洗车台。"
+    },
+    {
+      "id": "REG-ECO",
+      "name": "生态蓄水与调蓄",
+      "category": "生态储水",
+      "subtitle": "生态空间 · 提升泵站与双向管网",
+      "summary": "污水处理达标水可输送至生态空间调蓄；非雨季可根据水质选择回送除尘水池或污水处理系统。",
+      "anchorIds": [
+        "TG-CAD-14",
+        "TG-CAD-15",
+        "TG-CAD-18"
+      ],
+      "bandIds": [],
+      "contourHandles": [],
+      "designFacts": [
+        {
+          "label": "设计泵能力",
+          "value": "≥500 m³/h",
+          "source": "第四分册 §3.6",
+          "type": "design"
+        },
+        {
+          "label": "源CAD点位",
+          "value": "池、站、接口文字点",
+          "source": "V2区域文字锚点",
+          "type": "cad"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-ECO-PUMP",
+          "name": "生态空间地上自吸提升泵",
+          "designQuantity": "能力≥500 m³/h",
+          "countType": "design",
+          "specSection": "§3.6.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "泵状态",
+            "出水流量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "设备台数及位置需深化图纸确认",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-ECO-LEVEL",
+          "name": "生态空间雷达液位计",
+          "designQuantity": "按设计配置",
+          "countType": "design",
+          "specSection": "§3.6.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "液位",
+            "高低液位报警"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-ECO-METER",
+          "name": "提升泵出水流量计",
+          "designQuantity": "出水管配置",
+          "countType": "design",
+          "specSection": "§3.6.3",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "流量",
+            "累计量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-ECO-VALVE",
+          "name": "双向水管电动阀",
+          "designQuantity": "按压力管网设计配置",
+          "countType": "design",
+          "specSection": "§3.6.4",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "阀门状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "雨污水/回用",
+        "供水/除尘"
+      ],
+      "relationships": [
+        {
+          "to": "REG-WWT",
+          "description": "污水处理站与生态空间按水质及阀门条件双向调蓄",
+          "status": "设计双向/未核实启闭状态"
+        },
+        {
+          "to": "REG-DPOOL",
+          "description": "部分生态储水在水质满足时可回补除尘水池",
+          "status": "设计条件关系"
+        }
+      ],
+      "locationStatus": "多个CAD原文点已定位；独立生态池轮廓与泵设备点位待核",
+      "focusAnchorId": "TG-CAD-14",
+      "warning": "不要用演示数据模拟真实生态水位或双向阀门状态。"
+    },
+    {
+      "id": "REG-DOMESTIC",
+      "name": "生活污水与办公用水",
+      "category": "生活水",
+      "subtitle": "生活污水路径 · 办公用水量",
+      "summary": "生活污水设施与接入既有处理场在原CAD中均有标注；办公及生活用水仅展示实际计量水量。",
+      "anchorIds": [
+        "TG-CAD-16",
+        "TG-CAD-17"
+      ],
+      "bandIds": [],
+      "contourHandles": [],
+      "designFacts": [
+        {
+          "label": "供水量",
+          "value": "未接入",
+          "source": "当前没有真实计量接口或水表编号",
+          "type": "data"
+        },
+        {
+          "label": "原图路径",
+          "value": "存在两类文字标记",
+          "source": "V2 CAD一体化设施与既有处理场锚点",
+          "type": "cad"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-DOM-SEWAGE",
+          "name": "一体化生活污水处理设施",
+          "designQuantity": "原CAD有标注",
+          "countType": "design",
+          "specSection": "第四分册生活污水专业",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "污水处理量",
+            "运行状态"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "最终采用方案未核实",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-DOM-LINK",
+          "name": "生活污水接入既有处理场",
+          "designQuantity": "设计路径候选",
+          "countType": "design",
+          "specSection": "原CAD标注",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "污水流量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "与一体化设施关系未确认，不能认为两条工艺路线同时实际运行",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-DOM-METER",
+          "name": "办公生活用水远传水表",
+          "designQuantity": "各计量节点按设计配置",
+          "countType": "design",
+          "specSection": "§2.3.8",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "本日用水量",
+            "累计用水量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "有水表要求，但暂无表号、安装点和实际实时读数",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "消防/生活水",
+        "雨污水/回用"
+      ],
+      "relationships": [
+        {
+          "to": "REG-WWT",
+          "description": "生活污水与含矿污水分属不同工艺，不能混作一池",
+          "status": "系统独立"
+        }
+      ],
+      "locationStatus": "生活污水的两个文字点已定位；办公用水计量没有确定空间点位",
+      "focusAnchorId": "TG-CAD-16",
+      "warning": "办公生活用水只能在此展示真实计量水量。没有数据则显示“未接入”，不能填模拟值。"
+    },
+    {
+      "id": "REG-BERTH",
+      "name": "51#、52#泊位与码头",
+      "category": "泊位与水务",
+      "subtitle": "码头冲洗、消防、船舶上水",
+      "summary": "码头前沿及泊位沿线的冲洗、消防、船舶上水和含矿排水系统，保留51/52号泊位的原CAD文字定位。",
+      "anchorIds": [
+        "TG-CAD-19",
+        "TG-CAD-20"
+      ],
+      "bandIds": [],
+      "contourHandles": [],
+      "designFacts": [
+        {
+          "label": "泊位标识",
+          "value": "51# / 52#",
+          "source": "原CAD泊位文字Handle A148B/A148D",
+          "type": "cad"
+        },
+        {
+          "label": "船舶上水",
+          "value": "两泊位配套",
+          "source": "第四分册 §2.10",
+          "type": "design"
+        }
+      ],
+      "devices": [
+        {
+          "id": "EQ-BERTH-WATER",
+          "name": "船舶上水栓箱",
+          "designQuantity": "布置间距不超过70m",
+          "countType": "design",
+          "specSection": "§2.10",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "供水量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "实际数量及位置未确认",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-BERTH-FLUSH",
+          "name": "码头人工冲洗箱",
+          "designQuantity": "间距不大于30m",
+          "countType": "design",
+          "specSection": "§2.7.4",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "冲洗用水量"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-BERTH-FIRE",
+          "name": "码头消防消火栓",
+          "designQuantity": "相应规范和设计布置",
+          "countType": "design",
+          "specSection": "§2.8、§2.7.4",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "管网压力"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        },
+        {
+          "id": "EQ-BERTH-DRAIN",
+          "name": "码头排水沟",
+          "designQuantity": "沿排水系统布置",
+          "countType": "design",
+          "specSection": "§3.4",
+          "sourceDoc": "第四分册",
+          "dataFields": [
+            "水位"
+          ],
+          "positionStatus": "unlocated",
+          "currentStatus": "未接入",
+          "notes": "非压力管线",
+          "sourceCadHandle": null,
+          "relationStatus": "区域归属"
+        }
+      ],
+      "pipeSystems": [
+        "供水/除尘",
+        "消防/生活水",
+        "雨污水/回用"
+      ],
+      "relationships": [
+        {
+          "to": "REG-PUMP",
+          "description": "中压除尘与消防供水泵组为码头供水",
+          "status": "设计关系"
+        },
+        {
+          "to": "REG-SPOOL",
+          "description": "码头含矿雨污水经排水沟汇入南侧集水池",
+          "status": "设计关系"
+        }
+      ],
+      "locationStatus": "泊位标识原CAD位置已核；各个栓箱/冲洗点无逐点安装坐标",
+      "focusAnchorId": "TG-CAD-20",
+      "warning": "码头主干管线位置不等于单个消防栓/上水箱的实际位置。"
+    }
+  ],
+  "dataIntegrityRules": [
+    "所有设备项为设计规定的类别/数量/功能，并非安装台账与真实已定位设备。",
+    "所有设备device.currentStatus=未接入，任何字段必须在真实接口配置后才显示实时值。",
+    "区域根据现有CAD源文字定位，不应以文字锚点作为单个仪表或阀门实际坐标。",
+    "四个带状堆场候选只能作为区域点击范围；源中压除尘专业线不是1#~8#分界。",
+    "同一工程设备可以同时服务多个业务区域，但按归属区域只登记一次并用designRelationships连接。",
+    "泵组数量暂按不等于施工安装结果；备选生活污水与生态双向设计不可当现况。"
+  ]
+}

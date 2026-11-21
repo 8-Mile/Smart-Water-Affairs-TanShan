@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+ <title id="title">加载中</title><desc id="desc">蓝色水滴与持续流转的圆环</desc>
+ <defs>
+ <linearGradient id="drop" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#EFF9FF"/><stop offset="1" stop-color="#DDEEFF"/></linearGradient>
+ <linearGradient id="flow" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#52B9FF"/><stop offset="1" stop-color="#398AF2"/></linearGradient>
+ <linearGradient id="arc" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#B7E3FF"/><stop offset="1" stop-color="#368DF5"/></linearGradient>
+ <clipPath id="clip"><path d="M64 35C59 43 48 55 48 65C48 75 55 82 64 82S80 75 80 65C80 55 69 43 64 35Z"/></clipPath>
+ </defs>
+ <style>.still{display:none}@media(prefers-reduced-motion:reduce){.animated{display:none}.still{display:inline}}</style>
+ <circle cx="64" cy="60" r="42" fill="none" stroke="#E7F1FC" stroke-width="2.5"/>
+ <circle cx="64" cy="60" r="33" fill="none" stroke="#F0F6FD" stroke-width="1"/>
+ <g class="animated" transform="rotate(0.000 64 60)">
+ <animateTransform attributeName="transform" type="rotate" from="0 64 60" to="360 64 60" dur="2.4s" repeatCount="indefinite"/>
+ <path d="M22 60A42 42 0 0 1 64 18" fill="none" stroke="url(#arc)" stroke-width="3" stroke-linecap="round"/>
+ <circle cx="64" cy="18" r="7" fill="#65BCFF" opacity=".11"/>
+ <circle cx="64" cy="18" r="3.5" fill="#368DF5"/>
+ <circle cx="64" cy="102" r="2.2" fill="#B9DCFA"/>
+ </g>
+ <path class="still" d="M22 60A42 42 0 0 1 64 18" fill="none" stroke="#368DF5" stroke-width="3" stroke-linecap="round"/>
+ <g opacity="1.000"><animate attributeName="opacity" values="1;.8;1" dur="2.4s" repeatCount="indefinite"/>
+ <path d="M64 35C59 43 48 55 48 65C48 75 55 82 64 82S80 75 80 65C80 55 69 43 64 35Z" fill="url(#drop)" stroke="#8BC8FC" stroke-width="1.5"/>
+ <g clip-path="url(#clip)">
+ <path d="M0 65Q12 58 24 65T48 65T72 65T96 65T120 65T144 65V92H0Z" fill="#83CCFF" opacity=".42" transform="translate(0.000 0)"><animateTransform attributeName="transform" type="translate" from="0 0" to="-48 0" dur="2.4s" repeatCount="indefinite"/></path>
+ <path d="M0 69Q12 62 24 69T48 69T72 69T96 69T120 69T144 69V92H0Z" fill="url(#flow)" transform="translate(0.000 0)"><animateTransform attributeName="transform" type="translate" from="0 0" to="-48 0" dur="2.4s" repeatCount="indefinite"/></path>
+ </g>
+ <path d="M58 51C55 55 53 59 53 62" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" opacity=".9"/>
+ </g>
+ </svg>

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" href="data:,"/>
+<title>唐港51/52 · CAD工程平面图定位复核 V1.1</title>
+<style>
+:root{color-scheme:light;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#2d4960;background:#f4f8fb}
+*{box-sizing:border-box}body{margin:0;overflow:hidden}.top{height:73px;background:rgba(255,255,255,.96);display:flex;align-items:center;justify-content:space-between;padding:0 25px;border-bottom:1px solid #dce8f0;gap:24px}
+.brand{display:flex;align-items:center;gap:15px;min-width:0}.brand .accent{width:6px;height:39px;border-radius:4px;background:linear-gradient(#22a8be,#3f86be)}h1{margin:0;font-size:19px;font-weight:720;white-space:nowrap}h1 small{color:#89a0b4;font-size:11px;font-weight:550;letter-spacing:.4px;margin-left:12px}.sub{margin:4px 0 0;color:#7f98ac;font-size:11px}.actions{display:flex;gap:9px;align-items:center}button,.actions a,.layer-toggle{border:1px solid #d7e5ed;background:#fff;border-radius:9px;min-height:33px;padding:7px 13px;font-size:12px;color:#426a82;text-decoration:none;cursor:pointer;font-family:inherit}
+button:hover,.actions a:hover{background:#edf8fd;border-color:#9bcfe1}.page{display:flex;height:calc(100vh - 73px);min-height:350px}.workspace{flex:1;min-width:0;position:relative;background:radial-gradient(ellipse at center,#fff 0%,#f4f9fc 100%)}
+canvas{width:100%;height:100%;display:block;cursor:grab;touch-action:none}canvas:active{cursor:grabbing}
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.15px;color:#64849a;background:#ffffffdf;padding:9px 12px;border:1px solid #e0ebf1;border-radius:10px;box-shadow:0 5px 16px #6a92ac13}
+.badge .dot{height:7px;width:7px;border-radius:50%;background:#2ab7b4}
+.overlay-top{position:absolute;top:18px;left:21px;pointer-events:none}.overlay-top h2{margin:12px 0 3px;font-size:16px;font-weight:720;color:#3a5970}.overlay-top p{font-size:11px;line-height:1.7;color:#809cad;max-width:450px}
+.legend{position:absolute;left:19px;bottom:20px;background:rgba(255,255,255,.9);border:1px solid #dfeaf2;border-radius:12px;padding:11px 14px;display:flex;gap:13px;align-items:center;flex-wrap:wrap;box-shadow:0 5px 14px #7dabc10e}
+.legend label{display:flex;gap:6px;align-items:center;font-size:11px;color:#657f91;cursor:pointer;user-select:none}
+.legend input{accent-color:#339bb6;margin:0}.swatch{width:19px;height:4px;border-radius:2px}
+.coords{position:absolute;right:18px;bottom:23px;padding:8px 11px;background:#ffffffe8;border:1px solid #dfebf3;border-radius:8px;font:11px ui-monospace,monospace;color:#6f8c9d}
+.sidebar{width:354px;flex:none;background:#ffffffeb;box-shadow:-1px 0 0 #dde8ee;display:flex;flex-direction:column;min-height:0}
+.sidebar header{padding:17px 17px 12px;border-bottom:1px solid #e6edf2}.sidebar h3{font-size:15px;margin:0 0 5px}.sidebar header p{font-size:11px;color:#8299ab;margin:0;line-height:1.6}
+.items{overflow:auto;flex:1;padding:11px 9px 10px}.section{margin:13px 10px 8px;font-size:10px;font-weight:750;letter-spacing:1px;color:#9db0be;text-transform:uppercase}
+.facility{width:100%;display:flex;align-items:flex-start;gap:9px;text-align:left;border:1px solid transparent;background:none;border-radius:9px;padding:9px 8px;color:#3b5d72;min-height:54px;box-sizing:border-box}
+.facility:hover,.facility.active{background:#edf7fc;border-color:#c9e5f0}
+.number{width:29px;height:29px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;font-size:11px;background:#e9f4f8;color:#3889a9;font-weight:750}
+.number.yard{color:#a67633;background:#fff0d8}.number.note{color:#9d8160;background:#fbf1e1}.facility strong{display:block;font-size:12px;font-weight:700;margin:1px 0 5px}
+.facility span.info{font-size:10px;color:#8da5b3;display:block;line-height:1.6}
+.detail{padding:16px 17px;border-top:1px solid #dce8ef;max-height:245px;overflow:auto;background:#f8fcfe}
+.detail label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#8aa5b5}.detail h4{margin:7px 0 9px;font-size:14px;color:#23526f}
+.detail dl{display:grid;grid-template-columns:82px 1fr;gap:5px 11px;font-size:11px;line-height:1.5;margin:0}
+.detail dt{color:#869fb0}.detail dd{margin:0;overflow-wrap:anywhere;color:#44667c}
+.warning{margin:0;padding:10px 16px 13px;border-top:1px solid #e2ebf0;color:#9c6b63;background:#fffbf8;font-size:10px;line-height:1.6}
+@media(max-width:900px){.sidebar{width:270px}.brand h1{font-size:15px}.brand h1 small{display:none}.actions a{display:none}.legend{max-width:calc(100% - 30px);gap:8px}.sidebar header{padding:12px}.detail{max-height:180px}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand"><div class="accent"></div><div><h1>唐山港51、52号泊位 · CAD水务工程平面图 <small>V1.1 / 工程校核视图</small></h1><p class="sub">原始DWG空间坐标 · 逐设施源图元追溯 · 不是竣工图或已验收管网</p></div></div>
+  <div class="actions"><button id="reset">复位视角</button><button id="notes">隐藏注释点</button><a href="./network-evidence-v1.2.html">水路关系证据图 V1.2</a><a href="./唐港5152_水务设施CAD平面定位图_V1.1.png" target="_blank">高清图片</a><a href="./唐港5152_设施标注坐标与来源_V1.1.csv">坐标清单</a></div>
+</div>
+<div class="page">
+  <main class="workspace">
+    <canvas id="map"></canvas>
+    <div class="overlay-top"><div class="badge"><span class="dot"></span> 51 / 52 泊位 · CAD SOURCE GEOMETRY</div><h2>工程设施定位复核</h2><p>拖动平移 · 滚轮缩放 · 点击数字定位设施 · 点击管线查看原图图元。彩色管线为待校核的CAD候选，不代表真实水力连通。</p></div>
+    <div class="legend" id="filters"></div>
+    <div class="coords" id="coords">CAD X / Y</div>
+  </main>
+  <aside class="sidebar">
+    <header><h3>设施与标注索引</h3><p>来源于原 DWG 的图层、文字锚点和图元编号。点击右侧条目定位。</p></header>
+    <div class="items" id="list"></div>
+    <div class="detail" id="detail"><label>选中对象</label><h4>选择设施或CAD图元</h4><p style="font-size:11px;color:#8099ab">核对原始图层、编号和坐标；设施标签不等同于已完成工程验收。</p></div>
+    <p class="warning">本图仅对水务相关CAD进行定位复核。跨图层的备注斜线及未确认管段已排除，方案一/二和相邻工程未当作本项目设施。</p>
+  </aside>
+</div>
+<script>
+(async function(){
+'use strict';
+const response=await fetch('./site-review-v1.1.json',{cache:'no-store'});
+if(!response.ok){document.getElementById('detail').textContent='原CAD数据加载失败';return}
+const model=await response.json();
+const canvas=document.getElementById('map'),ctx=canvas.getContext('2d',{alpha:false});
+const host=canvas.parentElement,detail=document.getElementById('detail'),list=document.getElementById('list');
+const [minX,maxX,minY,maxY]=model.bounds;
+const midX=(minX+maxX)/2,midY=(minY+maxY)/2;
+const layers={
+ '0':{c:'#dfe6ec',w:.9},'--绿化':{c:'#e0ede5',w:1},
+ '轮廓':{c:'#cbd8df',w:1.2},'轮廓线':{c:'#ccd8df',w:1},
+ 'WALL':{c:'#bccbd3',w:1},'工艺管线':{c:'#d2e0e7',w:1},
+ '00-码头布置（东侧）':{c:'#8ca7ba',w:1.6},
+ '00-总图01推荐 道路中心线':{c:'#c1d0d9',w:1},
+ '皮带机中心线':{c:'#b4cbd7',w:1},'$pm单体':{c:'#7f9cad',w:1.35},
+ '水池':{c:'#8eb8c8',w:1.4},'---辅建区':{c:'#a8bbc8',w:1},
+ '$管综-中压除尘':{c:'#428fd6',w:2},'$管综-高压除尘':{c:'#48b7db',w:2},
+ '$管综-市政中水':{c:'#23b9b2',w:2},'$管综-市政自来水 生活给水':{c:'#6da9bc',w:2},
+ '$管综-室外消防':{c:'#da8a72',w:1.7},'$管综-室内消防':{c:'#e1ad88',w:1.5},
+ '$管综-雨水':{c:'#58a7d0',w:1.8},'$管综-生活污水':{c:'#947fa6',w:1.8},
+ '$管综-污泥管':{c:'#a47b91',w:1.8}
+};
+const filterOptions=[
+ ['base','CAD底图','#9eafbb'],['facility','建筑/堆场','#b6a183'],
+ ['green','绿化','#b6d3bf'],['water','水务管线候选','#399dba'],
+ ['points','设施定位','#dba55b']
+];
+const state={w:0,h:0,scale:1,base:1,px:0,py:0,showAnnotations:true,visible:new Set(filterOptions.map(x=>x[0])), selected:null,dragging:false,moved:false,lastX:0,lastY:0,downX:0,downY:0};
+const groups={base:[],facility:[],green:[],water:[]};
+for(const e of model.geometries){const group=e[3]||'base';(groups[group]||groups.base).push(e)}
+const points=model.facilityPoints;
+const tint={yard:'#c9923d',note:'#aa8660',utility:'#2199ad',berth:'#6589a9'};
+function pt(p){return [state.w/2+(p[0]-midX)*state.scale+state.px,state.h/2-(p[1]-midY)*state.scale+state.py]}
+function world(x,y){return [(x-state.w/2-state.px)/state.scale+midX,midY-(y-state.h/2-state.py)/state.scale]}
+function getColor(a){return a.kind==='堆场'?tint.yard:a.kind==='泊位'?tint.berth:a.kind==='设计文字（非设施中心）'?tint.note:tint.utility}
+function line(x0,y0,x1,y1,color,width=1){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke()}
+function drawGrid(){const gap=150000;ctx.strokeStyle='#eaf0f4';ctx.lineWidth=1;const firstX=Math.floor(minX/gap)*gap;for(let x=firstX;x<=maxX;x+=gap){const cx=pt([x,midY])[0];line(cx,0,cx,state.h,'#e8eff4');if(cx>0&&cx<state.w-100){ctx.fillStyle='#99adba';ctx.font='10px sans-serif';ctx.fillText('X '+Math.round(x),cx+5,23)}}
+const firstY=Math.floor(minY/gap)*gap;for(let y=firstY;y<=maxY;y+=gap){const yy=pt([midX,y])[1];line(0,yy,state.w,yy,'#e8eff4');if(yy>35&&yy<state.h-30){ctx.fillStyle='#99adba';ctx.font='10px sans-serif';ctx.fillText('Y '+Math.round(y),10,yy-6)}}}
+function drawPaths(items){
+ for(const z of items){
+ const [layer,handle,raw]=z;const style=layers[layer]||{c:'#ccd8e1',w:1};
+ if(!raw||raw.length<2)continue;
+ const a=raw.map(pt);const xx=a.map(q=>q[0]),yy=a.map(q=>q[1]);
+ if(Math.max(...xx)<-10||Math.min(...xx)>state.w+10||Math.max(...yy)<-10||Math.min(...yy)>state.h+10)continue;
+ ctx.beginPath();ctx.moveTo(a[0][0],a[0][1]);for(let i=1;i<a.length;i++)ctx.lineTo(a[i][0],a[i][1]);
+ ctx.lineWidth=style.w;ctx.strokeStyle=style.c;ctx.stroke();
+ }
+}
+function drawPins(){
+ if(!state.visible.has('points'))return;
+ for(const a of points){
+ if(!state.showAnnotations&&a.kind==='设计文字（非设施中心）')continue;
+ const [x,y]=pt(a.xy);if(x<-80||x>state.w+80||y<-80||y>state.h+80)continue;
+ const chosen=state.selected&&state.selected.type==='facility'&&state.selected.id===a.id;
+ const color=getColor(a),isYard=a.kind==='堆场',isNote=a.kind==='设计文字（非设施中心）';
+ ctx.lineWidth=chosen?3:2;ctx.strokeStyle=chosen?'#1d546c':color;ctx.fillStyle='#fff';
+ if(isNote){ctx.beginPath();ctx.moveTo(x,y-7);ctx.lineTo(x+7,y);ctx.lineTo(x,y+7);ctx.lineTo(x-7,y);ctx.closePath();ctx.fill();ctx.stroke();ctx.font='10px sans-serif';ctx.fillStyle=color;ctx.fillText(a.id,x+8,y-8)}
+ else if(isYard){
+ ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+ const label=a.label;ctx.font='bold 12px sans-serif';const width=ctx.measureText(label).width+13;
+ ctx.fillStyle='#fff8e9';ctx.strokeStyle='#dfb777';ctx.lineWidth=1;
+ ctx.beginPath();ctx.roundRect(x-width/2,y-27,width,21,5);ctx.fill();ctx.stroke();
+ ctx.fillStyle='#935d28';ctx.fillText(label,x-width/2+6,y-12);
+ }else{
+ ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();ctx.stroke();
+ ctx.fillStyle=color;ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText(a.id,x,y+3);ctx.textAlign='left';
+ if(state.scale>state.base*1.28){
+ ctx.font='11px sans-serif';const label=a.label.length>23?a.label.slice(0,21)+'…':a.label;
+ const tw=ctx.measureText(label).width+12;ctx.fillStyle='#fffffff0';ctx.fillRect(x+16,y-17,tw,20);
+ ctx.fillStyle='#476b83';ctx.fillText(label,x+22,y-3);
+ }
+ }
+ }
+}
+function draw(){
+ ctx.clearRect(0,0,state.w,state.h);
+ ctx.fillStyle='#f9fcfe';ctx.fillRect(0,0,state.w,state.h);drawGrid();
+ for(const group of ['green','base','facility','water'])if(state.visible.has(group))drawPaths(groups[group]);
+ drawPins();
+ // Explicitly mark the selected source LineString; not the full hydraulic circuit.
+ if(state.selected?.type==='line'&&state.visible.has('water')){
+  const z=groups.water.find(q=>q[1].toUpperCase()===state.selected.handle.toUpperCase());
+  if(z){const line=z[2].map(pt);ctx.beginPath();ctx.moveTo(...line[0]);for(let i=1;i<line.length;i++)ctx.lineTo(...line[i]);ctx.lineWidth=4.8;ctx.strokeStyle='#06d2e5';ctx.shadowColor='#25b8cc';ctx.shadowBlur=12;ctx.stroke();ctx.shadowBlur=0;}
+ }
+}
+function resetView(){
+ state.base=Math.min((state.w-150)/(maxX-minX),(state.h-150)/(maxY-minY));
+ state.scale=state.base;state.px=0;state.py=0;draw();
+}
+function size(){const box=host.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+ state.w=Math.max(1,box.width);state.h=Math.max(1,box.height);
+ canvas.width=state.w*dpr;canvas.height=state.h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+ resetView();
+}
+new ResizeObserver(size).observe(host);size();
+const specSupplement={
+ '09':'规格书：北侧集水池2座；这里只定位文字点，尚未核验两个池体',
+ '10':'规格书：南侧集水池5座，每座≥2700m³；这里只定位文字点，尚未核验五个池体',
+ '11':'规格书：含矿污水处理设计能力500m³/h',
+ '12':'规格书：除尘水池2座、每座3000m³；不是每座水池的物理坐标',
+ '13':'规格书一处称洗车台6套，布置章又称共计4套，计数口径与点位待确认',
+ '14':'生态储水设施涉及方案说明，真实边界和实施状态待核',
+ '16':'生活污水与含矿污水不同；既有处理场接入/一体化设施两种CAD标注待核'
+};
+function facilityDetail(a){
+ state.selected={type:'facility',id:a.id};draw();
+ detail.innerHTML='<label>CAD 原始设施/说明</label><h4>'+escapeHTML(a.id+' · '+a.label)+'</h4><dl>'+
+ '<dt>原文</dt><dd>'+escapeHTML(a.sourceText)+'</dd>'+
+ '<dt>源图层</dt><dd>'+escapeHTML(a.sourceLayer)+'</dd>'+
+ '<dt>CAD Handle</dt><dd>'+escapeHTML(String(a.sourceHandle||'无'))+'</dd>'+
+ '<dt>X坐标</dt><dd>'+Number(a.xy[0]).toFixed(3)+'</dd>'+
+ '<dt>Y坐标</dt><dd>'+Number(a.xy[1]).toFixed(3)+'</dd>'+
+ '<dt>状态</dt><dd>'+escapeHTML(a.grade)+'</dd>'+
+ '<dt>备注</dt><dd>'+escapeHTML(a.comment||'无')+'</dd>'+
+ '<dt>规格书补充</dt><dd>'+escapeHTML(specSupplement[a.id]||'待按相关专业校核')+'</dd></dl>';
+ for(const node of document.querySelectorAll('.facility'))node.classList.toggle('active',node.dataset.id===a.id);
+}
+function pipeDetail(z){
+ const [layer,handle,raw]=z;
+ state.selected={type:'line',handle};draw();
+ detail.innerHTML='<label>CAD 原始线状图元 · 尚未验收</label><h4>'+escapeHTML(layer)+'</h4><dl>'+
+ '<dt>Handle</dt><dd>'+escapeHTML(handle)+'</dd>'+
+ '<dt>类别</dt><dd>水务专业线状候选</dd>'+
+ '<dt>折点数</dt><dd>'+raw.length+'</dd>'+
+ '<dt>起点 X/Y</dt><dd>'+raw[0].slice(0,2).join(' / ')+'</dd>'+
+ '<dt>风险</dt><dd>未核实中心线、管径、接入点和水力连通</dd></dl>';
+}
+function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function focus(a){state.scale=Math.min(state.base*2.2,state.base*5);
+ state.px=-(a.xy[0]-midX)*state.scale;state.py=(a.xy[1]-midY)*state.scale;facilityDetail(a)}
+const filterHost=document.getElementById('filters');
+for(const [id,name,color]of filterOptions){const label=document.createElement('label');label.innerHTML='<input type="checkbox" checked><i class="swatch" style="background:'+color+'"></i>'+name;filterHost.appendChild(label);
+ label.querySelector('input').addEventListener('change',e=>{if(e.target.checked)state.visible.add(id);else state.visible.delete(id);draw()});}
+const groupsForList=[
+ ['堆场 / 泊位',a=>a.kind==='堆场'||a.kind==='泊位'],
+ ['水务设施 / 接口',a=>a.kind!=='堆场'&&a.kind!=='泊位'&&a.kind!=='设计文字（非设施中心）'],
+ ['工程文字锚点',a=>a.kind==='设计文字（非设施中心）']
+];
+for(const [name,predicate]of groupsForList){
+ const title=document.createElement('div');title.className='section';title.textContent=name;list.appendChild(title);
+ for(const a of points.filter(predicate)){
+ const item=document.createElement('button');item.className='facility';item.dataset.id=a.id;
+ const type=a.kind==='堆场'?'yard':a.kind==='设计文字（非设施中心）'?'note':'';
+ item.innerHTML='<span class="number '+type+'">'+escapeHTML(a.id)+'</span><span><strong>'+escapeHTML(a.label)+'</strong><span class="info">'+escapeHTML(a.sourceLayer)+' · '+escapeHTML(specSupplement[a.id]||a.grade)+'</span></span>';
+ item.onclick=()=>focus(a);list.appendChild(item);
+ }
+}
+// Deep-link from evidence relationship node to a verified CAD text insertion point.
+const focusId=new URLSearchParams(location.search).get('focus');
+if(focusId){const selectedAnchor=points.find(a=>a.id===focusId);if(selectedAnchor){requestAnimationFrame(()=>focus(selectedAnchor));}}
+const sourceLineHandle=new URLSearchParams(location.search).get('line');
+if(sourceLineHandle){
+ const targetLine=groups.water.find(q=>q[1].toUpperCase()===sourceLineHandle.toUpperCase());
+ if(targetLine){requestAnimationFrame(()=>{
+  const mid=targetLine[2][Math.floor(targetLine[2].length/2)];
+  state.scale=Math.min(state.base*5,state.base*2.6);
+  state.px=-(mid[0]-midX)*state.scale;state.py=(mid[1]-midY)*state.scale;
+  pipeDetail(targetLine);
+ });}
+}
+document.getElementById('reset').onclick=()=>resetView();
+const notes=document.getElementById('notes');
+notes.onclick=()=>{state.showAnnotations=!state.showAnnotations;notes.textContent=state.showAnnotations?'隐藏注释点':'显示注释点';draw()};
+const coords=document.getElementById('coords');
+canvas.addEventListener('pointerdown',e=>{state.dragging=true;state.moved=false;state.downX=e.clientX;state.downY=e.clientY;state.lastX=e.clientX;state.lastY=e.clientY;canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{
+ const box=canvas.getBoundingClientRect(),x=e.clientX-box.left,y=e.clientY-box.top;
+ if(state.dragging){const dx=e.clientX-state.lastX,dy=e.clientY-state.lastY;
+ if(Math.abs(e.clientX-state.downX)+Math.abs(e.clientY-state.downY)>5)state.moved=true;
+ if(state.moved){state.px+=dx;state.py+=dy;draw()}
+ state.lastX=e.clientX;state.lastY=e.clientY;}
+ const w=world(x,y);coords.textContent='CAD X '+w[0].toFixed(0)+'  ·  Y '+w[1].toFixed(0);
+});
+canvas.addEventListener('pointerup',e=>{
+ if(!state.dragging)return;state.dragging=false;
+ if(state.moved)return;
+ const box=canvas.getBoundingClientRect(),x=e.clientX-box.left,y=e.clientY-box.top;
+ let near=null,best=19;
+ for(const a of points){if(!state.visible.has('points'))break;if(!state.showAnnotations&&a.kind==='设计文字（非设施中心）')continue;
+ const p=pt(a.xy),dist=Math.hypot(x-p[0],y-p[1]);if(dist<best){best=dist;near=a}}
+ if(near){facilityDetail(near);return}
+ if(!state.visible.has('water'))return;
+ let found=null,min=7.5;
+ function distSegment(px,py,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay,den=dx*dx+dy*dy||1;
+  const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/den));
+  return Math.hypot(px-(ax+dx*t),py-(ay+dy*t))
+ }
+ for(const z of groups.water){
+ const poly=z[2];for(let i=1;i<poly.length;i++){
+  const a=pt(poly[i-1]),b=pt(poly[i]);const dd=distSegment(x,y,...a,...b);
+  if(dd<min){found=z;min=dd}
+ }}
+ if(found)pipeDetail(found);
+});
+canvas.addEventListener('pointercancel',()=>state.dragging=false);
+canvas.addEventListener('wheel',e=>{
+ e.preventDefault();const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;
+ const before=world(x,y);let factor=Math.exp(-e.deltaY*.0012);
+ const target=Math.min(state.base*20,Math.max(state.base*.55,state.scale*factor));state.scale=target;
+ const after=pt(before);state.px+=x-after[0];state.py+=y-after[1];draw();
+},{passive:false});
+})();
+</script>
+</body></html>

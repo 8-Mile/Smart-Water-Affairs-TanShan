@@ -1,0 +1,1140 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+html {
+  background: #eaf4ff;
+  color: var(--art-gray-900, #303133);
+  font-family:
+    'Helvetica Neue',
+    Helvetica,
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei',
+    Arial,
+    sans-serif;
+}
+
+/* ===== 全局唯一背景：newbg.webp（纯泵房工业底图，无 UI 元素） =====
+   锚定浏览器视口（fixed），不随主内容区滚动，侧栏/顶栏/主区共用同一张图 */
+body {
+  background:
+    url('../assets/img/newbg.webp') center / cover no-repeat fixed
+    #eaf4ff;
+}
+
+/* ===== 维修工单页 1:1 还原专用设计变量（仅该页使用，不污染全局） ===== */
+:root {
+  --repair-page-bg: #e7f3fd;
+  --repair-card-bg: #eef7ff;
+  --repair-card-border: #d5e9fa;
+  --repair-thead-start: #eaf4fe;
+  --repair-thead-end: #ddedfe;
+  --repair-row-odd: #fbfcfe;
+  --repair-row-even: #f2f7fe;
+  --repair-row-hover: #e6f2ff;
+  --repair-text-primary: #264779;
+  --repair-text-header: #214b83;
+  --repair-text-secondary: #8197b4;
+  --repair-btn-primary: #166dfe;
+  --repair-divider: #e4edf8;
+  --repair-shadow: 0 6px 24px rgba(55, 135, 220, 0.1);
+
+  /* ===== 全站动效 token（统一时长与缓动，克制动效基线） ===== */
+  --motion-fast: 150ms;
+  --motion-base: 220ms;
+  --motion-slow: 360ms;
+  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#app {
+  background: transparent;
+}
+
+/* 跨页跳转定位：命中行高亮（移除时经 transition 呼吸淡出） */
+.el-table .el-table__row {
+  transition: background-color 0.9s ease;
+}
+.el-table .row-focus > td.el-table__cell {
+  background: color-mix(in srgb, var(--el-color-primary) 18%, transparent) !important;
+  border-top: 1px solid color-mix(in srgb, var(--el-color-primary) 50%, transparent) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--el-color-primary) 50%, transparent) !important;
+  animation: row-focus-flash 1.2s ease-in-out 2;
+}
+.el-table .row-focus > td.el-table__cell:first-child {
+  border-left: 3px solid var(--el-color-primary) !important;
+}
+
+@keyframes row-focus-flash {
+  0%, 100% {
+    background: color-mix(in srgb, var(--el-color-primary) 18%, transparent);
+  }
+  50% {
+    background: color-mix(in srgb, var(--el-color-primary) 38%, transparent);
+  }
+}
+
+/* 定位提示条 */
+.focus-banner {
+  margin-bottom: 12px;
+}
+
+/* =====================================================================
+   Hydro Command 静水智控 —— 全局氛围与质感层
+   纯视觉规则，不改任何页面逻辑与 DOM 结构
+   ===================================================================== */
+
+/* ---- 数据数字：等宽数字（防止跳动）+ DIN 风格数字字体（系统兜底零加载） ---- */
+.num,
+.kpi-value,
+.kpi-val,
+.rk-val,
+.akpi-value,
+.el-pagination,
+.el-table .cell {
+  font-variant-numeric: tabular-nums;
+}
+.num,
+.kpi-value,
+.kpi-val,
+.rk-val,
+.akpi-value {
+  font-family:
+    'DIN Alternate', 'Bahnschrift', 'Rajdhani', 'Helvetica Neue', 'PingFang SC',
+    sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* ---- 主滚动区：背景统一为 body 视口级底图，此处保持透明 ---- */
+#app-main {
+  background: transparent;
+}
+
+/* ---- 卡片/表格形制：回归 art-design-pro 标准规范 ----
+   卡片走 app.scss 的 .art-card / .art-table-card（细边框 + 规范圆角），
+   表格走 el-ui.scss 对齐 ArtTable 的白底表头规则，此处不再覆盖。 */
+
+/* ---- 固定列：不透明背景，防止横向滚动/hover 时内容透视 ---- */
+.el-table__fixed-right .el-table__body tr td.el-table__cell,
+.el-table__fixed-left .el-table__body tr td.el-table__cell {
+  background: var(--default-box-color, #fff) !important;
+}
+/* 固定列表头不透明 */
+.el-table__fixed-right-wrapper .el-table__body tr td.el-table__cell,
+.el-table__fixed-left-wrapper .el-table__body tr td.el-table__cell {
+  background: var(--default-box-color, #fff) !important;
+}
+
+/* ---- 操作列：图标按钮靠右自适应横向排列（业务按钮在前、详情恒在最右） ---- */
+.action-cell {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  /* 间距统一交给 gap，避免按钮自带的右边距造成「详情前空隙更大」 */
+  gap: 12px;
+  /* 撑满单元格，保证在任意列宽下都贴右对齐（而非仅内容自身靠右） */
+  width: 100%;
+  overflow: visible !important;
+}
+/* 统一清零按钮/确认气泡触发器自带的右边距：所有相邻按钮间距严格一致 */
+.action-cell .inline-flex,
+.action-cell .dc-trigger {
+  margin-right: 0 !important;
+}
+
+/* ---- 小屏卡片 ⋮ 操作下拉：菜单行改成「图标 + 文字」 ---- */
+.ab-label {
+  display: none;
+}
+.pc-more-menu {
+  padding: 4px;
+}
+.pc-more-menu .el-dropdown-menu__item {
+  padding: 0;
+  line-height: normal;
+}
+.pc-more-menu .inline-flex {
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border-radius: 6px;
+  background: transparent !important;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.pc-more-menu .inline-flex:hover {
+  background: var(--el-fill-color-light) !important;
+}
+.pc-more-menu .ab-label {
+  display: inline;
+}
+/* 操作列的 .cell 不裁剪 tooltip */
+.el-table__fixed-right .cell,
+.el-table__fixed-left .cell,
+td.el-table__cell:last-child .cell {
+  overflow: visible !important;
+}
+
+/* ---- 纯 CSS tooltip：无 popper、即时显示、不触发弹窗 bug ---- */
+.action-cell .el-button[data-tip] {
+  position: relative;
+  overflow: visible !important;
+}
+.action-cell .el-button[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.85);
+  padding: 4px 10px;
+  background: rgba(48, 49, 51, 0.92);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  border-radius: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 9999;
+  pointer-events: none;
+}
+.action-cell .el-button[data-tip]::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(48, 49, 51, 0.92);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s;
+  z-index: 9999;
+  pointer-events: none;
+}
+.action-cell .el-button[data-tip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) scale(1);
+}
+.action-cell .el-button[data-tip]:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ---- 按钮/Tag/Tabs/输入框：回归 art-design-pro 标准规范 ----
+   主按钮纯色 var(--el-color-primary)，hover/danger 走 EP 色阶；
+   Tag、Tabs 指示条、输入框聚焦均由 el-ui.scss / EP 默认样式接管。 */
+
+/* ---- 分页：对齐维修工单页（无分隔线，间距交给 ProTable 分页皮肤） ---- */
+
+/* ---- 滚动条：中性灰调 ---- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 158, 183, 0.3);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 158, 183, 0.5);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 158, 183, 0.35) transparent;
+}
+
+/* 过渡外壳：保持内容区高度拉伸链（.page 仍占满剩余高度） */
+.page-shell {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ---- 交互态：按钮 hover 抬起 1px、active 回落、键盘聚焦环 ---- */
+.el-button:not(.is-text):not(.is-link):not(.is-disabled):not(.is-circle),
+.ab-trigger {
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+  will-change: transform;
+}
+.el-button:not(.is-text):not(.is-link):not(.is-disabled):not(.is-circle):hover {
+  transform: translateY(-1px);
+}
+.el-button:not(.is-text):not(.is-link):not(.is-disabled):not(.is-circle):active {
+  transform: translateY(0);
+}
+.el-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--el-color-primary) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* ---- 卡片：hover 阴影上浮（不做缩放/位移） ---- */
+.el-card {
+  transition: box-shadow var(--motion-base) var(--ease-standard);
+}
+.el-card:not(.art-table-card):not(.is-always-shadow):hover {
+  box-shadow: 0 10px 26px -10px rgba(55, 135, 220, 0.28);
+}
+
+/* ---- 减弱动效偏好：过渡/动画统一归零（保留状态可读性） ---- */
+@media (prefers-reduced-motion: reduce) {
+  .page-fade-enter-active,
+  .page-fade-leave-active {
+    transition: none;
+  }
+  .page-fade-enter-from {
+    transform: none;
+  }
+  .el-button,
+  .ab-trigger,
+  .el-card {
+    transition: none !important;
+  }
+  .el-button:not(.is-text):not(.is-link):not(.is-disabled):not(.is-circle):hover,
+  .el-button:not(.is-text):not(.is-link):not(.is-disabled):not(.is-circle):active {
+    transform: none;
+  }
+}
+
+/* ---- 实时脉冲点（realtime 卡片/实时状态复用） ---- */
+.pulse-dot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hydro-cyan-bright);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.9);
+}
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid var(--hydro-cyan-bright);
+  animation: hydro-pulse 1.8s ease-out infinite;
+}
+@keyframes hydro-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* ===== 卡片交错入场（全站统一）：页面根元素加 .is-ready 后，
+   内部 .dash-card 按内联 --i × 50ms 逐张浮现（渐显 + 上浮 20px）。
+   工作台、告警中心等页面共用同一节奏，避免各页自定义导致不一致 ===== */
+@keyframes dash-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.dash-card {
+  opacity: 0;
+}
+.is-ready .dash-card {
+  animation: dash-card-in var(--motion-slow) var(--ease-standard) forwards;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+/* 呼吸态（KpiCard 选中项）与入场并存：入场只播一次、呼吸循环接管边框辉光。
+   重复类名用于压过组件内 scoped 的 animation 声明，避免呼吸覆盖入场后
+   元素回落到 opacity:0 而消失 */
+.is-ready .dash-card.is-breathing.is-breathing {
+  animation:
+    dash-card-in var(--motion-slow) var(--ease-standard) forwards,
+    kpi-breathing 2s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 50ms), 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dash-card {
+    opacity: 1;
+  }
+  .is-ready .dash-card,
+  .is-ready .dash-card.is-breathing.is-breathing {
+    animation: none;
+  }
+}
+
+/* ===== 模块色相体系：页面根元素挂 mod-* 类提供 --mod-a/--mod-b，
+   供业务页面（工作台/告警实时等）图表与强调色取用，不影响通用组件形制 ===== */
+.mod-dash     { --mod-a: #0e7ff0; --mod-b: #06b6d4; } /* 工作台 · 蓝青指挥 */
+.mod-alarm    { --mod-a: #ef4444; --mod-b: #f97316; } /* 告警中心 · 红橙警戒 */
+.mod-repair   { --mod-a: #f59e0b; --mod-b: #f97316; } /* 维修工单 · 琥珀工程 */
+.mod-monitor  { --mod-a: #06b6d4; --mod-b: #10b981; } /* 实时监控 · 青绿数据 */
+.mod-asset    { --mod-a: #4f46e5; --mod-b: #0ea5e9; } /* 设备资产 · 靛蓝 */
+.mod-water    { --mod-a: #0ea5e9; --mod-b: #2563eb; } /* 供水分析 · 水蓝 */
+.mod-energy   { --mod-a: #d97706; --mod-b: #f59e0b; } /* 能耗分析 · 琥珀 */
+.mod-inspect  { --mod-a: #10b981; --mod-b: #059669; } /* 设备巡检 · 翠绿 */
+.mod-archive  { --mod-a: #64748b; --mod-b: #0ea5e9; } /* 档案管理 · 石板青 */
+.mod-system   { --mod-a: #475569; --mod-b: #64748b; } /* 系统管理 · 石墨 */
+
+/* ===== 卡片标题：回归 art-card-header 规范（text-lg/medium/g-900 由 tailwind 工具类提供） ===== */
+
+/* ===== 表格高度自适应 + 分页贴卡片底部：打通页面高度拉伸链 ===== */
+/* 外层内容容器（EmberLayout）已是 flex column + flex:1，这里透传高度 */
+.page-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* 页面根占满内容区高度 */
+.page {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* tab 宿主页：tabs → content → pane 逐层透传拉伸（min-height:0 防止 flex 项按内容撑破） */
+.page > .el-tabs,
+.page > .el-tabs > .el-tabs__content,
+.page > .el-tabs > .el-tabs__content > .el-tab-pane {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* el-tabs 底部分割线：默认灰改为白色，融入页面浅色背景（全站 tab 统一） */
+.el-tabs__nav-wrap::after {
+  background-color: #fff;
+}
+/* pane 内的嵌入子视图（根均为 .page）与布局容器继续透传，
+   内部 .art-table-card 以 flex 拉伸，分页即贴卡片底部 */
+.el-tab-pane > .page,
+.el-tab-pane > .rt-grid,
+.el-tab-pane > .rules-panel,
+.el-tab-pane > .tab-page {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.el-tab-pane > .tab-page {
+  display: flex;
+  flex-direction: column;
+}
+/* 表格卡片：占满剩余高度，body 内部滚动（art-table-card 基础形制定义在 app.scss） */
+.art-table-card {
+  min-height: 0;
+}
+/* 双栏/嵌套布局容器高度透传 */
+.rt-grid,
+.rt-main,
+.rt-side,
+.focus-detail-layout {
+  min-height: 0;
+}
+/* el-row / el-col 嵌套布局：KPI 行保持自然高，内容行（第二个 el-row 起）拉伸占满，
+   列内 flex 化使 art-table-card 可继续 flex:1。
+   用相邻兄弟选择器而非 :last-child——页面尾部的 el-dialog 等组件会占位导致后者失配 */
+.page > .el-row + .el-row {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.page > .el-row + .el-row > .el-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* 小屏（≤640px）恢复整页滚动：参考项目 art-full-height 同步策略 */
+@media (max-width: 768px) {
+  .page-content,
+  .page-shell,
+  .page,
+  .page > .el-tabs,
+  .page > .el-tabs > .el-tabs__content,
+  .page > .el-tabs > .el-tabs__content > .el-tab-pane,
+  .page > .el-row + .el-row {
+    min-height: auto;
+  }
+  .art-table-card {
+    flex: 0 0 auto;
+  }
+}
+/* 短视口（高度 ≤720px）：固定表头会把表格剩余高度压成 0（表体不可见），
+   含 ProTable 的页面退化为“自然高度 + 整页滚动”，保证数据行可访问 */
+@media (max-height: 720px) {
+  .page-content:has(.pro-table) {
+    overflow-y: auto;
+  }
+  .page-content:has(.pro-table) .page,
+  .page-content:has(.pro-table) .page-shell,
+  .page-content:has(.pro-table) .page-fill,
+  .page-content:has(.pro-table) .page > .el-tabs,
+  .page-content:has(.pro-table) .page > .el-tabs > .el-tabs__content,
+  .page-content:has(.pro-table) .page > .el-tabs > .el-tabs__content > .el-tab-pane,
+  .page-content:has(.pro-table) .el-tab-pane > .page,
+  .page-content:has(.pro-table) .el-tab-pane > .rt-grid,
+  .page-content:has(.pro-table) .el-tab-pane > .rules-panel,
+  .page-content:has(.pro-table) .el-tab-pane > .tab-page,
+  .page-content:has(.pro-table) .page > .el-row + .el-row,
+  .page-content:has(.pro-table) .page > .el-row + .el-row > .el-col,
+  .page-content:has(.pro-table) .rt-grid,
+  .page-content:has(.pro-table) .rt-main,
+  .page-content:has(.pro-table) .rt-side,
+  .page-content:has(.pro-table) .table-section,
+  .page-content:has(.pro-table) .art-table-card,
+  .page-content:has(.pro-table) .pro-table {
+    flex: 0 0 auto;
+    min-height: auto;
+  }
+}
+
+/* =====================================================================
+   全站列表页统一形制 —— 对齐维修工单页基准
+   （磨砂框架 / 卡片标题栏 / KPI 面板 / 渐变主按钮；与各页 scoped 同名规则同值，互不冲突）
+   ===================================================================== */
+
+/* 1. 表格卡片：浅白蓝磨砂通栏（对齐维修工单 .table-card；SCADA 大屏避让保持深色皮肤） */
+.el-card.art-table-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(238, 247, 255, 0.72) 100%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  border: none !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 24px rgba(55, 135, 220, 0.08) !important;
+}
+.screen-mode .el-card.art-table-card {
+  background: var(--default-box-color, #fff) !important;
+  border: 1px solid var(--art-card-border) !important;
+  border-radius: calc(var(--custom-radius, 0.75rem) + 4px) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* 2. 搜索条：白色卡改磨砂（对齐告警/维修页已验证的同款值） */
+.pro-search-bar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(238, 247, 255, 0.72) 100%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  border: none !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 24px rgba(55, 135, 220, 0.08) !important;
+}
+
+/* 3. KPI 磨砂面板：状态卡的统一背景容器（面板与下方内容间距统一 12px） */
+.kpi-panel {
+  margin-bottom: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(238, 247, 255, 0.72) 100%);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow: 0 6px 24px rgba(55, 135, 220, 0.08);
+}
+
+/* 4. 卡片标题栏：图标徽章 + 标题 + 右侧科技线条（设计稿无下横线） */
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+}
+.head-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #2f7cf6;
+  background: linear-gradient(135deg, #e3eefe, #eef4ff);
+  border: 1px solid #d7e6fd;
+}
+.head-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2d3d;
+  letter-spacing: 0.02em;
+}
+.head-deco {
+  flex: 1 1 auto;
+  height: 20px;
+  background:
+    linear-gradient(90deg, transparent 62%, rgba(47, 124, 246, 0.55) 82%, rgba(47, 124, 246, 0) 100%) right 8px / 100% 1px no-repeat,
+    linear-gradient(90deg, transparent 70%, rgba(47, 124, 246, 0.35) 88%, rgba(47, 124, 246, 0) 100%) right 0 / 100% 1px no-repeat;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* 5. 查询：蓝色渐变按钮（#3b9dff → #1477fd） */
+.btn-gradient {
+  border: none;
+  background: linear-gradient(135deg, #3b9dff 0%, #1477fd 100%);
+  box-shadow: 0 4px 10px -4px rgba(20, 119, 253, 0.5);
+}
+.btn-gradient:hover,
+.btn-gradient:focus {
+  background: linear-gradient(135deg, #55aaff 0%, #2b83ff 100%);
+}
+
+/* 6. KPI 行栅格：默认自适应列，页面可用 scoped 覆盖固定列数 */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+/* 中小屏（≤1024px，对齐四档断点 tablet）：KPI 面板紧凑化，
+   与 KpiCard 的 tile 紧凑档配合，给表格/内容区让出纵向空间 */
+@media only screen and (max-width: 1024px) {
+  .kpi-panel {
+    margin-bottom: 10px;
+    padding: 10px;
+  }
+  .kpi-row {
+    gap: 10px;
+  }
+}
+
+/* 7. 列表卡片左上角标题（图标徽章/标题文字/装饰线）全站去除；
+      仅保留右侧附加区（条数、WS 状态等），无附加区的整条卡头不占位 */
+.art-table-card .card-head .head-badge,
+.art-table-card .card-head .head-title,
+.art-table-card .card-head .head-deco {
+  display: none;
+}
+.art-table-card .card-head {
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 0;
+  margin-bottom: 10px;
+}
+.art-table-card .card-head:not(:has(.head-right, .el-tag)) {
+  display: none;
+}
+
+/* 7.1 表格磨砂嵌套容器：ProTable 组件根自带皮肤（全站统一，页面无需嵌套 div） */
+.pro-table {
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(240, 249, 255, 0.45) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 16px rgba(55, 135, 220, 0.06),
+    0 0 16px rgba(80, 160, 255, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+/* 顶部工具条（下载/刷新/新增按钮行）与表格保持 5px 间距 */
+.pro-table-header + .pro-table {
+  margin-top: 5px;
+}
+
+/* 8. 表格内状态标签统一为维修工单胶囊形制（圆点 + 浅底 + 浅描边 + 柔和投影） */
+.pro-table .el-tag,
+.art-table-card .el-table .el-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 11px !important;
+  border-radius: 999px !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow:
+    0 2px 6px rgba(35, 78, 130, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+/* 胶囊前置圆点（纯文字标签统一携带，与维修 status-pill 一致） */
+.pro-table .el-tag::before,
+.art-table-card .el-table .el-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+.pro-table .el-tag.el-tag--success,
+.art-table-card .el-table .el-tag.el-tag--success {
+  color: #16a34a !important;
+  background: #e7f8ed !important;
+  border-color: #c3f0d4 !important;
+}
+.pro-table .el-tag.el-tag--warning,
+.art-table-card .el-table .el-tag.el-tag--warning {
+  color: #f59a07 !important;
+  background: #fff2db !important;
+  border-color: #ffe1af !important;
+}
+.pro-table .el-tag.el-tag--danger,
+.art-table-card .el-table .el-tag.el-tag--danger {
+  color: #f03d45 !important;
+  background: #ffecee !important;
+  border-color: #ffd5d9 !important;
+}
+.pro-table .el-tag.el-tag--primary,
+.art-table-card .el-table .el-tag.el-tag--primary {
+  color: #176bff !important;
+  background: #e8f1ff !important;
+  border-color: #c9deff !important;
+}
+.pro-table .el-tag.el-tag--info,
+.art-table-card .el-table .el-tag.el-tag--info {
+  color: #78879c !important;
+  background: #edf1f6 !important;
+  border-color: #d9e1eb !important;
+}
+
+/* =====================================================================
+   9. 详情抽屉辅助样式（dd-*）—— 配合 components/ProDetailDrawer 形制使用
+   （ProDetailRow 插槽内的描述块/空态/状态胶囊，以及巡检任务/记录的
+    按设备分组时间线；抽屉 append-to-body，故必须放全局层）
+   ===================================================================== */
+
+/* 描述文本块：内容垂直居中，高度自适应（最小 88px，内容多时自然撑开） */
+.dd-desc {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 88px;
+  padding: 13px 0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #33415a;
+  word-break: break-all;
+}
+/* 空态：大横杠 + 灰提示 */
+.dd-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dd-empty-dash {
+  font-size: 18px;
+  line-height: 1;
+  color: #33415a;
+}
+.dd-empty-hint {
+  font-size: 13px;
+  color: #8197b4;
+}
+
+/* ===== 状态胶囊（泛化色系，与列表页/维修工单同规格） ===== */
+.dd-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 26px;
+  white-space: nowrap;
+  color: var(--pill-fg);
+  background: var(--pill-bg);
+  border: 1px solid var(--pill-bd);
+  border-radius: 999px;
+  box-shadow:
+    0 3px 9px rgba(35, 78, 130, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+.dd-pill.is-blue {
+  --pill-bg: #e8f1ff;
+  --pill-fg: #176bff;
+  --pill-bd: #c9deff;
+}
+.dd-pill.is-green {
+  --pill-bg: #e7f8ed;
+  --pill-fg: #16a34a;
+  --pill-bd: #c3f0d4;
+}
+.dd-pill.is-orange {
+  --pill-bg: #fff2db;
+  --pill-fg: #f59a07;
+  --pill-bd: #ffe1af;
+}
+.dd-pill.is-red {
+  --pill-bg: #ffecee;
+  --pill-fg: #f03d45;
+  --pill-bd: #ffd5d9;
+}
+.dd-pill.is-purple {
+  --pill-bg: #f2ecff;
+  --pill-fg: #8055db;
+  --pill-bd: #e0d1ff;
+}
+.dd-pill.is-gray {
+  --pill-bg: #edf1f6;
+  --pill-fg: #78879c;
+  --pill-bd: #d9e1eb;
+}
+
+/* ===== 详情抽屉：按设备分组（巡检任务/记录通用） ===== */
+.dd-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.dd-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dd-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8ecf3;
+}
+.dd-group-ico {
+  font-size: 16px;
+  color: #2f7cf6;
+}
+.dd-group-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #12234d;
+}
+.dd-group-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #909399;
+}
+.dd-group .dd-timeline {
+  margin-top: 0;
+}
+
+/* ===== 自定义时间线（虚线轨 + 蓝点光晕 + 白卡内容） ===== */
+.dd-timeline {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dd-tl {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding-left: 2px;
+}
+.dd-tl:last-child {
+  flex: 1 0 auto;
+}
+.dd-tl:last-child .dd-tl-body {
+  flex: 1 0 auto;
+  margin-bottom: 0;
+}
+.dd-tl-rail {
+  position: relative;
+  flex: 0 0 auto;
+  width: 14px;
+  padding-top: 9px;
+}
+.dd-tl-rail::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: -14px;
+  left: 50%;
+  border-left: 2px dashed #b9d2f5;
+  transform: translateX(-50%);
+}
+.dd-tl:last-child .dd-tl-rail::after {
+  bottom: 16px;
+}
+.dd-tl-dot {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 13px;
+  height: 13px;
+  border: 2.5px solid #fff;
+  border-radius: 50%;
+}
+/* 节点主题色：dot 与图标圆底同色（与档案管理运维记录时间轴同色系） */
+.dd-tl .dot-red { background: #f43f4e; box-shadow: 0 0 0 3px rgba(244, 63, 78, 0.15); }
+.dd-tl .dot-blue { background: #2f7cf6; box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.15); }
+.dd-tl .dot-orange { background: #f58a07; box-shadow: 0 0 0 3px rgba(245, 138, 7, 0.15); }
+.dd-tl .dot-purple { background: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15); }
+.dd-tl .dot-green { background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15); }
+.dd-tl-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 14px;
+}
+.dd-tl:last-child .dd-tl-body {
+  margin-bottom: 0;
+}
+.dd-tl-action {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #12234d;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.dd-tl-detail {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #5e6f8e;
+  line-height: 1.6;
+  word-break: break-all;
+}
+.dd-tl-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #8197b4;
+}
+.dd-tl-time .tl-time-icon {
+  font-size: 15px;
+  color: #9db4d4;
+}
+/* 时间线白卡内的结果胶囊（巡检项结果等）：与文本留出间距 */
+.dd-tl-body .dd-tl-pill {
+  margin-top: 8px;
+}
+
+/* ============================================================
+   全站 el-dialog 统一形制：顶部波纹标题栏（对齐设备分类设计稿）
+   - 标题栏铺 diaogtitleBg 波纹背景（仅标题区，波纹带居中裁切）
+   - 标题：深蓝粗体 + 蓝色渐变短条下划线（::after 伪元素）
+   - 关闭钮：白色圆形悬浮（原 EP 默认 × 改为徽章形制）
+   - footer 主按钮：蓝色渐变
+   ============================================================ */
+.el-dialog {
+  /* 容器 padding 归零并补偿到 body/footer：波纹标题栏背景占满整个顶部，四边不留白 */
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px -12px rgba(30, 80, 180, 0.28);
+}
+.el-dialog.is-fullscreen {
+  border-radius: 0;
+}
+.el-dialog__body {
+  padding: 16px 24px;
+}
+.el-dialog__footer {
+  padding: 12px 24px 20px;
+}
+.el-dialog__header {
+  margin-right: 0;
+  padding: 20px 64px 16px 24px;
+  background: url('@/assets/img/diaogtitleBg.webp') center 52% / 100% auto no-repeat;
+}
+/* 全屏弹窗（大屏等）标题栏不铺波纹，保持工具属性 */
+.el-dialog.is-fullscreen .el-dialog__header {
+  background: none;
+}
+.el-dialog__title {
+  position: relative;
+  padding-bottom: 9px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #17233d;
+}
+.el-dialog__title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 22px;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3b8bff 0%, #2f6bd8 100%);
+}
+/* 关闭钮：对齐 el-button circle 形制（白底灰边圆钮，hover 主题蓝浅系）
+   固定 absolute 相对 .el-dialog 定位（EP 原生机制），不依赖 header 布局，
+   自定义 #header 插槽/无标题弹窗等场景均稳定落在标题栏右上角 */
+.el-dialog__headerbtn {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--el-button-border-color, #dcdfe6);
+  border-radius: 50%;
+  background: var(--el-button-bg-color, #fff);
+  box-shadow: none;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+.el-dialog__headerbtn:hover {
+  color: var(--el-color-primary);
+  border-color: var(--el-color-primary-light-7);
+  background: var(--el-color-primary-light-9);
+}
+.el-dialog__headerbtn .el-dialog__close {
+  font-size: 16px;
+}
+/* ProDialog 的 el-button circle 关闭钮：与原生关闭钮同位 */
+.pro-dialog-close.el-button.is-circle {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+/* footer 按钮统一：圆角加粗；主按钮蓝色渐变 */
+.el-dialog__footer .el-button {
+  min-width: 88px;
+  height: 38px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.el-dialog__footer .el-button--primary {
+  border: none;
+  background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+  box-shadow: 0 6px 16px -6px rgba(22, 119, 255, 0.5);
+}
+.el-dialog__footer .el-button--primary:hover {
+  background: linear-gradient(135deg, #5aa5ff 0%, #2f86ff 100%);
+}
+
+/* ============================================================
+   弹窗表单统一：label 加粗、输入框加大圆角、字段图标徽章
+   - 徽章用法：<el-input><template #prefix><span class="field-badge"><ArtSvgIcon icon="ri:xxx" /></span></template></el-input>
+   - textarea 用法：<div class="field-textarea"><span class="field-badge">...</span><el-input type="textarea" /></div>
+   ============================================================ */
+.el-dialog .el-form-item__label {
+  font-weight: 600;
+  color: #1f2d3d;
+}
+.el-dialog .el-form .el-input__wrapper {
+  min-height: 42px;
+  border-radius: 8px;
+}
+.el-dialog .el-form .el-input__wrapper.is-focus {
+  box-shadow:
+    0 0 0 1px var(--el-color-primary) inset,
+    0 0 0 3px rgba(47, 124, 246, 0.12);
+}
+.el-dialog .el-form .el-input__prefix {
+  margin-right: 8px;
+}
+.el-dialog .el-form .el-select__wrapper {
+  min-height: 42px;
+  border-radius: 8px;
+}
+.el-dialog .el-form .el-select__prefix {
+  margin-right: 8px;
+}
+.el-dialog .el-form .el-textarea__inner {
+  border-radius: 8px;
+}
+/* 字段图标徽章：淡蓝渐变底 + 蓝色图标 */
+.field-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 14px;
+  color: #3b82f6;
+  background: linear-gradient(135deg, #e8f1ff 0%, #dbeafe 100%);
+}
+/* textarea 场景：徽章悬浮左上角，文本区左移避开 */
+.field-textarea {
+  position: relative;
+  width: 100%;
+}
+.field-textarea > .field-badge {
+  position: absolute;
+  z-index: 1;
+  left: 10px;
+  top: 8px;
+}
+.field-textarea .el-textarea__inner {
+  padding-left: 46px;
+}
+
+/* =====================================================================
+   全局响应式兜底：弹窗/抽屉/消息框窄屏封顶，分页换行不溢出
+   ===================================================================== */
+/* 固定 px 宽度的弹窗（420~980px 共 49 处）在窄屏统一封顶，避免横向溢出视口 */
+.el-dialog {
+  max-width: calc(100vw - 24px);
+}
+/* 横向抽屉（如维修工单详情 600px、菜单管理 680px）同理封顶 */
+.el-drawer:not(.is-vertical) {
+  max-width: calc(100vw - 24px);
+}
+.el-message-box {
+  /* EP 2.9 为 width:100% + max-width:420px（--el-messagebox-width）；
+     此处兜底窄屏时须与原上限取 min，不能直接覆盖，否则桌面端被拉成全宽 */
+  max-width: min(var(--el-messagebox-width, 420px), calc(100vw - 24px));
+}
+/* 通知（ElNotification）：右上角 + 半透明磨砂玻璃质感 */
+.el-notification {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 8px 28px rgba(31, 56, 88, 0.14);
+}
+/* 分页：窄屏允许换行，逐级收起次要项（总条数/页码跳转/条数选择） */
+.el-pagination {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+@media (max-width: 768px) {
+  .el-pagination .el-pagination__jump {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  .el-pagination .el-pagination__total,
+  .el-pagination .el-pagination__sizes {
+    display: none;
+  }
+}

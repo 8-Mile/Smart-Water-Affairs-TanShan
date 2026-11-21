@@ -1,0 +1,30 @@
+// 全项目统一响应式断点（SCSS 模块，以 @use 引入）
+// 档位对齐 Element Plus 栅格区间，归并历史分散断点：
+//   640/700/800 -> 768；900/1020/1100/1180/1200 -> 1024；1350/1400 -> 1280；1599/1600 -> 1600
+// 用法：@use '@styles/core/breakpoints.scss' as bp;  @include bp.respond(tablet) { ... }
+$bp-mobile: 768px; // 手机：单列堆叠、表格横向滚动
+$bp-tablet: 1024px; // 平板：侧栏抽屉化、栅格减列
+$bp-laptop: 1280px; // 小桌面：多列改单列、紧凑布局
+$bp-wide: 1600px; // 大屏：高度/间距微调
+
+@mixin respond($point) {
+  @if $point == mobile {
+    @media only screen and (max-width: $bp-mobile) {
+      @content;
+    }
+  } @else if $point == tablet {
+    @media only screen and (max-width: $bp-tablet) {
+      @content;
+    }
+  } @else if $point == laptop {
+    @media only screen and (max-width: $bp-laptop) {
+      @content;
+    }
+  } @else if $point == wide {
+    @media only screen and (max-width: $bp-wide) {
+      @content;
+    }
+  } @else {
+    @error "unknown breakpoint: #{$point}";
+  }
+}

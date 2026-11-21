@@ -1,0 +1,1027 @@
+{
+  "schema": "tanggang-floating-site-annotations-v2.6",
+  "sourceManifest": "/cad-review/v2/manifest-v2.json",
+  "sourceDWGSHA256": "de51fe02e029c880f9cee8e9ff0bc060e449603f4c213aef485ad161f3accd47",
+  "displayTransform": {
+    "originCADXY": [
+      448800000,
+      4545350000
+    ],
+    "rotationDeg": 35.000106,
+    "displayScaleCADperSceneUnit": 10000,
+    "displayOnly": true,
+    "elevationIsEngineering": false
+  },
+  "yardSideCandidates": [
+    {
+      "id": "YS-A-01",
+      "label": "A侧 1#",
+      "category": "yardSideCandidate",
+      "side": "A",
+      "originalYardText": "1#堆场",
+      "sourceAnchorId": "TG-CAD-01",
+      "sourceTextHandle": "10B795",
+      "sourceSideLineHandles": [
+        "10B794",
+        "10B78C"
+      ],
+      "bandId": "YB-01",
+      "sceneXZ": [
+        16.43389,
+        12.61786
+      ],
+      "originalCADXY": [
+        448862245.12402374,
+        4545547620.52487
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-B-01",
+      "label": "B侧 1#",
+      "category": "yardSideCandidate",
+      "side": "B",
+      "originalYardText": "1#堆场",
+      "sourceAnchorId": "TG-CAD-01",
+      "sourceTextHandle": "10B795",
+      "sourceSideLineHandles": [
+        "10B794",
+        "10B78C"
+      ],
+      "bandId": "YB-01",
+      "sceneXZ": [
+        16.43383,
+        -22.72839
+      ],
+      "originalCADXY": [
+        449064982.91402376,
+        4545258081.04487
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-A-02",
+      "label": "A侧 2#",
+      "category": "yardSideCandidate",
+      "side": "A",
+      "originalYardText": "2#堆场",
+      "sourceAnchorId": "TG-CAD-02",
+      "sourceTextHandle": "10B796",
+      "sourceSideLineHandles": [
+        "10B794",
+        "10B78C"
+      ],
+      "bandId": "YB-01",
+      "sceneXZ": [
+        9.68384,
+        12.61787
+      ],
+      "originalCADXY": [
+        448806951.8962591,
+        4545508903.777852
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-B-02",
+      "label": "B侧 2#",
+      "category": "yardSideCandidate",
+      "side": "B",
+      "originalYardText": "2#堆场",
+      "sourceAnchorId": "TG-CAD-02",
+      "sourceTextHandle": "10B796",
+      "sourceSideLineHandles": [
+        "10B794",
+        "10B78C"
+      ],
+      "bandId": "YB-01",
+      "sceneXZ": [
+        9.68378,
+        -22.72837
+      ],
+      "originalCADXY": [
+        449009689.68625915,
+        4545219364.2978525
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-A-03",
+      "label": "A侧 3#",
+      "category": "yardSideCandidate",
+      "side": "A",
+      "originalYardText": "3#堆场",
+      "sourceAnchorId": "TG-CAD-03",
+      "sourceTextHandle": "10B6F2",
+      "sourceSideLineHandles": [
+        "10B6F1",
+        "10B6E9"
+      ],
+      "bandId": "YB-02",
+      "sceneXZ": [
+        -0.0661,
+        12.61792
+      ],
+      "originalCADXY": [
+        448727084.94223255,
+        4545452980.656496
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-B-03",
+      "label": "B侧 3#",
+      "category": "yardSideCandidate",
+      "side": "B",
+      "originalYardText": "3#堆场",
+      "sourceAnchorId": "TG-CAD-03",
+      "sourceTextHandle": "10B6F2",
+      "sourceSideLineHandles": [
+        "10B6F1",
+        "10B6E9"
+      ],
+      "bandId": "YB-02",
+      "sceneXZ": [
+        -0.06615,
+        -22.72834
+      ],
+      "originalCADXY": [
+        448929822.9222325,
+        4545163441.1764965
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-A-04",
+      "label": "A侧 4#",
+      "category": "yardSideCandidate",
+      "side": "A",
+      "originalYardText": "4#堆场",
+      "sourceAnchorId": "TG-CAD-04",
+      "sourceTextHandle": "10B6F3",
+      "sourceSideLineHandles": [
+        "10B6F1",
+        "10B6E9"
+      ],
+      "bandId": "YB-02",
+      "sceneXZ": [
+        -6.81616,
+        12.61793
+      ],
+      "originalCADXY": [
+        448671791.73216707,
+        4545414263.885587
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-B-04",
+      "label": "B侧 4#",
+      "category": "yardSideCandidate",
+      "side": "B",
+      "originalYardText": "4#堆场",
+      "sourceAnchorId": "TG-CAD-04",
+      "sourceTextHandle": "10B6F3",
+      "sourceSideLineHandles": [
+        "10B6F1",
+        "10B6E9"
+      ],
+      "bandId": "YB-02",
+      "sceneXZ": [
+        -6.8162,
+        -22.72833
+      ],
+      "originalCADXY": [
+        448874529.712167,
+        4545124724.405587
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-A-05",
+      "label": "A侧 5#",
+      "category": "yardSideCandidate",
+      "side": "A",
+      "originalYardText": "5#堆场",
+      "sourceAnchorId": "TG-CAD-05",
+      "sourceTextHandle": "10B64F",
+      "sourceSideLineHandles": [
+        "10B64E",
+        "10B646"
+      ],
+      "bandId": "YB-03",
+      "sceneXZ": [
+        -16.56611,
+        12.61795
+      ],
+      "originalCADXY": [
+        448591924.78339267,
+        4545358340.461864
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-B-05",
+      "label": "B侧 5#",
+      "category": "yardSideCandidate",
+      "side": "B",
+      "originalYardText": "5#堆场",
+      "sourceAnchorId": "TG-CAD-05",
+      "sourceTextHandle": "10B64F",
+      "sourceSideLineHandles": [
+        "10B64E",
+        "10B646"
+      ],
+      "bandId": "YB-03",
+      "sceneXZ": [
+        -16.56618,
+        -22.72832
+      ],
+      "originalCADXY": [
+        448794662.5733927,
+        4545068800.791864
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-A-06",
+      "label": "A侧 6#",
+      "category": "yardSideCandidate",
+      "side": "A",
+      "originalYardText": "6#堆场",
+      "sourceAnchorId": "TG-CAD-06",
+      "sourceTextHandle": "10B650",
+      "sourceSideLineHandles": [
+        "10B64E",
+        "10B646"
+      ],
+      "bandId": "YB-03",
+      "sceneXZ": [
+        -23.31617,
+        12.61796
+      ],
+      "originalCADXY": [
+        448536631.5443423,
+        4545319623.73235
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-B-06",
+      "label": "B侧 6#",
+      "category": "yardSideCandidate",
+      "side": "B",
+      "originalYardText": "6#堆场",
+      "sourceAnchorId": "TG-CAD-06",
+      "sourceTextHandle": "10B650",
+      "sourceSideLineHandles": [
+        "10B64E",
+        "10B646"
+      ],
+      "bandId": "YB-03",
+      "sceneXZ": [
+        -23.31624,
+        -22.7283
+      ],
+      "originalCADXY": [
+        448739369.3343423,
+        4545030084.06235
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-A-07",
+      "label": "A侧 7#",
+      "category": "yardSideCandidate",
+      "side": "A",
+      "originalYardText": "7#堆场",
+      "sourceAnchorId": "TG-CAD-07",
+      "sourceTextHandle": "E4FD1",
+      "sourceSideLineHandles": [
+        "D71A5",
+        "D58A2"
+      ],
+      "bandId": "YB-04",
+      "sceneXZ": [
+        -33.06611,
+        12.61818
+      ],
+      "originalCADXY": [
+        448456763.49976313,
+        4545263702.003936
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-B-07",
+      "label": "B侧 7#",
+      "category": "yardSideCandidate",
+      "side": "B",
+      "originalYardText": "7#堆场",
+      "sourceAnchorId": "TG-CAD-07",
+      "sourceTextHandle": "E4FD1",
+      "sourceSideLineHandles": [
+        "D71A5",
+        "D58A2"
+      ],
+      "bandId": "YB-04",
+      "sceneXZ": [
+        -33.06619,
+        -22.72819
+      ],
+      "originalCADXY": [
+        448659501.8597631,
+        4544974161.383936
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-A-08",
+      "label": "A侧 8#",
+      "category": "yardSideCandidate",
+      "side": "A",
+      "originalYardText": "8#堆场",
+      "sourceAnchorId": "TG-CAD-08",
+      "sourceTextHandle": "E4FD2",
+      "sourceSideLineHandles": [
+        "D71A5",
+        "D58A2"
+      ],
+      "bandId": "YB-04",
+      "sceneXZ": [
+        -39.81617,
+        12.6182
+      ],
+      "originalCADXY": [
+        448401470.25217116,
+        4545224985.28662
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    },
+    {
+      "id": "YS-B-08",
+      "label": "B侧 8#",
+      "category": "yardSideCandidate",
+      "side": "B",
+      "originalYardText": "8#堆场",
+      "sourceAnchorId": "TG-CAD-08",
+      "sourceTextHandle": "E4FD2",
+      "sourceSideLineHandles": [
+        "D71A5",
+        "D58A2"
+      ],
+      "bandId": "YB-04",
+      "sceneXZ": [
+        -39.81625,
+        -22.72818
+      ],
+      "originalCADXY": [
+        448604208.6121711,
+        4544935444.66662
+      ],
+      "positionEvidence": "two_longitudinal_candidate_sites_per_original_cross_yard_CAD_text",
+      "physicalSingleYardVerified": false,
+      "description": "原DWG只有8个横向堆场编号文字点。A/B两个位置是在每条真实原CAD长边带方向的32%及70%处推算；原图并未核实中间横向分割线，不能据此宣称16个实体堆场。"
+    }
+  ],
+  "poolContourCandidates": [
+    {
+      "id": "PC-N-01",
+      "name": "北侧集水池轮廓候选1",
+      "groupId": "REG-NPOOL",
+      "side": "N",
+      "sourceTextAnchorId": "TG-CAD-09",
+      "sourceTextHandle": "FAC60",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "2E14D8"
+      ],
+      "displayXZ": [
+        [
+          7.0366,
+          40.27324
+        ],
+        [
+          10.75657,
+          40.27319
+        ],
+        [
+          10.75657,
+          39.26315
+        ],
+        [
+          7.03656,
+          39.2632
+        ],
+        [
+          7.0366,
+          40.27324
+        ]
+      ],
+      "sceneXZ": [
+        8.89658,
+        39.76819
+      ],
+      "areaDisplaySq": 3.757,
+      "areaOriginalCADUnitsSq": 375733659.77,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-N-02",
+      "name": "北侧集水池轮廓候选2",
+      "groupId": "REG-NPOOL",
+      "side": "N",
+      "sourceTextAnchorId": "TG-CAD-09",
+      "sourceTextHandle": "FAC60",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "2E14CD",
+        "2E14D9"
+      ],
+      "displayXZ": [
+        [
+          10.75658,
+          40.74402
+        ],
+        [
+          10.75656,
+          40.31317
+        ],
+        [
+          7.0366,
+          40.31316
+        ],
+        [
+          7.03664,
+          41.3232
+        ],
+        [
+          10.75658,
+          41.32321
+        ],
+        [
+          10.75658,
+          40.74402
+        ]
+      ],
+      "sceneXZ": [
+        8.8966,
+        40.81818
+      ],
+      "areaDisplaySq": 3.757,
+      "areaOriginalCADUnitsSq": 375729968.99,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-N-03",
+      "name": "北侧集水池轮廓候选3",
+      "groupId": "REG-NPOOL",
+      "side": "N",
+      "sourceTextAnchorId": "TG-CAD-09",
+      "sourceTextHandle": "FAC60",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "2E14C6",
+        "2E14D7"
+      ],
+      "displayXZ": [
+        [
+          10.75656,
+          38.21319
+        ],
+        [
+          7.0366,
+          38.21318
+        ],
+        [
+          7.03664,
+          39.22322
+        ],
+        [
+          10.75657,
+          39.22323
+        ],
+        [
+          10.75656,
+          38.21319
+        ]
+      ],
+      "sceneXZ": [
+        8.89659,
+        38.7182
+      ],
+      "areaDisplaySq": 3.757,
+      "areaOriginalCADUnitsSq": 375728744.33,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-N-04",
+      "name": "北侧集水池轮廓候选4",
+      "groupId": "REG-NPOOL",
+      "side": "N",
+      "sourceTextAnchorId": "TG-CAD-09",
+      "sourceTextHandle": "FAC60",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "2E14CA",
+        "2E14DA",
+        "2E14DE"
+      ],
+      "displayXZ": [
+        [
+          7.0366,
+          42.37321
+        ],
+        [
+          10.46663,
+          42.37323
+        ],
+        [
+          10.46659,
+          41.36319
+        ],
+        [
+          10.37512,
+          41.36319
+        ],
+        [
+          7.03662,
+          41.36326
+        ],
+        [
+          7.0366,
+          42.37321
+        ]
+      ],
+      "sceneXZ": [
+        8.75163,
+        41.86822
+      ],
+      "areaDisplaySq": 3.464,
+      "areaOriginalCADUnitsSq": 346429115.0,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-N-05",
+      "name": "北侧集水池轮廓候选5",
+      "groupId": "REG-NPOOL",
+      "side": "N",
+      "sourceTextAnchorId": "TG-CAD-09",
+      "sourceTextHandle": "FAC60",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "2E14C5",
+        "2E14CB",
+        "2E14CC",
+        "2E14D2",
+        "2E14FB",
+        "2E155A"
+      ],
+      "displayXZ": [
+        [
+          6.5166,
+          39.70823
+        ],
+        [
+          6.5166,
+          40.31323
+        ],
+        [
+          6.51662,
+          41.4632
+        ],
+        [
+          6.51663,
+          42.37315
+        ],
+        [
+          6.99668,
+          42.37321
+        ],
+        [
+          6.9966,
+          38.21323
+        ],
+        [
+          6.88158,
+          38.21324
+        ],
+        [
+          6.88157,
+          38.41317
+        ],
+        [
+          6.5166,
+          38.41322
+        ],
+        [
+          6.5166,
+          38.8797
+        ],
+        [
+          6.5166,
+          39.70823
+        ]
+      ],
+      "sceneXZ": [
+        6.75861,
+        40.3672
+      ],
+      "areaDisplaySq": 1.924,
+      "areaOriginalCADUnitsSq": 192192679.46,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-N-06",
+      "name": "北侧集水池轮廓候选6",
+      "groupId": "REG-NPOOL",
+      "side": "N",
+      "sourceTextAnchorId": "TG-CAD-09",
+      "sourceTextHandle": "FAC60",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "2E14C4",
+        "2E14C6",
+        "2E14C7",
+        "2E14CA",
+        "2E14CB",
+        "2E14CC",
+        "2E14CD",
+        "2E14D2",
+        "2E14D7",
+        "2E14D8",
+        "2E14D9",
+        "2E14DA",
+        "2E14DD",
+        "2E14DE",
+        "32D6FF"
+      ],
+      "displayXZ": [
+        [
+          10.81661,
+          38.1532
+        ],
+        [
+          6.45661,
+          38.1532
+        ],
+        [
+          6.45664,
+          42.43322
+        ],
+        [
+          10.75659,
+          42.43322
+        ],
+        [
+          10.81664,
+          42.43322
+        ],
+        [
+          10.81661,
+          38.1532
+        ]
+      ],
+      "sceneXZ": [
+        8.58977,
+        40.33137
+      ],
+      "areaDisplaySq": 18.661,
+      "areaOriginalCADUnitsSq": 167519772.0,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-N-07",
+      "name": "北侧集水池轮廓候选7",
+      "groupId": "REG-NPOOL",
+      "side": "N",
+      "sourceTextAnchorId": "TG-CAD-09",
+      "sourceTextHandle": "FAC60",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "2E14DD"
+      ],
+      "displayXZ": [
+        [
+          10.75658,
+          41.36321
+        ],
+        [
+          10.50665,
+          41.36322
+        ],
+        [
+          10.50663,
+          42.37317
+        ],
+        [
+          10.75659,
+          42.37317
+        ],
+        [
+          10.75658,
+          41.36321
+        ]
+      ],
+      "sceneXZ": [
+        10.63161,
+        41.8682
+      ],
+      "areaDisplaySq": 0.252,
+      "areaOriginalCADUnitsSq": 25243743.32,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-N-08",
+      "name": "北侧集水池轮廓候选8",
+      "groupId": "REG-NPOOL",
+      "side": "N",
+      "sourceTextAnchorId": "TG-CAD-09",
+      "sourceTextHandle": "FAC60",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "2E14C5"
+      ],
+      "displayXZ": [
+        [
+          6.88158,
+          38.21324
+        ],
+        [
+          6.5166,
+          38.21325
+        ],
+        [
+          6.5166,
+          38.41322
+        ],
+        [
+          6.88157,
+          38.41317
+        ],
+        [
+          6.88158,
+          38.21324
+        ]
+      ],
+      "sceneXZ": [
+        6.69908,
+        38.31322
+      ],
+      "areaDisplaySq": 0.073,
+      "areaOriginalCADUnitsSq": 7297562.1,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-S-01",
+      "name": "南侧集水池轮廓候选1",
+      "groupId": "REG-SPOOL",
+      "side": "S",
+      "sourceTextAnchorId": "TG-CAD-10",
+      "sourceTextHandle": "10AE0B",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "330266",
+        "330267",
+        "330287",
+        "33034F",
+        "33036C",
+        "330427",
+        "33045B"
+      ],
+      "displayXZ": [
+        [
+          -15.47435,
+          -47.05329
+        ],
+        [
+          -19.15439,
+          -47.05331
+        ],
+        [
+          -19.18439,
+          -47.02327
+        ],
+        [
+          -19.18441,
+          -45.77831
+        ],
+        [
+          -18.71936,
+          -45.77823
+        ],
+        [
+          -18.71941,
+          -45.55326
+        ],
+        [
+          -15.4744,
+          -45.5533
+        ],
+        [
+          -15.47442,
+          -46.28331
+        ],
+        [
+          -15.47435,
+          -47.05329
+        ]
+      ],
+      "sceneXZ": [
+        -17.29816,
+        -46.31545
+      ],
+      "areaDisplaySq": 5.46,
+      "areaOriginalCADUnitsSq": 546001248.85,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-S-02",
+      "name": "南侧集水池轮廓候选2",
+      "groupId": "REG-SPOOL",
+      "side": "S",
+      "sourceTextAnchorId": "TG-CAD-10",
+      "sourceTextHandle": "10AE0B",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "330265",
+        "330266",
+        "330267",
+        "330269",
+        "33026A",
+        "33026B",
+        "33026C",
+        "33026E",
+        "330270",
+        "330287",
+        "33034F",
+        "33036C",
+        "330427",
+        "33045B"
+      ],
+      "displayXZ": [
+        [
+          -15.12437,
+          -47.11329
+        ],
+        [
+          -19.24434,
+          -47.11325
+        ],
+        [
+          -19.24436,
+          -45.55329
+        ],
+        [
+          -19.24436,
+          -45.49327
+        ],
+        [
+          -15.12439,
+          -45.4933
+        ],
+        [
+          -15.12437,
+          -46.67329
+        ],
+        [
+          -15.12437,
+          -47.11329
+        ]
+      ],
+      "sceneXZ": [
+        -17.28079,
+        -46.22377
+      ],
+      "areaDisplaySq": 6.674,
+      "areaOriginalCADUnitsSq": 83968266.15,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    },
+    {
+      "id": "PC-S-03",
+      "name": "南侧集水池轮廓候选3",
+      "groupId": "REG-SPOOL",
+      "side": "S",
+      "sourceTextAnchorId": "TG-CAD-10",
+      "sourceTextHandle": "10AE0B",
+      "sourceLayer": "水池",
+      "sourceGeometryHandles": [
+        "330265",
+        "330269",
+        "33026A",
+        "33026B",
+        "330270"
+      ],
+      "displayXZ": [
+        [
+          -15.18442,
+          -47.05329
+        ],
+        [
+          -15.43443,
+          -47.05329
+        ],
+        [
+          -15.43436,
+          -45.97331
+        ],
+        [
+          -15.43434,
+          -45.55327
+        ],
+        [
+          -15.21434,
+          -45.55325
+        ],
+        [
+          -15.18434,
+          -45.58329
+        ],
+        [
+          -15.18434,
+          -46.28328
+        ],
+        [
+          -15.18442,
+          -47.05329
+        ]
+      ],
+      "sceneXZ": [
+        -15.30951,
+        -46.30418
+      ],
+      "areaDisplaySq": 0.375,
+      "areaOriginalCADUnitsSq": 37458967.0,
+      "status": "closed_polygon_derived_from_original_CAD_water_layer",
+      "singlePoolIdentityVerified": false,
+      "description": "本轮从原CAD水池图层的真实分段线条拓扑拼接得到闭合候选区；可能属于隔墙、池槽、内外套线或其他构造，不能用候选轮廓数量替代实际集水池座数。"
+    }
+  ],
+  "actualSourceYardTextCount": 8,
+  "userRequestedYardSideCount": {
+    "A": 8,
+    "B": 8
+  },
+  "verifiedIndividualYardSides": 0,
+  "designPoolCounts": {
+    "N": 2,
+    "S": 5
+  },
+  "verifiedIndividualPoolGeometries": 0,
+  "notes": [
+    "8个原CAD堆场编号文字并不等于16座物理堆场已验收；A/B两个纵向位置是依据原长边方向推算，是否对应用户所指两侧须核定。",
+    "北侧8块、南侧3块闭合候选轮廓是源水池图层线段拓扑拼接结果，不得当作11座实际池体。",
+    "正式设计数量仍为北侧2座、南侧5座；不能依据几何候选数量推断正式设计数量。",
+    "所有业务测点和设备点位未接入，不新增虚构数据。"
+  ]
+}

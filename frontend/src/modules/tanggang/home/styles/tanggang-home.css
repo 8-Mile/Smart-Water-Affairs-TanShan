@@ -1,0 +1,1946 @@
+
+/* ===== main.css ===== */
+.tanggang-home {
+  color-scheme: light;
+  --page: #eff2f7;
+  --ink: #283441;
+  --secondary: #536579;
+  --muted: #667a8f;
+  --brand: #396fbd;
+  --blue: #709de0;
+  --aqua: #81cbdb;
+  --green: #468781;
+  --card-radius: 18px;
+  --panel: linear-gradient(118deg, rgb(251 253 255 / 90%), rgb(235 241 253 / 76%));
+  --shadow: 0 8px 24px rgb(64 86 122 / 8%);
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'PingFang SC',
+    'Microsoft YaHei',
+    'Noto Sans CJK SC',
+    Arial,
+    sans-serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  color: var(--ink);
+  background: var(--page);
+}
+.tanggang-home * {
+  box-sizing: border-box;
+}
+.tanggang-home,
+.tanggang-home h1,
+.tanggang-home h2,
+.tanggang-home h3,
+.tanggang-home p,
+.tanggang-home dl,
+.tanggang-home dd {
+  margin: 0;
+}
+.tanggang-home {
+  min-width: 280px;
+  background: #edf2f8;
+}
+.tanggang-home button,
+.tanggang-home input,
+.tanggang-home select {
+  font: inherit;
+}
+.tanggang-home button,
+.tanggang-home a,
+.tanggang-home select,
+.tanggang-home input[type='checkbox'] {
+  -webkit-tap-highlight-color: transparent;
+}
+.tanggang-home button {
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.tanggang-home button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.tanggang-home a {
+  color: inherit;
+  text-decoration: none;
+}
+.tanggang-home button:focus-visible,
+.tanggang-home a:focus-visible,
+.tanggang-home select:focus-visible,
+.tanggang-home input:focus-visible {
+  outline: 2px solid #396fbd;
+  outline-offset: 3px;
+}
+.tanggang-home .icon {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  vertical-align: -0.12em;
+}
+.tanggang-home .screen-host {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #e9edf4;
+}
+.tanggang-home .screen-stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  isolation: isolate;
+  transform: translate(-50%, -50%) scale(var(--scale, 1));
+  background: var(--page);
+}
+.tanggang-home .scene-layer,
+.tanggang-home .scene-atmosphere,
+.tanggang-home .scene-image,
+.tanggang-home .marker-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.tanggang-home .scene-layer {
+  z-index: 0;
+  pointer-events: none;
+}
+.tanggang-home .scene-image {
+  object-fit: contain;
+}
+.tanggang-home .scene-atmosphere {
+  background:
+    radial-gradient(ellipse at 42% 31%, #c6d9ee9c, transparent 32%),
+    radial-gradient(ellipse at 63% 71%, #b3d7e5ad, transparent 24%),
+    linear-gradient(145deg, #f5f7fa 8%, #e1eaf5 52%, #f1f5fa 91%);
+}
+.tanggang-home .scene-atmosphere::before,
+.tanggang-home .scene-atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.tanggang-home .scene-atmosphere::before {
+  background:
+    repeating-linear-gradient(149deg, transparent 0 114px, #8faecc26 115px, transparent 117px),
+    repeating-linear-gradient(31deg, transparent 0 114px, #a3b9cf2b 115px, transparent 117px);
+  mask-image: radial-gradient(ellipse 49% 40% at 57% 47%, #000 15%, transparent 98%);
+}
+.tanggang-home .scene-atmosphere::after {
+  background: linear-gradient(
+    149deg,
+    transparent 35%,
+    #fff5 35.2%,
+    transparent 35.9%,
+    transparent 53%,
+    #fff8 53.2%,
+    transparent 54.1%
+  );
+}
+.tanggang-home .topbar {
+  position: absolute;
+  z-index: 4;
+  inset: 0 0 auto;
+  height: 77px;
+  padding: 0 34px;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(#f3f6f9eb, #f2f5faa8 72%, #f0f4f700);
+}
+.tanggang-home .brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.tanggang-home .brand img {
+  border-radius: 11px;
+  box-shadow: 0 3px 10px #44688e19;
+}
+.tanggang-home .brand span {
+  display: grid;
+  gap: 3px;
+}
+.tanggang-home .brand b {
+  font:
+    750 22px/1 Arial,
+    sans-serif;
+  letter-spacing: 2.3px;
+}
+.tanggang-home .brand small {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+}
+.tanggang-home .topbar nav {
+  position: absolute;
+  left: 16.7%;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  gap: 64px;
+}
+.tanggang-home .topbar nav a {
+  position: relative;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 560;
+  color: #667483;
+}
+.tanggang-home .topbar nav a[aria-current='page'] {
+  color: #45749d;
+}
+.tanggang-home .topbar nav a[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #799ab6;
+  border-radius: 2px;
+}
+.tanggang-home .topbar nav a:hover,
+.tanggang-home .quiet-link:hover,
+.tanggang-home .text-link:hover {
+  color: #245fa8;
+}
+.tanggang-home .header-tail {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  margin-left: auto;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #64798b;
+}
+.tanggang-home .snapshot-dot,
+.tanggang-home .live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.tanggang-home .snapshot-dot::before,
+.tanggang-home .live-dot {
+  width: 7px;
+  height: 7px;
+  background: #60a9a2;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #7ebcaf1c;
+}
+.tanggang-home .snapshot-dot::before {
+  content: '';
+}
+.tanggang-home .icon-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #62829f;
+  font-size: 17px;
+}
+.tanggang-home .icon-button:hover {
+  background: #dce7f5;
+}
+.tanggang-home .page-title {
+  position: absolute;
+  top: 7.86%;
+  left: 1.7876%;
+  pointer-events: none;
+}
+.tanggang-home .eyebrow {
+  font:
+    650 11px/1.25 Arial,
+    sans-serif;
+  color: #667f9a;
+  letter-spacing: 2.1px;
+}
+.tanggang-home .eyebrow i,
+.tanggang-home .screen-footer i {
+  margin: 0 4px;
+  color: #9aaec1;
+  font-style: normal;
+}
+.tanggang-home .page-title h1,
+.tanggang-home .register-title h1 {
+  margin: 8px 0 10px;
+  color: #2e3947;
+  letter-spacing: -0.7px;
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 640;
+}
+.tanggang-home .title-sub {
+  color: #708194;
+  font-size: 13px;
+}
+.tanggang-home .snapshot-switch {
+  position: absolute;
+  z-index: 2;
+  top: 14.8%;
+  right: 1.7%;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 5px;
+  border: 1px solid #ffffffa8;
+  border-radius: 24px;
+  background: #f8fbffd9;
+  box-shadow: 0 3px 15px #718ba30d;
+  font-size: 12px;
+}
+.tanggang-home .snapshot-switch span {
+  padding: 0 11px;
+  color: var(--muted);
+}
+.tanggang-home .snapshot-switch button {
+  padding: 6px 11px;
+  border-radius: 18px;
+  color: #596d82;
+  font-variant-numeric: tabular-nums;
+}
+.tanggang-home .snapshot-switch button[aria-pressed='true'] {
+  color: #345d85;
+  background: #dfeaf7;
+  font-weight: 650;
+}
+.tanggang-home .scene-marker {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  transform: translate(-13px, -50%);
+  pointer-events: auto;
+  color: var(--pin);
+  text-align: left;
+  border-radius: 12px;
+}
+.tanggang-home .pin-ring {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border: 7px solid #fff;
+  border-radius: 50%;
+  background: var(--pin);
+  box-shadow: 0 1px 5px #465f812b;
+}
+.tanggang-home .pin-line {
+  width: 33px;
+  height: 1px;
+  background: #a6b7cbaa;
+}
+.tanggang-home .marker-tag {
+  width: 190px;
+  min-height: 70px;
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  padding: 10px 32px 10px 16px;
+  background: linear-gradient(120deg, #fbfdfff0, #ecf3fbe8);
+  border: 1px solid #fff9;
+  border-radius: 13px;
+  box-shadow: 0 4px 14px #53678315;
+}
+.tanggang-home .marker-tag small {
+  color: #6d8499;
+  font:
+    550 10px/1.2 Arial,
+    sans-serif;
+  letter-spacing: 1px;
+}
+.tanggang-home .marker-tag b {
+  color: #35475c;
+  font-size: 15px;
+  font-weight: 620;
+}
+.tanggang-home .marker-tag .icon {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  color: #7b91a6;
+  font-size: 13px;
+}
+.tanggang-home .scene-marker:hover .marker-tag {
+  background: #fff;
+  box-shadow: 0 4px 18px #597ba92b;
+}
+.tanggang-home .cards-grid {
+  position: absolute;
+  z-index: 1;
+  left: 1.7876%;
+  right: 1.6824%;
+  top: 20.2247%;
+  bottom: 5.0562%;
+  display: grid;
+  grid-template-columns: minmax(0, 185fr) minmax(0, 398fr) minmax(0, 319fr);
+  grid-template-rows: minmax(0, 122fr) minmax(0, 134fr) minmax(0, 127fr);
+  gap: 16px;
+  grid-template-areas: 'metric . .' 'metrics . .' 'rate trend events';
+  pointer-events: none;
+}
+.tanggang-home .glass-panel {
+  min-width: 0;
+  min-height: 0;
+  padding: 23px 25px;
+  pointer-events: auto;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: var(--card-radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+}
+.tanggang-home .metric-panel {
+  grid-area: metric;
+}
+.tanggang-home .metrics-panel {
+  grid-area: metrics;
+}
+.tanggang-home .rate-panel {
+  grid-area: rate;
+}
+.tanggang-home .trend-panel {
+  grid-area: trend;
+}
+.tanggang-home .events-panel {
+  grid-area: events;
+}
+.tanggang-home .panel-heading,
+.tanggang-home .paired-caption,
+.tanggang-home .axis-ends {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tanggang-home .panel-heading h2 {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 650;
+}
+.tanggang-home .quiet-link,
+.tanggang-home .micro,
+.tanggang-home .paired-caption,
+.tanggang-home .status-text {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+.tanggang-home .quiet-link,
+.tanggang-home .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.tanggang-home .positive,
+.tanggang-home .status-text {
+  color: var(--green);
+  font-weight: 550;
+}
+.tanggang-home .big-number,
+.tanggang-home .mid-number,
+.tanggang-home .metric-row strong {
+  font-family: Inter, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.tanggang-home .big-number {
+  font-size: 43px;
+  line-height: 1.08;
+  margin: 15px 0 12px;
+  letter-spacing: -1.5px;
+  font-weight: 640;
+  color: #29323f;
+}
+.tanggang-home .big-number small,
+.tanggang-home .mid-number small,
+.tanggang-home .metric-row strong small {
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0;
+  font-weight: 450;
+  color: #6d7e90;
+  margin-left: 7px;
+}
+.tanggang-home .spark-wrap {
+  min-height: 0;
+  flex: 1;
+  margin-top: 13px;
+}
+.tanggang-home .trend-chart {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.tanggang-home .axis-ends {
+  font-size: 10px;
+  color: #8494a6;
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.tanggang-home .metric-rows,
+.tanggang-home .activity-rows {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+}
+.tanggang-home .metric-rows {
+  margin-top: 9px;
+  grid-template-rows: repeat(4, 1fr);
+}
+.tanggang-home .metric-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+  border-radius: 6px;
+}
+.tanggang-home .metric-row:hover,
+.tanggang-home .activity-rows button:hover {
+  background: #dbe7f454;
+}
+.tanggang-home .metric-icon,
+.tanggang-home .event-symbol {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 6px;
+  width: 23px;
+  height: 23px;
+  font-size: 14px;
+}
+.tanggang-home .blue {
+  color: #5a82be;
+  background: #dae6f5;
+}
+.tanggang-home .mint {
+  color: #478e87;
+  background: #ddf1ee;
+}
+.tanggang-home .lilac {
+  color: #8b81ad;
+  background: #eae6f4;
+}
+.tanggang-home .amber {
+  color: #9d804d;
+  background: #f4ecd9;
+}
+.tanggang-home .row-label {
+  font-size: 14px;
+  color: #586a7c;
+}
+.tanggang-home .metric-row strong {
+  margin-left: auto;
+  font-size: 24px;
+  font-weight: 630;
+}
+.tanggang-home .metric-row strong small {
+  font-size: 11px;
+  margin-left: 4px;
+}
+.tanggang-home .progress-track {
+  height: 8px;
+  border-radius: 6px;
+  background: #d8e4ee;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.tanggang-home .progress-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5987bc, #75b2cd);
+}
+.tanggang-home .rate-summary {
+  margin-top: 12px;
+}
+.tanggang-home .text-link {
+  font-size: 13px;
+  font-weight: 560;
+  color: #4c7293;
+}
+.tanggang-home .rate-panel .text-link {
+  align-self: flex-start;
+  margin-top: auto;
+}
+.tanggang-home .mid-number {
+  font-size: 28px;
+  line-height: 1.1;
+  color: #3b526b;
+  font-weight: 650;
+  margin: 9px 0 5px;
+}
+.tanggang-home .bars-wrap {
+  min-height: 0;
+  flex: 1;
+}
+.tanggang-home .chart-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--muted);
+  padding-top: 5px;
+}
+.tanggang-home .chart-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tanggang-home .chart-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.tanggang-home .chart-legend span + span i {
+  background: var(--aqua);
+}
+.tanggang-home .activity-rows {
+  margin-top: 9px;
+  grid-template-rows: repeat(3, 1fr);
+}
+.tanggang-home .activity-rows button {
+  display: grid;
+  grid-template-columns: 56px 22px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  border-radius: 6px;
+}
+.tanggang-home .activity-rows time,
+.tanggang-home .drawer-event-list time {
+  font:
+    12px Arial,
+    sans-serif;
+  color: #73879a;
+}
+.tanggang-home .event-symbol {
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+}
+.tanggang-home .event-copy {
+  display: grid;
+  gap: 3px;
+}
+.tanggang-home .event-copy b {
+  font-size: 14px;
+  font-weight: 610;
+}
+.tanggang-home .event-copy small {
+  color: #728397;
+  font-size: 12px;
+}
+.tanggang-home .screen-footer {
+  position: absolute;
+  left: 1.7876%;
+  right: 1.6824%;
+  bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  color: #768799;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+}
+.tanggang-home .register-pane {
+  position: absolute;
+  inset: 100px 34px 53px;
+  padding: 46px 48px;
+  border-radius: 22px;
+  background: var(--panel);
+  border: 1px solid white;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+.tanggang-home .register-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+}
+.tanggang-home .register-title h1 {
+  margin-bottom: 0;
+}
+.tanggang-home .register-title > span {
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 3px;
+}
+.tanggang-home .register-switch {
+  top: 119px;
+  right: 80px;
+}
+.tanggang-home .register-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 38px 0 16px;
+  gap: 16px;
+}
+.tanggang-home .register-toolbar strong {
+  font-size: 18px;
+}
+.tanggang-home .register-toolbar small {
+  padding-left: 8px;
+  color: var(--muted);
+  font-weight: 450;
+  font-size: 13px;
+}
+.tanggang-home .filters,
+.tanggang-home .search,
+.tanggang-home .action-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.tanggang-home .search,
+.tanggang-home select {
+  border-radius: 9px;
+  border: 1px solid #d1deea;
+  background: #f8fbfe;
+  padding: 9px 14px;
+  font-size: 14px;
+  color: var(--secondary);
+}
+.tanggang-home .search input {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  outline-offset: 0;
+  min-width: 0;
+  width: 230px;
+}
+.tanggang-home .table-scroll {
+  overflow: auto;
+}
+.tanggang-home table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.tanggang-home th,
+.tanggang-home td {
+  padding: 18px 15px;
+  border-bottom: 1px solid #e0e8ef;
+}
+.tanggang-home th {
+  font-weight: 570;
+  color: #647b8c;
+  font-size: 13px;
+}
+.tanggang-home thead {
+  background: #e8eff6;
+}
+.tanggang-home .record-id {
+  color: #477399;
+  font:
+    600 14px Arial,
+    sans-serif;
+  letter-spacing: 0.4px;
+}
+.tanggang-home .state-chip {
+  border-radius: 12px;
+  display: inline-block;
+  background: #dfecf3;
+  color: #456b83;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.tanggang-home .empty {
+  padding: 35px 0;
+  color: var(--secondary);
+  text-align: center;
+}
+.detail-sheet {
+  --el-drawer-padding-primary: 24px;
+  max-width: 100%;
+  background: #f5f8fc !important;
+  color: var(--ink);
+}
+.detail-sheet .el-drawer__header {
+  padding: 24px 24px 18px;
+  margin: 0;
+  border-bottom: 1px solid #dce5ed;
+  color: var(--ink);
+}
+.detail-sheet .el-drawer__title {
+  font-weight: 650;
+  font-size: 20px;
+}
+.tanggang-home .drawer-stamp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 26px;
+}
+.tanggang-home .drawer-subtitle {
+  font-size: 22px;
+  margin: 8px 0 14px;
+}
+.tanggang-home .drawer-note,
+.tanggang-home .setting-section p,
+.tanggang-home .setting-check small {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.tanggang-home .data-list {
+  margin: 18px 0 24px;
+}
+.tanggang-home .data-list div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #dce5ed;
+  font-size: 14px;
+}
+.tanggang-home .data-list dt {
+  color: var(--secondary);
+}
+.tanggang-home .data-list dd {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.tanggang-home .primary-button,
+.tanggang-home .secondary-button {
+  border-radius: 8px;
+  font-size: 14px;
+  padding: 10px 16px;
+}
+.tanggang-home .primary-button {
+  color: white;
+  background: #426e98;
+}
+.tanggang-home .primary-button:hover {
+  background: #345d85;
+}
+.tanggang-home .secondary-button {
+  color: var(--secondary);
+  background: #e9eff5;
+}
+.tanggang-home .drawer-event-list button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px 1fr 14px;
+  gap: 12px;
+  text-align: left;
+  padding: 15px 0;
+  border-bottom: 1px solid #dce5ed;
+  align-items: center;
+}
+.tanggang-home .drawer-event-list button:hover {
+  color: var(--brand);
+}
+.tanggang-home .drawer-event-list span {
+  display: grid;
+  gap: 5px;
+}
+.tanggang-home .drawer-event-list b {
+  font-size: 14px;
+}
+.tanggang-home .drawer-event-list small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.tanggang-home .drawer-table th,
+.tanggang-home .drawer-table td {
+  padding: 10px 9px;
+}
+.tanggang-home .drawer-table td:not(:first-child),
+.tanggang-home .drawer-table th:not(:first-child) {
+  text-align: right;
+}
+.tanggang-home .setting-section {
+  padding: 6px 0 20px;
+}
+.tanggang-home .setting-section + .setting-section {
+  padding-top: 20px;
+  border-top: 1px solid #dce5ed;
+}
+.tanggang-home .setting-check {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.tanggang-home .setting-check span {
+  display: grid;
+  gap: 5px;
+}
+.tanggang-home .setting-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand);
+}
+.tanggang-home .setting-section h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.tanggang-home .action-row {
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.tanggang-home .feedback {
+  margin-top: 12px;
+}
+@media (min-width: 1200px) and (max-width: 1599px) {
+  .tanggang-home .screen-host {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .tanggang-home .screen-stage {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: max(860px, 100dvh);
+    transform: none;
+  }
+  .tanggang-home .topbar {
+    padding-inline: 24px;
+  }
+  .tanggang-home .topbar nav {
+    left: 17%;
+    gap: clamp(26px, 3.2vw, 52px);
+  }
+  .tanggang-home .header-tail {
+    gap: clamp(12px, 1.7vw, 24px);
+  }
+  .tanggang-home .cards-grid {
+    left: 24px;
+    right: 24px;
+    gap: 14px;
+  }
+  .tanggang-home .glass-panel {
+    padding: 19px 18px;
+  }
+  .tanggang-home .panel-heading h2 {
+    font-size: 15px;
+  }
+  .tanggang-home .metric-row {
+    gap: 8px;
+  }
+  .tanggang-home .row-label {
+    font-size: 12px;
+  }
+  .tanggang-home .metric-row strong {
+    font-size: 20px;
+  }
+  .tanggang-home .metric-row strong small {
+    font-size: 10px;
+  }
+  .tanggang-home .activity-rows button {
+    grid-template-columns: 46px 20px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .tanggang-home .event-copy b {
+    font-size: 13px;
+  }
+  .tanggang-home .event-copy small {
+    font-size: 11px;
+  }
+  .tanggang-home .screen-footer {
+    left: 24px;
+    right: 24px;
+  }
+}
+@media (max-width: 1199px) {
+  .tanggang-home .screen-host {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .tanggang-home .screen-stage {
+    position: relative;
+    inset: auto;
+    transform: none;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    min-height: 100dvh;
+    padding: 0 15px 18px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: max-content;
+    align-content: start;
+  }
+  .tanggang-home .topbar {
+    order: 0;
+    position: relative;
+    inset: auto;
+    height: auto;
+    padding: 13px 0 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    background: none;
+  }
+  .tanggang-home .brand img {
+    width: 33px;
+    height: 33px;
+  }
+  .tanggang-home .brand b {
+    font-size: 17px;
+  }
+  .tanggang-home .brand small {
+    font-size: 9px;
+  }
+  .tanggang-home .topbar nav {
+    position: static;
+    grid-row: 2;
+    grid-column: 1/-1;
+    display: flex;
+    justify-content: space-between;
+    gap: 7px;
+    border-bottom: 1px solid #d8e4ee;
+  }
+  .tanggang-home .topbar nav a {
+    font-size: 14px;
+    padding: 9px 2px;
+  }
+  .tanggang-home .header-tail {
+    gap: 9px;
+  }
+  .tanggang-home .header-tail time {
+    display: none;
+  }
+  .tanggang-home .overview,
+  .tanggang-home .register-main {
+    display: contents;
+  }
+  .tanggang-home .page-title {
+    order: 1;
+    position: static;
+    padding: 20px 0 8px;
+  }
+  .tanggang-home .page-title h1 {
+    font-size: clamp(21px, 4vw, 28px);
+  }
+  .tanggang-home .snapshot-switch,
+  .tanggang-home .register-switch {
+    order: 2;
+    position: static;
+    justify-self: end;
+    margin: 6px 0 8px;
+  }
+  .tanggang-home .scene-layer {
+    order: 3;
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: clamp(180px, 35vw, 280px);
+    overflow: hidden;
+    border-radius: 14px;
+  }
+  .tanggang-home .scene-image {
+    width: 100%;
+    height: 100%;
+  }
+  .tanggang-home .marker-layer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-content: center;
+    gap: 10px;
+    padding: 12px;
+  }
+  .tanggang-home .scene-marker {
+    position: static;
+    transform: none;
+  }
+  .tanggang-home .pin-ring {
+    width: 13px;
+    height: 13px;
+    border-width: 3px;
+    flex: none;
+  }
+  .tanggang-home .pin-line {
+    width: 4px;
+    flex: none;
+  }
+  .tanggang-home .marker-tag {
+    width: auto;
+    flex: 1;
+    padding: 9px;
+    min-height: 49px;
+    gap: 3px;
+    border-radius: 8px;
+  }
+  .tanggang-home .marker-tag small {
+    font-size: 8px;
+    letter-spacing: 0.1px;
+  }
+  .tanggang-home .marker-tag b {
+    font-size: 12px;
+  }
+  .tanggang-home .marker-tag .icon {
+    display: none;
+  }
+  .tanggang-home .cards-grid {
+    order: 4;
+    position: static;
+    display: grid;
+    margin: 12px 0;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
+    grid-template-areas: 'metric metrics' 'rate events' 'trend trend';
+  }
+  .tanggang-home .glass-panel {
+    padding: 17px;
+    min-height: 200px;
+  }
+  .tanggang-home .big-number {
+    font-size: 34px;
+  }
+  .tanggang-home .panel-heading h2 {
+    font-size: 15px;
+  }
+  .tanggang-home .spark-wrap {
+    min-height: 36px;
+  }
+  .tanggang-home .trend-panel {
+    height: 233px;
+  }
+  .tanggang-home .metrics-panel {
+    min-height: 218px;
+  }
+  .tanggang-home .events-panel {
+    min-height: 224px;
+  }
+  .tanggang-home .activity-rows button {
+    grid-template-columns: 36px 16px 1fr;
+    gap: 7px;
+  }
+  .tanggang-home .event-copy b {
+    font-size: 13px;
+  }
+  .tanggang-home .event-copy small {
+    font-size: 11px;
+  }
+  .tanggang-home .register-pane {
+    position: static;
+    order: 3;
+    min-width: 0;
+    padding: 19px 14px;
+    margin: 6px 0 12px;
+  }
+  .tanggang-home .register-title {
+    align-items: start;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .tanggang-home .register-title h1 {
+    font-size: 25px;
+  }
+  .tanggang-home .register-toolbar {
+    align-items: start;
+    flex-direction: column;
+    margin: 18px 0 10px;
+  }
+  .tanggang-home .filters {
+    flex-wrap: wrap;
+  }
+  .tanggang-home .search input {
+    width: 145px;
+  }
+  .tanggang-home .register-table {
+    min-width: 630px;
+  }
+  .tanggang-home .table-scroll {
+    width: 100%;
+    max-width: 100%;
+  }
+  .tanggang-home th,
+  .tanggang-home td {
+    padding: 12px;
+  }
+  .tanggang-home .screen-footer {
+    order: 5;
+    position: static;
+    gap: 10px;
+    font-size: 9px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+}
+@media (max-width: 600px) {
+  .tanggang-home .filters {
+    width: 100%;
+  }
+  .tanggang-home .search {
+    flex: 1 1 100%;
+  }
+  .tanggang-home .search input {
+    width: 100%;
+  }
+  .tanggang-home .snapshot-switch,
+  .tanggang-home .register-switch {
+    justify-self: stretch;
+    justify-content: center;
+  }
+  .tanggang-home .cards-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'metric' 'metrics' 'rate' 'trend' 'events';
+  }
+  .tanggang-home .glass-panel {
+    padding: 18px 20px;
+  }
+  .tanggang-home .metric-panel {
+    height: 217px;
+  }
+  .tanggang-home .metrics-panel {
+    height: 234px;
+  }
+  .tanggang-home .rate-panel {
+    height: 207px;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .tanggang-home .glass-panel,
+  .tanggang-home .marker-tag {
+    backdrop-filter: none;
+    background: #f4f7fc;
+  }
+}
+.tanggang-home .scene-projection {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+@media (max-width: 1199px) {
+  .tanggang-home .with-image .marker-layer {
+    display: block;
+    padding: 0;
+  }
+  .tanggang-home .with-image .scene-marker {
+    position: absolute;
+    transform: translate(-7px, -50%);
+  }
+  .tanggang-home .with-image .marker-tag {
+    padding: 4px 7px;
+    min-height: 22px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+  .tanggang-home .with-image .marker-tag small {
+    display: none;
+  }
+  .tanggang-home .with-image .marker-tag b {
+    font-size: 10px;
+  }
+}
+
+/* Tanggang CAD / Three.js middle scene only — original dashboard cards are intentionally untouched. */
+.tanggang-home .cad-scene-layer { pointer-events:none; }
+.tanggang-home .cad-zone {
+  position:absolute; left:23.3%; right:1.8%; top:20.55%; bottom:29.3%;
+  border:1px solid rgba(255,255,255,.85); border-radius:23px;
+  overflow:hidden; pointer-events:auto;
+  background:radial-gradient(ellipse 60% 80% at 52% 42%,#f9fdff 0%,#e5f0f9 68%,#dceaf5 100%);
+  box-shadow:0 16px 44px rgba(67,107,147,.08),inset 0 1px rgba(255,255,255,.9);
+  isolation:isolate;
+}
+.tanggang-home .cad-zone:after {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse 66% 65% at 55% 59%,transparent 40%,rgba(225,237,248,.22) 100%);
+  pointer-events:none; z-index:1;
+}
+.tanggang-home .cad-render,.tanggang-home .cad-canvas{position:absolute; inset:0;width:100%;height:100%}
+.tanggang-home .cad-render{z-index:0}
+.tanggang-home .cad-canvas{display:block; outline:none;cursor:grab; touch-action:none}
+.tanggang-home .cad-canvas:active{cursor:grabbing}
+.tanggang-home .cad-hud-top{position:absolute;z-index:3;left:24px;right:24px;top:19px;display:flex;align-items:flex-start;justify-content:space-between;pointer-events:none}
+.tanggang-home .cad-titleblock h2{margin:7px 0 2px;color:#304b62;font-size:19px;font-weight:720;letter-spacing:.2px}
+.tanggang-home .cad-titleblock h2 span{font:500 10px/1.6 Arial,sans-serif;letter-spacing:1.6px;color:#7d9ab1;vertical-align:2px;margin-left:8px}
+.tanggang-home .cad-titleblock p{font-size:11px;line-height:1.8;color:#728da3}
+.tanggang-home .cad-status{font-size:10px;letter-spacing:1.1px;color:#5d8d9c;font-weight:700}
+.tanggang-home .cad-status b{font-size:9px;margin-left:7px;padding:3px 5px;border-radius:4px;color:#5baeba;background:#d9f5f7}
+.tanggang-home .cad-status-pulse{display:inline-block;vertical-align:middle;width:6px;height:6px;background:#35b9c6;border-radius:50%;margin-right:6px;box-shadow:0 0 0 4px #35bbcb20}
+.tanggang-home .cad-hud-actions{display:flex;gap:8px;pointer-events:auto}
+.tanggang-home .cad-hud-actions button{height:33px;min-width:33px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 10px;font-size:12px;border:1px solid #fff;background:#ffffffc9;box-shadow:0 3px 14px #809bbc13;border-radius:10px;color:#568099}
+.tanggang-home .cad-hud-actions button:hover{color:#248fb2;background:#fff}
+.tanggang-home .cad-layerbar{position:absolute;z-index:3;left:23px;right:23px;top:92px;display:flex;align-items:center;gap:6px;padding-bottom:7px;overflow-x:auto;white-space:nowrap;scrollbar-width:thin;scrollbar-color:#b4c8d8 transparent}
+.tanggang-home .cad-filter{flex:none;display:inline-flex;gap:6px;align-items:center;justify-content:center;height:28px;padding:0 10px;border:1px solid #e4eff5;background:rgba(255,255,255,.68);border-radius:16px;color:#6b8296;font-size:11px;transition:background .15s,border-color .15s}
+.tanggang-home .cad-filter i{display:block;width:7px;height:7px;border-radius:50%;box-shadow:0 0 0 2px #ffffffc9}
+.tanggang-home .cad-filter small{font:600 9px/1 Arial,sans-serif;color:#9ab0c1}
+.tanggang-home .cad-filter.active,.tanggang-home .cad-filter:hover{background:rgba(255,255,255,.98);color:#24728e;border-color:#84c9df;box-shadow:0 2px 13px #5296bd17}
+.tanggang-home .cad-filter.active small{color:#4c9abb}
+.tanggang-home .cad-footer{position:absolute;z-index:3;left:23px;right:23px;bottom:15px;display:flex;align-items:center;justify-content:space-between;gap:20px;color:#6c8da4;font-size:10px;pointer-events:none}
+.tanggang-home .cad-footer b{color:#159cc0;font:700 11px Arial,sans-serif;letter-spacing:1px}
+.tanggang-home .cad-footer strong{color:#ad8182;font-weight:620}
+.tanggang-home .cad-tag-layer{position:absolute;inset:0;z-index:2;pointer-events:none}
+.tanggang-home .cad-model-tag{position:absolute;transform:translate(-50%,-100%);background:#ffffffed;color:#526e82;font-size:10px;padding:6px 9px 6px 10px;border:1px solid #ffffff;border-left:3px solid var(--cad-tag-color);border-radius:7px;white-space:nowrap;box-shadow:0 5px 14px #69899a29;letter-spacing:.1px}
+.tanggang-home .cad-model-tag:after{content:'';position:absolute;top:100%;left:50%;height:14px;width:1px;background:linear-gradient(#6ebbd5,transparent)}
+.tanggang-home .cad-detail{position:absolute;z-index:4;right:19px;top:154px;width:310px;padding:17px 18px 15px;background:linear-gradient(126deg,#ffffffed,#eaf5fcef);border:1px solid white;border-radius:14px;box-shadow:0 10px 30px #5a8dab30;backdrop-filter:blur(14px);color:#37536d}
+.tanggang-home .cad-detail-head{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:600;letter-spacing:1px;color:#3ca1b0}
+.tanggang-home .cad-detail-head button{font-size:19px;line-height:12px;padding:4px 6px;color:#7894a6}
+.tanggang-home .cad-detail>strong{font-size:18px;display:block;margin:9px 0 10px;color:#294e67}
+.tanggang-home .cad-detail dl{display:grid;gap:7px;margin:0}
+.tanggang-home .cad-detail dl>div{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;border-bottom:1px solid #deebf5;padding-bottom:6px;font-size:11px}
+.tanggang-home .cad-detail dt{flex:none;color:#7b94a9}
+.tanggang-home .cad-detail dd{margin:0;font-weight:640;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.tanggang-home .cad-detail .cad-unverified{color:#9e8791;font-weight:530}
+.tanggang-home .cad-detail p{margin-top:12px;font-size:10px;line-height:1.6;color:#8a9eae}
+.tanggang-home .cad-loading,.tanggang-home .cad-error{position:absolute;z-index:4;left:50%;top:53%;transform:translate(-50%,-50%);background:#ffffffd9;border:1px solid white;border-radius:12px;padding:15px 24px;color:#55728b;font-size:13px;box-shadow:0 7px 22px #6a92ad19}
+.tanggang-home .cad-error{color:#a15560}
+.tanggang-home .cad-help{position:absolute;z-index:5;right:19px;top:56px;background:#ffffffec;border:1px solid white;border-radius:9px;padding:10px 14px;color:#51738b;font-size:11px;box-shadow:0 5px 17px #7b9cb333}
+
+
+/* ===== responsive.css ===== */
+/* Tanggang responsive layout v2.4. Import AFTER main.css. */
+.tanggang-home{--layout-g:12px;--layout-p:clamp(12px,1.55vw,28px)}
+.tanggang-home,.tanggang-home,.tanggang-home{min-height:100%;width:100%}.tanggang-home{overflow-x:clip}
+.tanggang-home .screen-host{position:relative;width:100%;height:auto;min-height:100dvh;overflow-x:clip;overflow-y:visible;background:#edf2f8}
+.tanggang-home .screen-stage{position:relative;top:auto;left:auto;transform:none;box-sizing:border-box;width:min(100%,2280px);max-width:2280px;margin:auto;height:max(850px,100dvh);min-height:max(850px,100dvh);overflow:visible;display:grid;grid-template-columns:clamp(244px,19.5vw,317px) minmax(0,1.55fr) minmax(0,1fr);grid-template-rows:64px repeat(3,minmax(150px,1fr)) minmax(182px,1fr) 28px;gap:var(--layout-g);padding:14px var(--layout-p) 9px;background:linear-gradient(145deg,#f3f6fb,#eaf1f8 90%)}
+.tanggang-home .screen-stage>.topbar{grid-column:1/-1;grid-row:1;position:relative;inset:auto;display:flex;align-items:center;min-height:0;height:64px;padding:0 12px;gap:clamp(14px,3vw,52px);background:linear-gradient(100deg,#ffffffd9,#f6faffc4);border:1px solid #ffffffed;box-shadow:0 4px 20px #7295b113;border-radius:15px;z-index:10}
+.tanggang-home .topbar nav{position:static;left:auto;top:auto;min-width:0;height:100%;display:flex;align-items:stretch;gap:clamp(16px,3vw,58px);margin-left:clamp(10px,2vw,42px)}
+.tanggang-home .topbar nav a{white-space:nowrap}.tanggang-home .topbar nav a[aria-current='page']::after{bottom:0}
+.tanggang-home .header-tail{gap:clamp(8px,1.6vw,24px);margin-left:auto;white-space:nowrap}.tanggang-home .brand{flex:none}
+.tanggang-home .screen-stage>.scene-layer{grid-column:2/4;grid-row:2/5;position:relative;inset:auto;width:100%;height:100%;min-height:0;min-width:0;pointer-events:auto;z-index:2;overflow:hidden;border-radius:18px}
+.tanggang-home .screen-stage>.scene-layer .cad-zone{position:absolute;inset:0;left:0;right:0;top:0;bottom:0;width:100%;height:100%;border-radius:18px;overflow:hidden}
+.tanggang-home .screen-stage>.overview{display:contents}.tanggang-home .screen-stage .cards-grid{display:contents;position:static;inset:auto;margin:0;pointer-events:auto}
+.tanggang-home .screen-stage .glass-panel{min-width:0;min-height:0;height:auto;position:relative;padding:clamp(13px,1.15vw,22px);border-radius:16px;overflow:hidden}
+.tanggang-home .screen-stage .metric-panel{grid-column:1;grid-row:2}.tanggang-home .screen-stage .metrics-panel{grid-column:1;grid-row:3}.tanggang-home .screen-stage .rate-panel{grid-column:1;grid-row:4}
+.tanggang-home .screen-stage .trend-panel{grid-column:1/3;grid-row:5}.tanggang-home .screen-stage .events-panel{grid-column:3;grid-row:5}
+.tanggang-home .screen-stage .panel-heading h2{font-size:clamp(13px,.95vw,16px)}
+.tanggang-home .screen-stage .metric-panel .spark-wrap{min-height:36px}.tanggang-home .screen-stage .trend-panel .bars-wrap{min-height:70px}
+.tanggang-home .screen-stage .screen-footer{grid-column:1/-1;grid-row:6;align-self:center;position:relative;inset:auto;margin:0;padding:0 5px;display:flex;gap:12px;justify-content:space-between}
+.tanggang-home .screen-stage .register-main{grid-column:1/-1;grid-row:2/6;position:relative;min-width:0;min-height:0}
+.tanggang-home .screen-stage .register-main .register-pane{position:absolute;inset:0;overflow:hidden}.tanggang-home .screen-stage .register-main .table-scroll{min-height:0;overflow:auto}
+.tanggang-home .screen-stage .l1-hud{top:15px;left:16px;right:16px;min-width:0}
+.tanggang-home .screen-stage .l1-hud>div:first-child{min-width:0}.tanggang-home .screen-stage .l1-hud h2{font-size:clamp(15px,1.25vw,20px)}
+.tanggang-home .screen-stage .l1-actions{max-width:57%;flex-wrap:wrap;justify-content:flex-end;gap:5px}
+.tanggang-home .screen-stage .l1-actions :is(a, .tanggang-home button){font-size:10px;padding:6px 8px;min-height:28px}
+.tanggang-home .screen-stage .l1-filters{top:91px;left:15px;right:15px;min-height:29px}.tanggang-home .screen-stage .l1-filter{flex:none}
+.tanggang-home .screen-stage .l1-boundarybar{left:15px;right:15px;bottom:40px}.tanggang-home .screen-stage .l1-footer{left:15px;right:15px;bottom:10px;gap:8px;font-size:9px}
+.tanggang-home .screen-stage .l1-footer span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tanggang-home .screen-stage .l1-footer span:last-child{flex:none}
+.tanggang-home .screen-stage .l1-selection{top:133px;right:12px;max-height:calc(100% - 196px);overflow:auto}
+.tanggang-home .screen-stage .region-overlay .region-nav{top:132px;left:12px;max-height:calc(100% - 188px)}
+.tanggang-home .screen-stage .region-overlay .region-card{top:132px;right:12px;max-height:calc(100% - 188px)}
+@media(max-width:1379px){
+ .tanggang-home .screen-stage{width:100%;height:auto;min-height:100dvh;display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:12px clamp(12px,2vw,24px) 17px}
+ .tanggang-home .screen-stage>.topbar{width:100%;flex:none;height:62px;min-height:62px}.tanggang-home .topbar nav{gap:clamp(13px,2.8vw,38px);margin-left:clamp(5px,1vw,18px)}.tanggang-home .topbar nav a{font-size:13px}
+ .tanggang-home .screen-stage>.scene-layer{flex:none;display:block;order:1;position:relative;height:clamp(560px,55vw,730px);min-height:0;width:100%}
+ .tanggang-home .screen-stage>.overview{display:block;order:2}
+ .tanggang-home .screen-stage .cards-grid{display:grid;position:static;margin:0;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(205px,auto) minmax(210px,auto);grid-template-areas:'metric metrics rate' 'trend trend events'}
+ .tanggang-home .screen-stage .glass-panel{padding:16px;min-width:0;min-height:0}.tanggang-home .screen-stage .metric-panel{grid-area:metric}.tanggang-home .screen-stage .metrics-panel{grid-area:metrics}.tanggang-home .screen-stage .rate-panel{grid-area:rate}.tanggang-home .screen-stage .trend-panel{grid-area:trend;min-height:220px}.tanggang-home .screen-stage .events-panel{grid-area:events;min-height:220px}
+ .tanggang-home .screen-stage .screen-footer{order:5;flex:none;min-height:25px}.tanggang-home .screen-stage .register-main{order:2;display:block;position:relative;min-height:640px}.tanggang-home .screen-stage .register-main .register-pane{position:relative;inset:auto;min-height:610px}
+ .tanggang-home .screen-stage .region-overlay .region-nav{width:185px}.tanggang-home .screen-stage .region-overlay .region-card{width:290px}.tanggang-home .screen-stage .l1-hud h2{font-size:18px}
+}
+@media(max-width:949px){
+ .tanggang-home .screen-stage>.scene-layer{height:auto;min-height:0;overflow:visible;border-radius:16px;--scene-view-height:clamp(480px,62vw,590px)}
+ .tanggang-home .screen-stage>.scene-layer .cad-zone{position:relative;inset:auto;width:100%;height:auto;min-height:var(--scene-view-height);border-radius:16px;overflow:hidden}
+ .tanggang-home .screen-stage .l1-view{position:absolute;top:0;bottom:auto;left:0;right:0;width:100%;height:var(--scene-view-height)}
+ .tanggang-home .screen-stage .l1-label-layer{position:absolute;inset:auto;top:0;left:0;right:0;height:var(--scene-view-height);pointer-events:none}
+ .tanggang-home .screen-stage .region-overlay{position:relative;inset:auto;margin-top:var(--scene-view-height);padding:12px;display:grid;gap:12px;grid-template-columns:minmax(180px,32%) minmax(0,1fr);align-items:start;pointer-events:auto;background:linear-gradient(140deg,#f6fbfe,#ecf6fa);border-top:1px solid #d9e9f1;z-index:6}
+ .tanggang-home .screen-stage .region-overlay .region-nav,.tanggang-home .screen-stage .region-overlay .region-card{position:relative;inset:auto;width:100%;max-width:none;height:420px;max-height:420px;margin:0;min-height:0;box-shadow:0 5px 17px #8caab41d}
+ .tanggang-home .screen-stage .region-overlay:not(:has(.region-nav)){grid-template-columns:1fr}.tanggang-home .screen-stage .region-overlay:not(:has(.region-nav)) .region-card{grid-column:1/-1}
+ .tanggang-home .screen-stage .l1-boundarybar{top:calc(var(--scene-view-height) - 73px);bottom:auto;left:12px;right:12px;max-height:31px}
+ .tanggang-home .screen-stage .l1-footer{top:calc(var(--scene-view-height) - 33px);bottom:auto;left:12px;right:12px}.tanggang-home .screen-stage .l1-footer span:last-child{display:none}
+ .tanggang-home .screen-stage .l1-selection{top:132px;right:12px;max-height:calc(var(--scene-view-height) - 191px)}.tanggang-home .screen-stage .l1-message{top:calc(var(--scene-view-height) / 2)}
+ .tanggang-home .screen-stage .l1-hud{top:14px;left:14px;right:14px}.tanggang-home .screen-stage .l1-actions{max-width:62%}.tanggang-home .screen-stage .l1-filters{top:99px;left:12px;right:12px}
+ .tanggang-home .screen-stage .cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto;grid-template-areas:'metric metrics' 'rate events' 'trend trend'}
+ .tanggang-home .screen-stage .glass-panel{min-height:206px}.tanggang-home .screen-stage .metrics-panel{min-height:246px}.tanggang-home .screen-stage .rate-panel{min-height:218px}.tanggang-home .screen-stage .events-panel{min-height:245px}.tanggang-home .screen-stage .trend-panel{height:auto;min-height:238px}
+ .tanggang-home .screen-stage .topbar nav{margin-left:auto;gap:16px}.tanggang-home .screen-stage .brand b{font-size:19px}.tanggang-home .screen-stage .header-tail{gap:8px}.tanggang-home .screen-stage .header-tail time{display:none}
+}
+@media(max-width:650px){
+ .tanggang-home .screen-stage{padding:9px 9px 16px;gap:10px}
+ .tanggang-home .screen-stage>.topbar{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:44px 37px;height:92px;min-height:92px;gap:0 9px;padding:5px 12px 0;border-radius:12px}
+ .tanggang-home .screen-stage .brand img{width:31px;height:31px}.tanggang-home .screen-stage .brand b{font-size:17px}.tanggang-home .screen-stage .brand small{font-size:9px;letter-spacing:.5px}
+ .tanggang-home .screen-stage .header-tail{grid-row:1;grid-column:2}.tanggang-home .screen-stage .snapshot-dot{font-size:10px}
+ .tanggang-home .screen-stage .topbar nav{grid-row:2;grid-column:1/-1;position:relative;margin:0;display:flex;justify-content:space-around;gap:12px;overflow-x:auto;scrollbar-width:none;border-top:1px solid #e5edf5;height:37px}.tanggang-home .screen-stage .topbar nav a{font-size:12px;flex:none}
+ .tanggang-home .screen-stage>.scene-layer{--scene-view-height:460px}
+ .tanggang-home .screen-stage .l1-hud{top:10px;left:10px;right:10px;flex-wrap:wrap;gap:5px;align-items:start}.tanggang-home .screen-stage .l1-hud>div:first-child{flex:1 1 100%}
+ .tanggang-home .screen-stage .l1-eyebrow{font-size:9px;gap:5px}.tanggang-home .screen-stage .l1-eyebrow span{font-size:8px}.tanggang-home .screen-stage .l1-hud h2{font-size:16px;margin:4px 0 2px}.tanggang-home .screen-stage .l1-hud p{font-size:9px}
+ .tanggang-home .screen-stage .l1-actions{width:100%;max-width:100%;flex:1 1 100%;gap:5px;display:flex;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:3px}.tanggang-home .screen-stage .l1-actions :is(button, .tanggang-home a){flex:none;font-size:10px;min-height:29px;padding:6px 8px}
+ .tanggang-home .screen-stage .l1-filters{top:123px;left:10px;right:10px}.tanggang-home .screen-stage .l1-label{font-size:9px;padding:3px 5px}.tanggang-home .screen-stage .l1-count{display:none}
+ .tanggang-home .screen-stage .region-overlay{padding:10px;grid-template-columns:1fr;gap:10px}.tanggang-home .screen-stage .region-overlay .region-nav{height:205px;max-height:205px}.tanggang-home .screen-stage .region-overlay .nav-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(38px,auto);gap:2px;overflow:auto}.tanggang-home .screen-stage .region-overlay .region-card{height:auto;min-height:280px;max-height:390px}
+ .tanggang-home .screen-stage .l1-boundarybar{left:10px;right:10px}.tanggang-home .screen-stage .l1-footer{left:10px;right:10px}.tanggang-home .screen-stage .l1-selection{left:10px;right:10px;width:auto;top:171px;max-height:calc(var(--scene-view-height) - 218px)}.tanggang-home .screen-stage .l1-help{top:136px;right:10px;max-width:calc(100% - 20px)}
+ .tanggang-home .screen-stage .cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'metric metrics' 'rate events' 'trend trend';gap:9px}.tanggang-home .screen-stage .glass-panel{padding:13px;min-width:0}.tanggang-home .screen-stage .metric-row strong{font-size:18px}.tanggang-home .screen-stage .big-number{font-size:29px}.tanggang-home .screen-stage .panel-heading h2{font-size:13px}.tanggang-home .screen-stage .quiet-link{font-size:10px}.tanggang-home .screen-stage .screen-footer{flex-wrap:wrap;gap:7px;font-size:9px}
+}
+@media(max-width:480px){.tanggang-home .screen-stage .cards-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:'metric' 'metrics' 'rate' 'trend' 'events'}.tanggang-home .screen-stage .glass-panel{min-height:190px;padding:17px}.tanggang-home .screen-stage .metrics-panel{min-height:240px}.tanggang-home .screen-stage .trend-panel{min-height:235px}.tanggang-home .screen-stage .events-panel{min-height:232px}.tanggang-home .screen-stage .metric-panel{min-height:206px}.tanggang-home .screen-stage .brand span{gap:2px}.tanggang-home .screen-stage .snapshot-dot{font-size:0;gap:0}}
+@media(min-width:1380px) and (max-height:800px){.tanggang-home .screen-stage{height:800px;min-height:800px}}
+/* V2.5 six-system strip: preserve space for source-evidence banner on desktop. */
+@media (min-width:950px){
+ .tanggang-home .screen-stage .region-overlay .region-nav,
+ .tanggang-home .screen-stage .region-overlay .region-card{top:166px;max-height:calc(100% - 220px)}
+ .tanggang-home .screen-stage .l1-selection{top:166px;max-height:calc(100% - 220px)}
+}
+@media (max-width:949px){
+ .tanggang-home .screen-stage .l1-system-evidence{top:133px}
+ .tanggang-home .screen-stage .region-overlay .region-nav,
+ .tanggang-home .screen-stage .region-overlay .region-card{top:auto;max-height:420px}
+}
+@media (max-width:650px){
+ .tanggang-home .screen-stage .l1-system-evidence{top:164px;left:10px;right:10px;max-width:none}
+ .tanggang-home .screen-stage .l1-filters{top:124px;min-height:32px}
+ .tanggang-home .screen-stage .l1-filters .l1-filter{min-height:31px}
+ .tanggang-home .screen-stage .l1-label-layer{overflow:hidden}
+}
+
+/* V2.5.1 temporary hide bottom cards: reversible CSS-only change */
+/* Hide the two bottom dashboard cards; preserve data, components and dialogs. */
+.tanggang-home .screen-stage:has(>.scene-layer) .trend-panel,
+.tanggang-home .screen-stage:has(>.scene-layer) .events-panel{display:none!important}
+/* Wide screens: give the reclaimed bottom row to the 3D scene and left metric cards. */
+@media(min-width:1380px){
+ .tanggang-home .screen-stage:has(>.scene-layer){grid-template-rows:64px repeat(3,minmax(150px,1fr)) 28px}
+ .tanggang-home .screen-stage:has(>.scene-layer)>.scene-layer{grid-row:2/5}
+ .tanggang-home .screen-stage:has(>.scene-layer) .screen-footer{grid-row:5}
+}
+/* Laptop: eliminate empty grid track left by the removed bottom row. */
+@media(min-width:950px) and (max-width:1379px){
+ .tanggang-home .screen-stage:has(>.scene-layer) .cards-grid{
+   grid-template-areas:'metric metrics rate';
+   grid-template-rows:minmax(205px,auto);
+ }
+}
+/* Tablet: retain the three left-side cards without blank grid slots. */
+@media(min-width:481px) and (max-width:949px){
+ .tanggang-home .screen-stage:has(>.scene-layer) .cards-grid{
+   grid-template-areas:'metric metrics' 'rate rate';
+   grid-template-rows:auto auto;
+ }
+}
+/* Phone: three vertically stacked metric cards only. */
+@media(max-width:480px){
+ .tanggang-home .screen-stage:has(>.scene-layer) .cards-grid{
+   grid-template-areas:'metric' 'metrics' 'rate';
+   grid-template-rows:auto auto auto;
+ }
+}
+
+/* V2.6 user request: temporarily hide remaining legacy logistics KPI cards. */
+.tanggang-home .screen-stage:has(>.scene-layer)>.overview{display:none!important}
+@media(min-width:1380px){
+ .tanggang-home .screen-stage:has(>.scene-layer)>.scene-layer{grid-column:1/-1;grid-row:2/5}
+}
+/* Top-right compass owns the corner; keep original header actions clear. */
+.tanggang-home .screen-stage .l1-hud{right:112px;top:12px}
+.tanggang-home .screen-stage .l1-site-legend{top:137px}
+.tanggang-home .screen-stage .l1-filters{top:94px}
+@media(max-width:949px){.tanggang-home .screen-stage .l1-hud{right:82px;top:12px}.tanggang-home .screen-stage .l1-site-legend{top:149px}}
+@media(max-width:650px){
+ .tanggang-home .screen-stage .l1-filters{top:118px}
+ .tanggang-home .screen-stage .l1-site-legend{top:160px}
+ .tanggang-home .screen-stage .l1-hud{right:77px;top:10px}
+}
+
+
+/* V2.9 responsive large-display rules.
+   Breakpoint is CSS pixels (browser zoom / OS scaling included).
+   No fixed-width cap, no transform scale, no new legacy metric cards. */
+@media (min-width: 2200px) {
+  .tanggang-home {
+    --layout-p: clamp(26px, 1.15vw, 56px);
+    --layout-g: clamp(12px, .55vw, 23px);
+    --large-filter-top: clamp(112px, 4.45vw, 175px);
+    --large-filter-height: clamp(37px, 1.5vw, 58px);
+  }
+  .tanggang-home .screen-host {
+    min-height: 100dvh;
+  }
+  .tanggang-home .screen-stage {
+    width: 100%;
+    max-width: none;
+    min-height: 100dvh;
+    height: 100dvh;
+    padding: clamp(14px, .62vw, 26px) var(--layout-p) clamp(12px, .43vw, 20px);
+    gap: var(--layout-g);
+  }
+  .tanggang-home .screen-stage:has(>.scene-layer) {
+    grid-template-rows: clamp(75px, 3vw, 112px) repeat(3, minmax(0, 1fr)) clamp(29px, 1.3vw, 50px);
+  }
+  .tanggang-home .screen-stage>.topbar {
+    height: 100%;
+    min-height: 0;
+    padding: 0 clamp(20px, .95vw, 44px);
+    border-radius: clamp(15px, .55vw, 23px);
+    gap: clamp(18px, 2vw, 80px);
+  }
+  .tanggang-home .screen-stage .brand {gap: clamp(12px, .52vw, 22px)}
+  .tanggang-home .screen-stage .brand img {width: clamp(45px, 1.75vw, 70px);height: clamp(45px, 1.75vw, 70px)}
+  .tanggang-home .screen-stage .brand b {font-size: clamp(23px, .8vw, 32px);letter-spacing: .11em}
+  .tanggang-home .screen-stage .brand small {font-size: clamp(11px, .36vw, 15px)}
+  .tanggang-home .screen-stage .topbar nav {
+    margin-left: clamp(16px, 2vw, 80px);
+    gap: clamp(26px, 2.4vw, 95px);
+    align-self:stretch;
+  }
+  .tanggang-home .screen-stage .topbar nav a {
+    font-size: clamp(17px, calc(.4vw + .5vh), 23px);
+  }
+  .tanggang-home .screen-stage .header-tail {gap: clamp(16px, .85vw, 34px)}
+  .tanggang-home .screen-stage .header-tail :is(time, .tanggang-home .snapshot-dot) {font-size: clamp(13px, .37vw, 18px)}
+  .tanggang-home .screen-stage .icon-button {width:clamp(40px,1.7vw,64px);height:clamp(40px,1.7vw,64px)}
+  .tanggang-home .screen-stage>.scene-layer {
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+    border-radius: clamp(18px, .65vw, 28px);
+  }
+  .tanggang-home .screen-stage>.scene-layer .cad-zone {border-radius: inherit}
+  .tanggang-home .screen-stage .screen-footer {grid-row:5;font-size:clamp(12px,.34vw,17px)}
+  .tanggang-home .screen-stage .l1-hud {
+    top:clamp(20px, .8vw, 33px);
+    left:clamp(23px, .93vw, 40px);
+    right:clamp(165px, 6.4vw, 266px);
+    gap:clamp(18px,.85vw,34px);
+    align-items:flex-start;
+  }
+  .tanggang-home .screen-stage .l1-hud h2 {
+    font-size:clamp(23px,1.03vw,41px);
+    margin:clamp(7px,.25vw,11px) 0 4px;
+  }
+  .tanggang-home .screen-stage .l1-hud p {
+    font-size:clamp(12px,.4vw,18px);
+    max-width: min(43vw, 850px);
+  }
+  .tanggang-home .screen-stage .l1-eyebrow {font-size:clamp(11px,.35vw,16px);gap:clamp(7px,.3vw,12px)}
+  .tanggang-home .screen-stage .l1-eyebrow span {font-size:clamp(10px,.32vw,15px);padding:4px 9px}
+  .tanggang-home .screen-stage .l1-actions {max-width:65%;gap:clamp(7px,.35vw,15px);flex-wrap:wrap}
+  .tanggang-home .screen-stage .l1-actions :is(button, .tanggang-home a) {
+    min-height:clamp(37px,1.5vw,56px);
+    font-size:clamp(13px,calc(.34vw + .28vh),20px);
+    padding:clamp(7px,.32vw,12px) clamp(11px,.45vw,19px);
+    border-radius:clamp(8px,.36vw,14px);
+  }
+  .tanggang-home .screen-stage .l1-compass {
+    top:clamp(15px,.6vw,26px);
+    right:clamp(16px,.7vw,29px);
+    width:clamp(103px,3.85vw,153px);
+    height:clamp(107px,4.3vw,168px);
+    border-radius:clamp(15px,.55vw,24px);
+  }
+  .tanggang-home .screen-stage .l1-compass-dial {width:clamp(67px,2.55vw,101px);height:clamp(67px,2.55vw,101px)}
+  .tanggang-home .screen-stage .l1-compass-n {font-size:clamp(13px,.42vw,19px);top:3px}
+  .tanggang-home .screen-stage .l1-compass-s {font-size:clamp(11px,.33vw,15px);bottom:3px}
+  .tanggang-home .screen-stage .l1-compass-arrow {font-size:clamp(20px,.7vw,30px);top:34%}
+  .tanggang-home .screen-stage .l1-compass-caption {font-size:clamp(11px,.35vw,16px);margin-top:7px}
+  .tanggang-home .screen-stage .l1-filters {
+    top:var(--large-filter-top);
+    left:clamp(23px,.93vw,40px);
+    right:clamp(23px,.93vw,40px);
+    min-height:var(--large-filter-height);
+    gap:clamp(7px,.36vw,16px);
+    scrollbar-width: thin;
+  }
+  .tanggang-home .screen-stage .l1-filters .l1-filter {
+    height:var(--large-filter-height);
+    min-height:var(--large-filter-height);
+    font-size:clamp(13px,calc(.32vw + .26vh),19px);
+    padding:0 clamp(13px,.55vw,25px);
+    gap:clamp(6px,.3vw,12px);
+    border-radius: 999px;
+  }
+  .tanggang-home .screen-stage .l1-filters .l1-filter i {
+    width:clamp(8px,.3vw,13px);height:clamp(8px,.3vw,13px)
+  }
+  .tanggang-home .screen-stage .l1-site-legend {
+    top:calc(var(--large-filter-top) + var(--large-filter-height) + clamp(11px,.35vw,19px));
+    left:clamp(23px,.93vw,40px);
+    right:clamp(23px,.93vw,40px);
+    max-width:calc(100% - 2 * clamp(23px,.93vw,40px));
+    gap:clamp(9px,.4vw,17px);
+  }
+  .tanggang-home .screen-stage .l1-site-legend>span,
+  .tanggang-home .screen-stage .l1-chain-shortcut {
+    font-size:clamp(12px,calc(.25vw + .25vh),18px);
+    padding:clamp(6px,.3vw,12px) clamp(11px,.43vw,18px);
+    border-radius:clamp(9px,.4vw,16px);
+  }
+  .tanggang-home .screen-stage .l1-site-legend b,.tanggang-home .screen-stage .l1-chain-shortcut b {
+    font-size:clamp(11px,.28vw,15px)
+  }
+  .tanggang-home .screen-stage .l1-float-label {
+    font-size:clamp(13px,calc(.26vw + .33vh),19px);
+    padding:clamp(5px,.23vw,9px) clamp(10px,.41vw,17px);
+    gap:clamp(6px,.23vw,10px);
+    border-radius:clamp(11px,.45vw,19px) clamp(11px,.45vw,19px) clamp(11px,.45vw,19px) 6px;
+    border-left-width:3px;
+  }
+  .tanggang-home .screen-stage .l1-label-pulse {
+    width:clamp(7px,.24vw,11px);height:clamp(7px,.24vw,11px);
+  }
+  .tanggang-home .screen-stage .l1-continuity-panel {
+    top:calc(var(--large-filter-top) + var(--large-filter-height) + clamp(28px,1.5vw,66px));
+    right:clamp(23px,.93vw,40px);
+    bottom:clamp(16px,.6vw,29px);
+    width:clamp(420px,17.2vw,680px);
+    padding:clamp(16px,.7vw,28px);
+    gap:clamp(9px,.36vw,15px);
+    border-radius:clamp(15px,.55vw,25px);
+  }
+  .tanggang-home .screen-stage .l1-continuity-title strong {font-size:clamp(17px,.57vw,24px)}
+  .tanggang-home .screen-stage .l1-continuity-title button {font-size:clamp(24px,.8vw,34px)}
+  .tanggang-home .screen-stage .l1-continuity-warning {font-size:clamp(12px,.35vw,17px);padding:clamp(9px,.37vw,15px)}
+  .tanggang-home .screen-stage .l1-continuity-summary b {font-size:clamp(22px,.75vw,32px)}
+  .tanggang-home .screen-stage .l1-continuity-summary small {font-size:clamp(11px,.3vw,15px)}
+  .tanggang-home .screen-stage .l1-continuity-filters button {font-size:clamp(12px,.35vw,17px);padding:clamp(8px,.3vw,12px)}
+  .tanggang-home .screen-stage .l1-continuity-item {padding:clamp(8px,.36vw,15px);gap:clamp(9px,.3vw,13px)}
+  .tanggang-home .screen-stage .l1-continuity-item strong {font-size:clamp(12px,.39vw,18px)}
+  .tanggang-home .screen-stage .l1-continuity-item small {font-size:clamp(11px,.33vw,16px)}
+  .tanggang-home .screen-stage .l1-continuity-selected strong {font-size:clamp(13px,.39vw,19px)}
+  .tanggang-home .screen-stage .l1-continuity-selected p,.tanggang-home .screen-stage .l1-continuity-selected small,.tanggang-home .screen-stage .l1-continuity-panel>a {font-size:clamp(11px,.33vw,16px)}
+  .tanggang-home .screen-stage .l1-continuity-pages button,.tanggang-home .screen-stage .l1-continuity-pages small {font-size:clamp(13px,.36vw,17px)}
+  .tanggang-home .screen-stage .l1-pipe-audit {
+    top:calc(var(--large-filter-top) + var(--large-filter-height) + clamp(28px,1.5vw,66px));
+    right:clamp(23px,.93vw,40px);
+    width:clamp(420px,17vw,680px);
+    max-height:calc(100% - var(--large-filter-top) - var(--large-filter-height) - 80px);
+    padding:clamp(16px,.7vw,28px);
+  }
+  .tanggang-home .screen-stage .l1-pipe-audit-head strong {font-size:clamp(16px,.55vw,23px)}
+  .tanggang-home .screen-stage .l1-pipe-audit-summary b {font-size:clamp(21px,.7vw,30px)}
+  .tanggang-home .screen-stage .l1-pipe-audit-summary small {font-size:clamp(11px,.3vw,15px)}
+  .tanggang-home .screen-stage .l1-pipe-audit p,
+  .tanggang-home .screen-stage .l1-pipe-audit-table>div,
+  .tanggang-home .screen-stage .l1-pipe-audit>a {font-size:clamp(12px,.37vw,18px)}
+  .tanggang-home .screen-stage .l1-point-index {bottom:clamp(20px,.8vw,38px);left:clamp(23px,.93vw,40px);right:clamp(23px,.93vw,40px);
+    padding:clamp(12px,.5vw,20px)}
+  .tanggang-home .screen-stage .l1-point-index-head {font-size:clamp(15px,.46vw,21px)}
+  .tanggang-home .screen-stage .l1-point-index-links button {font-size:clamp(13px,.38vw,18px);
+    padding:clamp(8px,.3vw,13px) clamp(12px,.5vw,20px)}
+  .tanggang-home .screen-stage .l1-point-index small {font-size:clamp(11px,.33vw,16px)}
+  .tanggang-home .screen-stage .l1-point-popover {
+    width:clamp(350px,14vw,560px);
+    padding:clamp(14px,.55vw,23px);
+    border-radius:clamp(14px,.55vw,22px);
+  }
+  .tanggang-home .screen-stage .l1-point-popover-header b {font-size:clamp(15px,.51vw,23px)}
+  .tanggang-home .screen-stage .l1-point-popover p,
+  .tanggang-home .screen-stage .l1-point-popover small,
+  .tanggang-home .screen-stage .l1-point-open {font-size:clamp(12px,.38vw,19px)}
+  .tanggang-home .screen-stage .l1-point-open {padding:clamp(9px,.37vw,14px)}
+  .tanggang-home .screen-stage .l1-selection,
+  .tanggang-home .screen-stage .region-overlay .region-card {
+    top:calc(var(--large-filter-top) + var(--large-filter-height) + clamp(27px,1.45vw,64px));
+    right:clamp(23px,.93vw,40px);
+    width:clamp(365px,16vw,630px);
+    max-height:calc(100% - var(--large-filter-top) - var(--large-filter-height) - 110px);
+    padding:clamp(15px,.6vw,26px);
+  }
+  .tanggang-home .screen-stage .l1-selection strong {font-size:clamp(18px,.57vw,25px)}
+  .tanggang-home .screen-stage .l1-selection dt,
+  .tanggang-home .screen-stage .l1-selection dd,
+  .tanggang-home .screen-stage .l1-selection p {font-size:clamp(12px,.38vw,18px)}
+  .tanggang-home .screen-stage .region-overlay .region-nav {
+    top:calc(var(--large-filter-top) + var(--large-filter-height) + clamp(27px,1.45vw,64px));
+    left:clamp(23px,.93vw,40px);
+    width:clamp(235px,11vw,430px);
+    max-height:calc(100% - var(--large-filter-top) - var(--large-filter-height) - 110px);
+  }
+}
+/* Ultra-wide dashboards: scale by height for legibility, not just width.
+   Map canvas remains full-bleed; data panes are contextual, not new cards. */
+@media(min-width:3000px) and (max-height:1550px) {
+  .tanggang-home .screen-stage:has(>.scene-layer) {grid-template-rows:clamp(76px,5.5vh,92px) repeat(3,minmax(0,1fr)) 31px}
+  .tanggang-home .screen-stage .l1-filters {top:clamp(164px,11.75vh,190px)}
+  .tanggang-home .screen-stage .l1-site-legend {top:calc(clamp(164px,11.75vh,190px) + var(--large-filter-height) + 12px)}
+  .tanggang-home .screen-stage .l1-hud {top:18px}
+}
+
+
+
+/* V2.9.2: no outer margins. The dashboard uses ALL available display pixels.
+   Card interiors and floating tool spacing intentionally remain; these are NOT
+   page gutters. Do not reintroduce a 2280px maximum container width. */
+.tanggang-home,.tanggang-home,.tanggang-home,.tanggang-home .screen-host{margin:0;padding:0;width:100%;min-height:100%;}
+.tanggang-home .screen-host{overflow-x:clip}
+.tanggang-home .screen-stage{margin:0!important;padding:0!important;gap:0!important;width:100%!important;max-width:none!important}
+.tanggang-home .screen-stage>.topbar{
+  border-radius:0!important;border-left:0!important;border-right:0!important;
+  border-top:0!important;box-shadow:none!important;
+}
+.tanggang-home .screen-stage>.scene-layer,
+.tanggang-home .screen-stage>.scene-layer .cad-zone{
+  border-radius:0!important;margin:0!important;min-width:0!important;
+}
+/* The compact source/footer notice stays inside the map itself. Do not reserve
+   a separate bottom strip or the map would stop short of the display edge. */
+.tanggang-home .screen-stage:has(>.scene-layer)>.screen-footer{display:none!important}
+@media(min-width:950px){
+  .tanggang-home .screen-stage:has(>.scene-layer){
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:clamp(62px,3.0vw,112px) minmax(0,1fr)!important;
+    height:100dvh!important;min-height:100dvh!important;
+    overflow:hidden!important;
+  }
+  .tanggang-home .screen-stage:has(>.scene-layer)>.topbar{
+    grid-column:1!important;grid-row:1!important;
+    width:100%!important;height:100%!important;min-height:0!important;
+  }
+  .tanggang-home .screen-stage:has(>.scene-layer)>.scene-layer{
+    grid-column:1!important;grid-row:2!important;
+    order:0!important;width:100%!important;height:100%!important;
+    min-height:0!important;position:relative!important;overflow:hidden!important;
+  }
+  .tanggang-home .screen-stage:has(>.scene-layer)>.scene-layer .cad-zone{
+    position:absolute!important;inset:0!important;
+    width:100%!important;height:100%!important;
+  }
+}
+/* Tablet and handset retain their existing vertical flow rather than squeezing
+   every overlay into a desktop-height map. The viewport outer edges stay flush. */
+@media(max-width:949px){
+  .tanggang-home .screen-stage:has(>.scene-layer){padding:0!important;gap:0!important;width:100%!important}
+  .tanggang-home .screen-stage:has(>.scene-layer)>.topbar,
+  .tanggang-home .screen-stage:has(>.scene-layer)>.scene-layer{margin:0!important;width:100%!important}
+}
+
+
+/* ===== port-header.css ===== */
+/* V3.0 — Tanggang port water management header.
+   Full-bleed header, no old FlowOps routes or fake alerts.
+   Iconify icons are bundled with the app (no runtime Iconify API). */
+.tanggang-home .screen-stage>.topbar.port-header{
+  position:relative;inset:auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(16px,1.05vw,43px)!important;
+  gap:clamp(14px,1.3vw,44px)!important;
+  min-width:0;overflow:visible;
+  background:linear-gradient(100deg,#f9fcff 0%,#edf6fb 53%,#f6faff 100%);
+  border-bottom:1px solid #cfe2ed!important;
+  color:#23455e;
+}
+.tanggang-home .screen-stage .port-header .port-brand{
+  display:inline-flex;align-items:center;gap:clamp(9px,.55vw,20px);
+  flex:none;min-width:0;white-space:nowrap;
+}
+.tanggang-home .port-brand-symbol{
+  display:grid;place-items:center;flex:none;
+  width:clamp(37px,2.05vw,72px);height:clamp(37px,2.05vw,72px);
+  border-radius:clamp(10px,.55vw,18px);
+  color:#fff;background:linear-gradient(140deg,#209cbd,#2c7299);
+  box-shadow:inset 0 1px 0 #b8f2ff7a,0 3px 14px #428ca036;
+  font-size:clamp(15px,.85vw,27px);
+}
+.tanggang-home .screen-stage .port-header .port-brand-name{
+  display:block;
+  color:#193d56;
+  font-size:clamp(18px,1.04vw,37px);
+  line-height:1.2;font-weight:770;letter-spacing:.025em;
+}
+.tanggang-home .screen-stage>.topbar.port-header nav.port-nav{
+  position:relative;left:auto;top:auto;height:100%;
+  flex:none;display:flex;align-items:stretch;
+  margin:0 0 0 clamp(8px,1.05vw,40px);
+  padding:0;gap:0;min-width:0;
+}
+.tanggang-home .screen-stage>.topbar.port-header nav.port-nav a{
+  display:flex;gap:clamp(7px,.35vw,14px);
+  align-items:center;justify-content:center;
+  position:relative;
+  color:#257b98;
+  font-size:clamp(15px,.58vw,23px);
+  font-weight:690;line-height:1;
+  padding:0 clamp(7px,.48vw,18px);
+}
+.tanggang-home .screen-stage>.topbar.port-header nav.port-nav a svg{font-size:1.2em}
+.tanggang-home .screen-stage>.topbar.port-header nav.port-nav a[aria-current='page']::after{
+  left:10%;right:10%;height:3px;bottom:0;
+  background:linear-gradient(90deg,#74d1e2,#2588ac);
+  box-shadow:0 -2px 7px #5bb9d14c;
+}
+.tanggang-home .port-header .port-right{display:flex;align-items:center;gap:clamp(10px,1.0vw,43px);margin-left:auto;min-width:0;}
+.tanggang-home .port-header .port-status,
+.tanggang-home .port-header .port-actions{display:flex;align-items:center;gap:clamp(9px,.75vw,32px);flex:none;}
+.tanggang-home .port-header .port-control-group{position:relative;display:flex;align-items:center;flex:none;}
+.tanggang-home .port-header .port-weather-trigger,
+.tanggang-home .port-header .port-time,
+.tanggang-home .port-header .port-role-trigger{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:clamp(7px,.43vw,15px);
+  white-space:nowrap;flex:none;
+}
+.tanggang-home .port-header .port-weather-trigger{padding:5px 3px;min-height:36px}
+.tanggang-home .port-header .port-weather-symbol{
+  font-size:clamp(24px,1.35vw,47px);
+  color:#e4a34a;filter:drop-shadow(0 2px 4px #d8a95630);
+}
+.tanggang-home .port-header .port-weather-text,
+.tanggang-home .port-header .port-time-values,
+.tanggang-home .port-header .port-role-name{
+  display:flex;flex-direction:column;align-items:flex-start;gap:3px;line-height:1.15;
+}
+.tanggang-home .port-header .port-weather-text strong{
+  font-size:clamp(15px,.65vw,25px);
+  font-weight:780;color:#2b5b74;font-variant-numeric:tabular-nums;
+}
+.tanggang-home .port-header .port-weather-text small{
+  font-size:clamp(10px,.39vw,16px);font-weight:490;color:#7994a4;
+}
+.tanggang-home .port-header .port-time{padding:4px 0}
+.tanggang-home .port-header .port-time-icon{font-size:clamp(17px,.76vw,29px);color:#6d9cb6}
+.tanggang-home .port-header .port-time-values strong{
+  font-size:clamp(14px,.66vw,25px);
+  color:#345e76;font-variant-numeric:tabular-nums;font-weight:750;letter-spacing:.035em;
+}
+.tanggang-home .port-header .port-time-values small{
+  font-size:clamp(10px,.38vw,16px);color:#849ca9;font-weight:475;
+}
+.tanggang-home .port-header .port-icon-action{
+  width:clamp(38px,1.85vw,64px);height:clamp(38px,1.85vw,64px);
+  display:grid;place-items:center;
+  border:1px solid #d0e3ec;
+  border-radius:clamp(9px,.47vw,17px);
+  background:#ffffffa9;color:#5a87a0;
+  font-size:clamp(19px,.82vw,31px);
+  transition:background .15s,color .15s,border-color .15s;
+}
+.tanggang-home .port-header .port-icon-action:hover,
+.tanggang-home .port-header .port-icon-action[aria-expanded='true'],
+.tanggang-home .port-header .port-role-trigger:hover,
+.tanggang-home .port-header .port-role-trigger[aria-expanded='true']{
+  background:#e3f4fa;border-color:#a8d4e5;color:#267b9a;
+}
+.tanggang-home .port-header .port-role-trigger{
+  border:1px solid #d2e5ed;
+  background:#ffffffad;
+  padding:clamp(4px,.25vw,10px) clamp(6px,.37vw,16px);
+  border-radius:clamp(9px,.5vw,19px);
+  min-height:clamp(39px,1.9vw,67px);
+  color:#365f77;
+}
+.tanggang-home .port-header .port-avatar{
+  display:grid;place-items:center;border-radius:50%;
+  background:linear-gradient(140deg,#d4f1f8,#e9f3ff);
+  color:#428ca2;width:clamp(28px,1.4vw,52px);height:clamp(28px,1.4vw,52px);
+  font-size:clamp(16px,.74vw,28px);
+}
+.tanggang-home .port-header .port-role-name strong{font-size:clamp(12px,.48vw,19px);font-weight:740}
+.tanggang-home .port-header .port-role-name small{font-size:clamp(9px,.33vw,14px);color:#93a4ad}
+.tanggang-home .port-header .port-role-chevron{font-size:clamp(12px,.53vw,21px);color:#849fac}
+
+/* Header popups: fixed-width content, anchored to their clicked item. */
+.tanggang-home .port-header .port-popup{
+  position:absolute;top:calc(100% + clamp(10px,.5vw,17px));right:0;
+  z-index:100;width:clamp(285px,15vw,430px);max-width:min(90vw,430px);
+  border:1px solid #cbdfe9;border-radius:15px;
+  padding:clamp(13px,.55vw,19px);
+  background:linear-gradient(135deg,#fffffffa,#edf8fcfa);
+  box-shadow:0 15px 44px #467a9840;
+  backdrop-filter:blur(19px);white-space:normal;
+  display:flex;flex-direction:column;gap:11px;
+  color:#395d72;
+}
+.tanggang-home .port-header .port-popup-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tanggang-home .port-header .port-popup-header strong{display:inline-flex;gap:7px;align-items:center;font-size:15px;color:#276b87}
+.tanggang-home .port-header .port-popup-close{width:27px;height:27px;display:grid;place-items:center;border-radius:8px;color:#7794a5}
+.tanggang-home .port-header .port-popup-close:hover{background:#e1eff5}
+.tanggang-home .port-header .port-popup-note{
+  padding:9px 10px;border-radius:8px;line-height:1.6;font-size:11px;
+  color:#8197a6;background:#f3f8fa;
+}
+.tanggang-home .port-header .port-weather-reading{display:flex;gap:14px;align-items:center;padding:6px 4px}
+.tanggang-home .port-header .port-weather-reading-icon{font-size:53px;color:#e4ab55}
+.tanggang-home .port-header .port-weather-current{display:flex;flex-direction:column;gap:4px}
+.tanggang-home .port-header .port-weather-current b{color:#2b6f8a;font-size:35px;line-height:1}
+.tanggang-home .port-header .port-weather-current span{font-size:13px;color:#7192a1}
+.tanggang-home .port-header .port-weather-unavailable{display:flex;align-items:center;gap:12px;padding:18px 2px;color:#8099a8;font-size:12px}
+.tanggang-home .port-header .port-weather-unavailable svg{font-size:29px}
+.tanggang-home .port-header .port-weather-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tanggang-home .port-header .port-weather-metrics span{display:flex;align-items:center;gap:6px;background:#f1f8fb;border:1px solid #e2f0f5;border-radius:7px;padding:7px;font-size:11px}
+.tanggang-home .port-header .port-weather-metrics span:last-child{grid-column:1/-1}
+.tanggang-home .port-header .port-weather-footer{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tanggang-home .port-header .port-weather-footer small{font-size:10px;color:#8da6b2}
+.tanggang-home .port-header .port-weather-footer button{display:flex;align-items:center;gap:5px;font-size:12px;color:#277c99}
+.tanggang-home .port-header .port-weather-footer button:disabled{opacity:.55}
+@keyframes port-spin{to{transform:rotate(360deg)}}
+.tanggang-home .port-header .spinning{animation:port-spin 1.1s linear infinite}
+.tanggang-home .port-header .port-message-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:16px 8px}
+.tanggang-home .port-header .port-empty-icon{width:60px;height:60px;display:grid;place-items:center;border-radius:18px;background:#e5f4f9;color:#639eb6;font-size:30px}
+.tanggang-home .port-header .port-message-empty strong{font-size:14px;color:#547e93}
+.tanggang-home .port-header .port-message-empty p{max-width:270px;font-size:11px;line-height:1.8;color:#89a0ae}
+.tanggang-home .port-header .port-message-foot{display:flex;align-items:flex-start;gap:7px;background:#f0f7fa;padding:9px;border-radius:8px;color:#829dab;font-size:10px;line-height:1.6}
+.tanggang-home .port-header .port-message-foot svg{flex:none;font-size:14px;margin-top:1px}
+.tanggang-home .port-header .port-role-option{display:flex;align-items:center;text-align:left;gap:11px;border:1px solid transparent;border-radius:10px;padding:11px;transition:background .13s}
+.tanggang-home .port-header .port-role-option.selected{border-color:#bce1ec;background:#eaf8fc}
+.tanggang-home .port-header .port-role-option:hover{background:#edf7fa}
+.tanggang-home .port-header .port-role-option-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#e4f2f8;color:#397f99}
+.tanggang-home .port-header .port-role-option>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
+.tanggang-home .port-header .port-role-option strong{font-size:13px;color:#3d6d86}
+.tanggang-home .port-header .port-role-option small{font-size:10px;color:#8aa1b0}
+.tanggang-home .port-header .port-role-check{font-size:18px;color:#24a19c}
+@media(min-width:2200px){
+  .tanggang-home .screen-stage>.topbar.port-header{padding-inline:clamp(25px,.95vw,43px)!important}
+  .tanggang-home .screen-stage>.topbar.port-header .port-weather-text strong{font-size:clamp(20px,.66vw,27px)}
+  .tanggang-home .screen-stage>.topbar.port-header .port-role-name strong{font-size:clamp(16px,.5vw,22px)}
+}
+@media(min-width:651px) and (max-width:1379px){
+  .tanggang-home .screen-stage>.topbar.port-header{padding:0 clamp(12px,1.1vw,19px)!important;gap:clamp(7px,.9vw,15px)!important}
+  .tanggang-home .screen-stage>.topbar.port-header .port-brand-name{font-size:clamp(15px,1.5vw,20px)}
+  .tanggang-home .screen-stage>.topbar.port-header nav.port-nav{margin-left:2px}
+  .tanggang-home .screen-stage>.topbar.port-header nav.port-nav a{font-size:clamp(13px,1.1vw,17px);padding-inline:5px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-right{gap:clamp(7px,.8vw,15px)}
+  .tanggang-home .screen-stage>.topbar.port-header .port-status{gap:clamp(7px,.8vw,15px)}
+  .tanggang-home .screen-stage>.topbar.port-header .port-actions{gap:8px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-weather-text small,
+  .tanggang-home .screen-stage>.topbar.port-header .port-time-values small{display:none}
+  .tanggang-home .screen-stage>.topbar.port-header .port-role-name small{display:none}
+  .tanggang-home .screen-stage>.topbar.port-header .port-avatar{width:29px;height:29px}
+}
+@media(min-width:651px) and (max-width:920px){
+  .tanggang-home .screen-stage>.topbar.port-header .port-time-icon{display:none}
+  .tanggang-home .screen-stage>.topbar.port-header .port-role-name{display:none}
+  .tanggang-home .screen-stage>.topbar.port-header .port-role-chevron{display:none}
+  .tanggang-home .screen-stage>.topbar.port-header .port-weather-symbol{font-size:23px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-weather-text strong{font-size:15px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-time-values strong{font-size:13px}
+}
+@media(max-width:650px){
+  .tanggang-home .screen-stage:has(>.scene-layer)>.topbar.port-header{
+    display:grid!important;grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:51px 41px;grid-template-areas:"brand actions" "nav status";
+    height:92px!important;min-height:92px!important;
+    padding:0 10px!important;gap:0 5px!important;align-items:center;
+  }
+  .tanggang-home .screen-stage>.topbar.port-header .port-brand{grid-area:brand;gap:7px;min-width:0}
+  .tanggang-home .screen-stage>.topbar.port-header .port-brand-symbol{width:28px;height:28px;border-radius:9px;font-size:12px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-brand-name{font-size:clamp(12px,3.45vw,16px);letter-spacing:0;overflow:hidden;text-overflow:ellipsis}
+  .tanggang-home .screen-stage>.topbar.port-header nav.port-nav{grid-area:nav;border-top:1px solid #dceaf1;justify-content:flex-start;margin:0;min-width:0}
+  .tanggang-home .screen-stage>.topbar.port-header nav.port-nav a{font-size:12px;gap:5px;padding:0 8px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-right{display:contents}
+  .tanggang-home .screen-stage>.topbar.port-header .port-status{grid-area:status;display:flex;justify-content:flex-end;gap:10px;min-width:0}
+  .tanggang-home .screen-stage>.topbar.port-header .port-actions{grid-area:actions;display:flex;justify-content:flex-end;gap:5px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-weather-trigger{gap:4px;padding:0;min-height:27px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-weather-symbol{font-size:21px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-weather-text strong{font-size:12px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-weather-text small{display:none}
+  .tanggang-home .screen-stage>.topbar.port-header .port-time{gap:0}
+  .tanggang-home .screen-stage>.topbar.port-header .port-time-icon{display:none}
+  .tanggang-home .screen-stage>.topbar.port-header .port-time-values strong{font-size:12px;letter-spacing:0}
+  .tanggang-home .screen-stage>.topbar.port-header .port-time-values small{display:none}
+  .tanggang-home .screen-stage>.topbar.port-header .port-icon-action{width:31px;height:31px;font-size:18px;border-radius:9px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-role-trigger{min-height:31px;padding:2px 5px;gap:2px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-avatar{width:25px;height:25px;font-size:16px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-role-name,.tanggang-home .screen-stage>.topbar.port-header .port-role-chevron{display:none}
+  .tanggang-home .screen-stage>.topbar.port-header .port-popup{width:min(330px,calc(100vw - 16px));max-width:calc(100vw - 16px);top:calc(100% + 12px)}
+  .tanggang-home .screen-stage>.topbar.port-header .port-role-popup,
+  .tanggang-home .screen-stage>.topbar.port-header .port-message-popup{right:-2px}
+  .tanggang-home .screen-stage>.topbar.port-header .port-weather-popup{right:-77px}
+}
+

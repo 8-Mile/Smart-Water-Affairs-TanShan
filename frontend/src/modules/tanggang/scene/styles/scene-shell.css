@@ -1,0 +1,138 @@
+/*
+ * 唐港三维场景容器样式
+ * 来源：5188 industrial-operations-screen/src/styles/main.css(.cad-zone) 与 responsive.css 中
+ * 仅与 .l1-* / .region-overlay 场景元素相关的规则。
+ * 已剔除 5188 的 .screen-stage 页面栅格、顶栏、KPI 卡片、页脚等应用外壳规则，
+ * 避免污染 5175 的 EmberLayout 与业务页面。
+ * 容器约定：外层使用 .tanggang-scene（position:relative; 宽高由业务页面给定）。
+ */
+.tanggang-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  --scene-view-height: clamp(480px, 62vw, 590px);
+}
+
+.tanggang-scene .cad-zone {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: auto;
+  background: radial-gradient(ellipse 60% 80% at 52% 42%, #f9fdff 0%, #e5f0f9 68%, #dceaf5 100%);
+  box-shadow: 0 16px 44px rgba(67, 107, 147, 0.08), inset 0 1px rgba(255, 255, 255, 0.9);
+  isolation: isolate;
+}
+
+.tanggang-scene .cad-zone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 66% 65% at 55% 59%, transparent 40%, rgba(225, 237, 248, 0.22) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tanggang-scene .l1-hud { top: 15px; left: 16px; right: 16px; min-width: 0; }
+.tanggang-scene .l1-hud > div:first-child { min-width: 0; }
+.tanggang-scene .l1-hud h2 { font-size: clamp(15px, 1.25vw, 20px); }
+.tanggang-scene .l1-actions { max-width: 57%; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.tanggang-scene .l1-actions :is(a, button) { font-size: 10px; padding: 6px 8px; min-height: 28px; }
+.tanggang-scene .l1-filters { top: 91px; left: 15px; right: 15px; min-height: 29px; }
+.tanggang-scene .l1-filter { flex: none; }
+.tanggang-scene .l1-boundarybar { left: 15px; right: 15px; bottom: 40px; }
+.tanggang-scene .l1-footer { left: 15px; right: 15px; bottom: 10px; gap: 8px; font-size: 9px; }
+.tanggang-scene .l1-footer span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tanggang-scene .l1-footer span:last-child { flex: none; }
+.tanggang-scene .l1-selection { top: 133px; right: 12px; max-height: calc(100% - 196px); overflow: auto; }
+.tanggang-scene .region-overlay .region-nav { top: 132px; left: 12px; max-height: calc(100% - 188px); }
+.tanggang-scene .region-overlay .region-card { top: 132px; right: 12px; max-height: calc(100% - 188px); }
+
+@media (max-width: 1379px) {
+  .tanggang-scene .region-overlay .region-nav { width: 185px; }
+  .tanggang-scene .region-overlay .region-card { width: 290px; }
+  .tanggang-scene .l1-hud h2 { font-size: 18px; }
+}
+
+@media (max-width: 949px) {
+  .tanggang-scene { height: auto; min-height: 0; overflow: visible; border-radius: 16px; }
+  .tanggang-scene .cad-zone { position: relative; inset: auto; width: 100%; height: auto; min-height: var(--scene-view-height); border-radius: 16px; overflow: hidden; }
+  .tanggang-scene .l1-view { position: absolute; top: 0; bottom: auto; left: 0; right: 0; width: 100%; height: var(--scene-view-height); }
+  .tanggang-scene .l1-label-layer { position: absolute; inset: auto; top: 0; left: 0; right: 0; height: var(--scene-view-height); pointer-events: none; }
+  .tanggang-scene .region-overlay { position: relative; inset: auto; margin-top: var(--scene-view-height); padding: 12px; display: grid; gap: 12px; grid-template-columns: minmax(180px, 32%) minmax(0, 1fr); align-items: start; pointer-events: auto; background: linear-gradient(140deg, #f6fbfe, #ecf6fa); border-top: 1px solid #d9e9f1; z-index: 6; }
+  .tanggang-scene .region-overlay .region-nav,
+  .tanggang-scene .region-overlay .region-card { position: relative; inset: auto; width: 100%; max-width: none; height: 420px; max-height: 420px; margin: 0; min-height: 0; box-shadow: 0 5px 17px #8caab41d; }
+  .tanggang-scene .region-overlay:not(:has(.region-nav)) { grid-template-columns: 1fr; }
+  .tanggang-scene .region-overlay:not(:has(.region-nav)) .region-card { grid-column: 1 / -1; }
+  .tanggang-scene .l1-boundarybar { top: calc(var(--scene-view-height) - 73px); bottom: auto; left: 12px; right: 12px; max-height: 31px; }
+  .tanggang-scene .l1-footer { top: calc(var(--scene-view-height) - 33px); bottom: auto; left: 12px; right: 12px; }
+  .tanggang-scene .l1-footer span:last-child { display: none; }
+  .tanggang-scene .l1-selection { top: 132px; right: 12px; max-height: calc(var(--scene-view-height) - 191px); }
+  .tanggang-scene .l1-message { top: calc(var(--scene-view-height) / 2); }
+  .tanggang-scene .l1-hud { top: 14px; left: 14px; right: 14px; }
+  .tanggang-scene .l1-actions { max-width: 62%; }
+  .tanggang-scene .l1-filters { top: 99px; left: 12px; right: 12px; }
+  .tanggang-scene .l1-system-evidence { top: 133px; }
+}
+
+@media (max-width: 650px) {
+  .tanggang-scene { --scene-view-height: 460px; }
+  .tanggang-scene .l1-hud { top: 10px; left: 10px; right: 10px; flex-wrap: wrap; gap: 5px; align-items: start; }
+  .tanggang-scene .l1-hud > div:first-child { flex: 1 1 100%; }
+  .tanggang-scene .l1-eyebrow { font-size: 9px; gap: 5px; }
+  .tanggang-scene .l1-eyebrow span { font-size: 8px; }
+  .tanggang-scene .l1-hud h2 { font-size: 16px; margin: 4px 0 2px; }
+  .tanggang-scene .l1-hud p { font-size: 9px; }
+  .tanggang-scene .l1-actions { width: 100%; max-width: 100%; flex: 1 1 100%; gap: 5px; display: flex; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; padding-bottom: 3px; }
+  .tanggang-scene .l1-actions :is(button, a) { flex: none; font-size: 10px; min-height: 29px; padding: 6px 8px; }
+  .tanggang-scene .l1-filters { top: 123px; left: 10px; right: 10px; }
+  .tanggang-scene .l1-label { font-size: 9px; padding: 3px 5px; }
+  .tanggang-scene .l1-count { display: none; }
+  .tanggang-scene .region-overlay { padding: 10px; grid-template-columns: 1fr; gap: 10px; }
+  .tanggang-scene .region-overlay .region-nav { height: 205px; max-height: 205px; }
+  .tanggang-scene .region-overlay .nav-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(38px, auto); gap: 2px; overflow: auto; }
+  .tanggang-scene .region-overlay .region-card { height: auto; min-height: 280px; max-height: 390px; }
+  .tanggang-scene .l1-boundarybar { left: 10px; right: 10px; }
+  .tanggang-scene .l1-footer { left: 10px; right: 10px; }
+  .tanggang-scene .l1-selection { left: 10px; right: 10px; width: auto; top: 171px; max-height: calc(var(--scene-view-height) - 218px); }
+  .tanggang-scene .l1-help { top: 136px; right: 10px; max-width: calc(100% - 20px); }
+  .tanggang-scene .l1-system-evidence { top: 164px; left: 10px; right: 10px; max-width: none; }
+  .tanggang-scene .l1-filters { top: 124px; min-height: 32px; }
+  .tanggang-scene .l1-filters .l1-filter { min-height: 31px; }
+  .tanggang-scene .l1-label-layer { overflow: hidden; }
+}
+
+/* 大屏/4K：仅放大场景内部元素，不引入 5188 的固定宽度容器 */
+@media (min-width: 2200px) {
+  .tanggang-scene {
+    --large-filter-top: clamp(112px, 4.45vw, 175px);
+    --large-filter-height: clamp(37px, 1.5vw, 58px);
+  }
+  .tanggang-scene .l1-hud { top: clamp(20px, 0.8vw, 33px); left: clamp(23px, 0.93vw, 40px); right: clamp(165px, 6.4vw, 266px); gap: clamp(18px, 0.85vw, 34px); align-items: flex-start; }
+  .tanggang-scene .l1-hud h2 { font-size: clamp(23px, 1.03vw, 41px); margin: clamp(7px, 0.25vw, 11px) 0 4px; }
+  .tanggang-scene .l1-hud p { font-size: clamp(12px, 0.4vw, 18px); max-width: min(43vw, 850px); }
+  .tanggang-scene .l1-eyebrow { font-size: clamp(11px, 0.35vw, 16px); gap: clamp(7px, 0.3vw, 12px); }
+  .tanggang-scene .l1-eyebrow span { font-size: clamp(10px, 0.32vw, 15px); padding: 4px 9px; }
+  .tanggang-scene .l1-actions { max-width: 65%; gap: clamp(7px, 0.35vw, 15px); flex-wrap: wrap; }
+  .tanggang-scene .l1-actions :is(button, a) { min-height: clamp(37px, 1.5vw, 56px); font-size: clamp(13px, calc(0.34vw + 0.28vh), 20px); padding: clamp(7px, 0.32vw, 12px) clamp(11px, 0.45vw, 19px); border-radius: clamp(8px, 0.36vw, 14px); }
+  .tanggang-scene .l1-compass { top: clamp(15px, 0.6vw, 26px); right: clamp(16px, 0.7vw, 29px); width: clamp(103px, 3.85vw, 153px); height: clamp(107px, 4.3vw, 168px); border-radius: clamp(15px, 0.55vw, 24px); }
+  .tanggang-scene .l1-compass-dial { width: clamp(67px, 2.55vw, 101px); height: clamp(67px, 2.55vw, 101px); }
+  .tanggang-scene .l1-compass-caption { font-size: clamp(11px, 0.35vw, 16px); margin-top: 7px; }
+  .tanggang-scene .l1-filters { top: var(--large-filter-top); left: clamp(23px, 0.93vw, 40px); right: clamp(23px, 0.93vw, 40px); min-height: var(--large-filter-height); gap: clamp(7px, 0.36vw, 16px); scrollbar-width: thin; }
+  .tanggang-scene .l1-filters .l1-filter { height: var(--large-filter-height); min-height: var(--large-filter-height); font-size: clamp(13px, calc(0.32vw + 0.26vh), 19px); padding: 0 clamp(13px, 0.55vw, 25px); gap: clamp(6px, 0.3vw, 12px); border-radius: 999px; }
+  .tanggang-scene .l1-site-legend { top: calc(var(--large-filter-top) + var(--large-filter-height) + clamp(11px, 0.35vw, 19px)); left: clamp(23px, 0.93vw, 40px); right: clamp(23px, 0.93vw, 40px); max-width: calc(100% - 2 * clamp(23px, 0.93vw, 40px)); gap: clamp(9px, 0.4vw, 17px); }
+  .tanggang-scene .l1-site-legend > span,
+  .tanggang-scene .l1-chain-shortcut { font-size: clamp(12px, calc(0.25vw + 0.25vh), 18px); padding: clamp(6px, 0.3vw, 12px) clamp(11px, 0.43vw, 18px); border-radius: clamp(9px, 0.4vw, 16px); }
+  .tanggang-scene .l1-float-label { font-size: clamp(13px, calc(0.26vw + 0.33vh), 19px); padding: clamp(5px, 0.23vw, 9px) clamp(10px, 0.41vw, 17px); gap: clamp(6px, 0.23vw, 10px); border-radius: clamp(11px, 0.45vw, 19px) clamp(11px, 0.45vw, 19px) clamp(11px, 0.45vw, 19px) 6px; border-left-width: 3px; }
+  .tanggang-scene .l1-point-popover { width: clamp(350px, 14vw, 560px); padding: clamp(14px, 0.55vw, 23px); border-radius: clamp(14px, 0.55vw, 22px); }
+  .tanggang-scene .l1-continuity-panel { top: calc(var(--large-filter-top) + var(--large-filter-height) + clamp(28px, 1.5vw, 66px)); right: clamp(23px, 0.93vw, 40px); bottom: clamp(16px, 0.6vw, 29px); width: clamp(420px, 17.2vw, 680px); padding: clamp(16px, 0.7vw, 28px); gap: clamp(9px, 0.36vw, 15px); border-radius: clamp(15px, 0.55vw, 25px); }
+  .tanggang-scene .l1-pipe-audit { top: calc(var(--large-filter-top) + var(--large-filter-height) + clamp(28px, 1.5vw, 66px)); right: clamp(23px, 0.93vw, 40px); width: clamp(420px, 17vw, 680px); max-height: calc(100% - var(--large-filter-top) - var(--large-filter-height) - 80px); padding: clamp(16px, 0.7vw, 28px); }
+  .tanggang-scene .l1-selection,
+  .tanggang-scene .region-overlay .region-card { top: calc(var(--large-filter-top) + var(--large-filter-height) + clamp(27px, 1.45vw, 64px)); right: clamp(23px, 0.93vw, 40px); width: clamp(365px, 16vw, 630px); max-height: calc(100% - var(--large-filter-top) - var(--large-filter-height) - 110px); padding: clamp(15px, 0.6vw, 26px); }
+  .tanggang-scene .region-overlay .region-nav { top: calc(var(--large-filter-top) + var(--large-filter-height) + clamp(27px, 1.45vw, 64px)); left: clamp(23px, 0.93vw, 40px); width: clamp(235px, 11vw, 430px); max-height: calc(100% - var(--large-filter-top) - var(--large-filter-height) - 110px); }
+}

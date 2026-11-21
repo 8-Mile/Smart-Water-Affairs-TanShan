@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN" data-box-mode="border-mode">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230e7ff0'/%3E%3Cstop offset='1' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M32 13c-7.6 10.4-15 18.8-15 26.2A15 15 0 0 0 47 39.2C47 31.8 39.6 23.4 32 13z' fill='%23ffffff' fill-opacity='0.94'/%3E%3C/svg%3E"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>生产运维管理系统</title>
+    <style>
+      html {
+        background-color: #f3f7fb;
+      }
+      html.dark {
+        background-color: #070707;
+      }
+      /* 首屏加载（纯 CSS + water-loading.svg 动图，Vue 挂载后自动移除） */
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f4f8fd;
+        font-family:
+          system-ui,
+          -apple-system,
+          'PingFang SC',
+          'Microsoft YaHei',
+          sans-serif;
+      }
+      html.dark #boot-splash {
+        background: #0b1622;
+      }
+      #boot-splash .bs-loading {
+        width: 112px;
+        height: 112px;
+        display: block;
+      }
+      #boot-splash .bs-label {
+        margin: 8px 0 0;
+        font-size: 14px;
+        letter-spacing: 2px;
+        color: #647a96;
+      }
+      html.dark #boot-splash .bs-label {
+        color: #8ba3bf;
+      }
+      #boot-splash .bs-dots {
+        display: inline-block;
+        width: 18px;
+        text-align: left;
+        overflow: hidden;
+        vertical-align: bottom;
+        animation: bs-dots 2.4s steps(4, end) infinite;
+      }
+      @keyframes bs-dots {
+        0% {
+          width: 0;
+        }
+        100% {
+          width: 18px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash .bs-dots {
+          animation: none;
+        }
+      }
+    </style>
+    <script>
+      ;(function () {
+        try {
+          if (typeof Storage !== 'undefined' && window.localStorage) {
+            if (localStorage.getItem('sys-theme') === 'dark') {
+              document.documentElement.classList.add('dark')
+            }
+          }
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <!-- 首屏加载：水滴动图 + 省略号动画，Vue 挂载后自动替换移除 -->
+      <div id="boot-splash" role="status" aria-live="polite">
+        <img class="bs-loading" src="/water-loading.svg" alt="" />
+        <p class="bs-label">加载中<span class="bs-dots" aria-hidden="true">...</span></p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+    <!-- model-viewer 已改为本地 npm 依赖（内网离线环境，不再走 jsdelivr CDN），在 AiFloatAssistant 中按需引入 -->
+  </body>
+</html>
