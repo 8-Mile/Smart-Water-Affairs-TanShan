@@ -37,8 +37,8 @@ describe('唐港首页/侧边栏统一菜单契约', () => {
   it('所有一级业务菜单直接进入有功能的页面，不再展示二级总览', () => {
     const expected:Record<string,string> = {
       monitor:'/port/process/fog',
-      water:'/water/stats',
-      operations:'/alarm/realtime',
+      water:'/port/water/supply',
+      operations:'/port/operations/monitor',
       assets:'/equipment/list',
       analysis:'/ai/chat',
     }
@@ -51,14 +51,24 @@ describe('唐港首页/侧边栏统一菜单契约', () => {
   it('已删除的总览页面地址只做兼容跳转，不再挂载旧组件', () => {
     const redirects:Record<string,string> = {
       '/port/monitor':'/port/process/fog',
-      '/port/water':'/water/stats',
-      '/port/operations':'/alarm/realtime',
+      '/port/water':'/port/water/supply',
+      '/port/operations':'/port/operations/monitor',
       '/port/assets':'/equipment/list',
       '/port/analysis':'/ai/chat',
     }
     for (const [from,to] of Object.entries(redirects)) {
       expect(router.resolve(from).matched[router.resolve(from).matched.length - 1]?.redirect,from).toEqual(to)
     }
+  })
+  it('新专业页面不含独立总览或模拟输入页',()=>{
+    for(const path of ['/port/water/supply','/port/water/rain-risk','/port/operations/monitor']){
+      expect(router.resolve(path).matched.length,path).toBeGreaterThan(0)
+    }
+    const water=tanggangMenus.find(x=>x.id==='water')
+    const operations=tanggangMenus.find(x=>x.id==='operations')
+    expect(water?.children?.some(x=>x.path==='/port/water/supply')).toBe(true)
+    expect(water?.children?.some(x=>x.path==='/port/water/rain-risk')).toBe(true)
+    expect(operations?.children?.some(x=>x.path==='/port/operations/monitor')).toBe(true)
   })
   it('六套工艺复用固定SystemId及父模块', () => {
     expect(tanggangMenus.find((x) => x.id === 'monitor')?.children?.map((x) => x.id))

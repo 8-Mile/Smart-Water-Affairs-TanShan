@@ -1,0 +1,42 @@
+/* 专业联动页面沿用5175磨砂卡片及路由淡入，水量输入仅由统一情景控制台维护 */
+.tg-analysis-page{min-width:0}
+.tg-page-eyebrow{font-size:11px;font-weight:650;letter-spacing:.07em;color:#5892ad;margin-bottom:7px}
+.tg-datamode{display:inline-flex;align-items:center;padding:6px 10px;border-radius:16px;font-size:11px;font-weight:650;
+  color:#7e929d;border:1px solid #d4e2eb;background:rgba(255,255,255,.7)}
+.tg-datamode.sim{color:#a5742c;border-color:#f2d6aa;background:#fff5e7}
+.tg-analysis-empty{padding:70px 25px;min-height:300px;text-align:center;border-radius:16px;
+  background:linear-gradient(145deg,rgba(255,255,255,.67),rgba(232,244,253,.57));border:1px dashed rgba(114,169,199,.42)}
+.tg-analysis-empty .tg-empty-icon{font-size:32px;color:#64a3c1}
+.tg-analysis-empty h2{font-size:19px;margin:8px 0}
+.tg-analysis-empty p{max-width:590px;margin:10px auto 19px;font-size:13px;color:#708b9e;line-height:1.8}
+.tg-analysis-summary{display:flex;flex-direction:column;gap:8px;padding:18px 22px;border:1px solid rgba(146,193,216,.44);
+  border-radius:14px;background:linear-gradient(120deg,rgba(230,246,253,.72),rgba(250,252,255,.69));margin-bottom:17px}
+.tg-analysis-summary strong{font-size:19px;color:#245b78}
+.tg-analysis-summary p{font-size:12px;color:#6d8796;margin:0}
+.tg-sim-badge{display:inline-flex;align-self:flex-start;padding:4px 9px;border:1px solid #f2dbb5;border-radius:12px;
+  font-size:10px;font-weight:750;background:#fff3df;color:#9c672c}
+.tg-analysis-page .tg-biz-kpi.risk{color:#cf8835}
+.tg-analysis-page .tg-biz-kpi small{font-size:13px;font-weight:500;color:#71899a}
+.tg-analysis-page .tg-biz-card{min-height:0}
+.tg-mini-note{font-size:11px!important;color:#8199a6!important;line-height:1.7!important;margin-top:12px!important}
+.tg-risk-text{color:#d28b39}
+.tg-pool-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}
+.tg-pool-status div{padding:11px;background:rgba(244,250,253,.68);border:1px solid #e0edf3;border-radius:9px}
+.tg-pool-status small{display:block;font-size:10px;color:#7b95a6}
+.tg-pool-status strong{display:block;margin-top:5px;font-size:15px;color:#287a9e}
+.tg-volume-trend{height:100px;display:flex;align-items:stretch;justify-content:space-between;gap:8px;margin:13px 0}
+.tg-volume-point{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;flex:1;min-width:0}
+.tg-volume-track{height:77px;width:100%;background:rgba(214,235,244,.49);border-radius:5px;overflow:hidden;
+  display:flex;align-items:end}
+.tg-volume-track>div{width:100%;background:linear-gradient(180deg,#9cdbed,#2c8fac);border-radius:5px 5px 0 0;transition:height .32s}
+.tg-volume-track>div.warn{background:linear-gradient(180deg,#f3d2a1,#d38e45)}
+.tg-volume-point small{font-size:10px;color:#829ca8;margin-top:4px}
+.tg-scenario-evidence{padding:11px 0;display:grid;gap:5px;border-bottom:1px solid #e5eff3}
+.tg-scenario-evidence strong{font-size:12px;color:#356582}
+.tg-scenario-evidence span{font-size:11px;color:#8195a3;line-height:1.6}
+.tg-scenario-evidence .el-button{justify-self:start}
+.tg-check-title{margin-top:17px!important}
+.tg-analysis-footer{display:flex;gap:15px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.tg-analysis-footer p{max-width:660px}
+@media(max-width:850px){.tg-pool-status{grid-template-columns:1fr}.tg-analysis-footer{align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){.tg-volume-track>div{transition:none}}

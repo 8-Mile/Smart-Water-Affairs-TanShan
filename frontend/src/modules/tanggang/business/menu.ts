@@ -17,12 +17,15 @@ export const tanggangMenus: TanggangNavItem[] = [
     {id:'pool',title:'水池供水',icon:'ri:drop-line',path:'/port/process/pool'},
     {id:'domestic',title:'生活污水提升与外送',icon:'ri:flow-chart',path:'/port/process/domestic'},
   ]},
-  { id:'water',title:'水资源管理',icon:'ri:water-flash-line',path:'/water/stats',children:[
+  { id:'water',title:'水资源管理',icon:'ri:water-flash-line',path:'/port/water/supply',children:[
+    {id:'supply',title:'大机供水保障',icon:'ri:water-flash-line',path:'/port/water/supply'},
+    {id:'rain-risk',title:'雨水调蓄风险',icon:'ri:rainy-line',path:'/port/water/rain-risk'},
     {id:'water-stats',title:'供水统计',icon:'ri:bar-chart-line',path:'/water/stats',permission:'water:stats'},
     {id:'energy-stats',title:'能耗分析',icon:'ri:line-chart-line',path:'/energy/stats',permission:'energy:stats'},
     {id:'dispatch-stats',title:'调度指令',icon:'ri:send-plane-line',path:'/dispatch/stats',permission:'dispatch:stats'},
   ]},
-  { id:'operations',title:'运行处置',icon:'ri:alarm-warning-line',path:'/alarm/realtime',children:[
+  { id:'operations',title:'运行处置',icon:'ri:alarm-warning-line',path:'/port/operations/monitor',children:[
+    {id:'active-monitor',title:'主动智能监护',icon:'ri:shield-check-line',path:'/port/operations/monitor'},
     {id:'alarm',title:'告警中心',icon:'ri:alarm-warning-line',path:'/alarm/realtime',permission:'alarm:realtime'},
     {id:'repair',title:'维修工单',icon:'ri:tools-line',path:'/repair/list',permission:'repair:list'},
   ]},

@@ -55,10 +55,26 @@ const router = createRouter({
           component:()=>import('@/modules/tanggang/business/PortProcessView.vue'),
           meta:{title:'唐港专业工艺详情'},
         },
-        {path:'port/water',redirect:'/water/stats'},
-        {path:'port/operations',redirect:'/alarm/realtime'},
+        {path:'port/water',redirect:'/port/water/supply'},
+        {path:'port/operations',redirect:'/port/operations/monitor'},
         {path:'port/assets',redirect:'/equipment/list'},
         {path:'port/analysis',redirect:'/ai/chat'},
+        // 情景推演结果页：所有参数只在独立的全局推演控制台编辑。
+        {
+          path:'port/water/supply',name:'tg-water-supply',
+          component:()=>import('@/modules/tanggang/business/PortSupplyAssuranceView.vue'),
+          meta:{title:'大机供水保障'},
+        },
+        {
+          path:'port/water/rain-risk',name:'tg-rain-risk',
+          component:()=>import('@/modules/tanggang/business/PortRainRiskView.vue'),
+          meta:{title:'雨水调蓄风险'},
+        },
+        {
+          path:'port/operations/monitor',name:'tg-active-monitor',
+          component:()=>import('@/modules/tanggang/business/PortActiveMonitoringView.vue'),
+          meta:{title:'主动智能监护'},
+        },
         // ai
         {
           path: 'ai/chat',

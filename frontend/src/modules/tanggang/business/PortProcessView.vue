@@ -4,6 +4,17 @@ import {useRoute,useRouter} from 'vue-router'
 import {ElButton} from 'element-plus'
 import {loadTanggangCatalog,summarizeSystem,type TanggangCatalog} from '../mapping/tanggangCatalog'
 import './business.css'
+import {useScenarioStore} from '../simulation/store'
+const sim=useScenarioStore()
+const simMessage=computed(()=>{
+  const r=sim.result
+  if(!r)return ''
+  if(sysId.value==='middle')return '假设用水 '+r.demandedM3h+' m³/h；可分配 '+r.deliveredM3h+' m³/h；缺口 '+r.shortageM3h+' m³/h。'
+  if(sysId.value==='pool')return '按统一情景预计 '+r.input.horizonHours+'小时后模拟储量 '+r.forecastPoolM3+' m³。'
+  if(sysId.value==='rain')return '假设降雨 '+r.input.rainMm+'mm，单池演示条件溢流 '+r.rainOverflowM3+'m³。'
+  return '本情景没有已确认的本系统空间管线关联，请在专业页核对工程资料。'
+})
+
 const route=useRoute(),router=useRouter()
 const catalog=ref<TanggangCatalog|null>(null)
 const error=ref('')
@@ -24,6 +35,14 @@ const unique=computed(()=>Array.from(new Map(facilities.value.map(o=>[o.device!.
     <div v-else-if="!system" class="tg-biz-empty">没有找到该专业系统，请返回专业系统总览选择。</div>
     <template v-else>
       <div class="tg-biz-note"><strong>工艺边界：</strong>{{system.intro}} <span v-if="system.disclaimer">{{system.disclaimer}}</span> 本页为工程资料与数据准备视图，不是已连接PLC的实时SCADA。实际控制操作须完成授权、联锁及厂家确认。</div>
+      <section v-if="sim.running" class="tg-biz-note" style="border-color:#f1d7ac;background:rgba(255,245,222,.75)">
+        <strong>SIM · 全系统统一推演：</strong>{{sim.activeScenario?.title}}。
+        {{simMessage}}
+        <el-button v-if="sysId==='middle'||sysId==='pool'" link type="primary" @click="router.push('/port/water/supply')">查看供水保障</el-button>
+        <el-button v-if="sysId==='rain'" link type="primary" @click="router.push('/port/water/rain-risk')">查看雨水风险</el-button>
+        <el-button link type="warning" @click="sim.openConsole()">打开统一推演控制台</el-button>
+        <span class="tg-biz-label">模拟视图，不改变真实测点与业务事件</span>
+      </section>
       <div class="tg-biz-grid">
         <section class="tg-biz-card art-card"><h2>设计关联设备项</h2><p class="tg-biz-kpi">{{summarizeSystem(system,catalog).designCategories}}</p><p>依据设计设备清单归类，不等于实际安装台数。</p></section>
         <section class="tg-biz-card art-card"><h2>数据接入状态</h2><p class="tg-biz-kpi">待映射</p><p>资产ID、SCADA测点ID与现场点表尚未完成一一核对。</p></section>
