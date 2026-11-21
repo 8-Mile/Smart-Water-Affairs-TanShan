@@ -545,24 +545,44 @@ onUnmounted(() => {
   background: transparent;
 }
 
+/* 独立悬浮侧栏：距视口左/上/下16px，右侧与主内容间隔16px。
+   边距放在容器而非面板内，确保阴影不被面板overflow裁切。 */
 #app-sidebar {
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  height: 100vh;
+  padding: 16px;
+  display: flex;
+  min-width: 0;
 }
 
 .layout-sidebar {
   position: relative;
   width: 210px;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
-  /* 侧栏：白雾渐变 + 磨砂（更白、模糊加重） */
+  box-sizing: border-box;
+  border-radius: 20px;
+  /* 轻盈的冷白磨砂层，不再是一整块顶天立地的实色导航 */
   background: linear-gradient(
-    180deg,
-    rgb(255 255 255 / 30%) 0%,
-    rgb(250 253 255 / 30%) 50%,
-    rgb(241 248 255 / 30%) 100%
+    165deg,
+    rgb(255 255 255 / 67%) 0%,
+    rgb(250 253 255 / 57%) 48%,
+    rgb(241 248 255 / 51%) 100%
   );
-  backdrop-filter: blur(14px) saturate(1.15);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
-  border-right: 1px solid rgb(125 171 212 / 20%);
+  backdrop-filter: blur(18px) saturate(1.18);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  border: 1px solid rgb(255 255 255 / 70%);
+  /* 每层阴影不透明度都较低：近层接地，中层体积，远层氛围 */
+  box-shadow:
+    0 2px 5px rgb(33 68 102 / 3.2%),
+    0 9px 24px rgb(33 68 102 / 5.2%),
+    0 24px 50px rgb(33 68 102 / 3.2%),
+    inset 0 1px 0 rgb(255 255 255 / 58%);
+  transition:
+    box-shadow var(--motion-fast, 200ms) ease,
+    background-color var(--motion-fast, 200ms) ease;
 }
 /* 侧栏背景图：仅铺在菜单栏底部，100% 不透明显示 */
 .layout-sidebar::before {
@@ -577,6 +597,7 @@ onUnmounted(() => {
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 72px);
   mask-image: linear-gradient(180deg, transparent 0, #000 72px);
   pointer-events: none;
+  opacity: 0.25;
 }
 .layout-sidebar.is-collapsed {
   width: 70px;
@@ -1036,8 +1057,10 @@ onUnmounted(() => {
     top: 0;
     bottom: 0;
     left: 0;
+    height: 100dvh;
     z-index: 2200;
-    transform: translateX(-105%);
+    /* 手机也保持四边16px，抽屉滑出时阴影跟随面板而非全屏遮罩 */
+    transform: translateX(calc(-100% - 18px));
     transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
   }
   #app-sidebar.drawer-open {
@@ -1047,7 +1070,11 @@ onUnmounted(() => {
   #app-sidebar .layout-sidebar.is-collapsed {
     width: 210px;
     height: 100%;
-    box-shadow: 16px 0 48px rgb(15 32 55 / 18%);
+    box-shadow:
+      0 2px 5px rgb(33 68 102 / 3.2%),
+      0 9px 24px rgb(33 68 102 / 5.2%),
+      0 24px 50px rgb(33 68 102 / 3.2%),
+      inset 0 1px 0 rgb(255 255 255 / 58%);
   }
   .sidebar-mask {
     position: fixed;
