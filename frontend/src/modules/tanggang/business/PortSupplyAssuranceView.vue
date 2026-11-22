@@ -7,6 +7,16 @@ import './business.css'
 import './scenario-pages.css'
 const router=useRouter(),store=useScenarioStore()
 const r=computed(()=>store.result)
+const impact=computed(()=>store.impactAnalysis)
+const reviewText=computed(()=>{
+  const review=store.monitorReview
+  if(!review)return '当前轮次尚未进行模拟核查'
+  return review.status==='investigating'
+    ?'当前轮次正在模拟核查'
+    :review.outcome==='sim-recovery-conditions'
+      ?'当前轮次仅满足模拟恢复条件，现场仍需复核'
+      :'当前轮次已记录核查意见，待现场核实'
+})
 const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
 </script>
 <template>
@@ -63,8 +73,12 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
       </div>
       <SupplyPlanComparison />
       <section class="tg-biz-card art-card tg-analysis-footer">
-        <div><h2>跨业务联动</h2><p>同一供水缺口会出现在智能监护的模拟线索中；不会写入真实告警或工单。雨水收集不能自动视为生产供水来源。</p></div>
-        <el-button type="primary" plain @click="router.push('/port/operations/monitor')">查看智能监护</el-button>
+        <div>
+          <h2>监护关联核查</h2>
+          <p>{{impact?.conclusion}}</p>
+          <p>{{reviewText}}。关联结果只来自同一SIM情景，不能推断设备故障根因，也不生成真实告警或工单。</p>
+        </div>
+        <el-button type="primary" plain @click="router.push('/port/operations/monitor')">查看监护证据</el-button>
       </section>
     </template>
   </main>

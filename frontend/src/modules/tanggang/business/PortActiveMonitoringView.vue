@@ -9,7 +9,7 @@ import './scenario-pages.css'
 
 const router=useRouter(),store=useScenarioStore()
 const current=computed(()=>store.monitorEvidence)
-const r=computed(()=>store.result)
+const impact=computed(()=>store.impactAnalysis)
 const expanded=ref<string[]>([])
 const note=ref('')
 const conclusion=ref<'requires-field-check'|'sim-recovery-conditions'>('requires-field-check')
@@ -61,6 +61,7 @@ function exportEvidence(){
     scenarioStartedAt:store.startedAt,
     inputs:store.effectiveScenario?.inputs,
     assessment:current.value,
+    linkedSupplyImpact:impact.value,
     review:store.monitorReview,
     warning:'只用于研发演示与规则检验，合成时序不是现场历史，未进行现场设备诊断或恢复验收',
   }
@@ -97,7 +98,7 @@ function exportEvidence(){
     </div>
 
     <template v-else>
-      <div class="tg-monitor-status">
+      <section class="tg-biz-card art-card tg-monitor-status">
         <div>
           <span class="tg-monitor-overline">SIM / {{store.activeScenario?.title}} / 第{{store.runNumber}}轮</span>
           <strong>{{riskText}}</strong>
@@ -107,14 +108,18 @@ function exportEvidence(){
           <el-button plain size="small" @click="store.openConsole()">调整情景</el-button>
           <el-button plain size="small" @click="exportEvidence">导出SIM证据</el-button>
         </div>
-      </div>
+      </section>
 
-      <div class="tg-monitor-values">
-        <div><span>设备状态</span><strong>{{latest?.pumpState==='fault'?'模拟异常':latest?.pumpState==='running'?'模拟运行':'模拟停止'}}</strong></div>
-        <div><span>假设压力</span><strong>{{fmt(latest?.pressureMpa,'MPa')}}</strong></div>
-        <div><span>假设电流</span><strong>{{fmt(latest?.currentA,'A')}}</strong></div>
-        <div><span>假设流量</span><strong>{{fmt(latest?.flowM3h,'m³/h')}}</strong></div>
-      </div>
+      <section class="tg-biz-card art-card tg-monitor-readings">
+        <el-descriptions :column="4" border size="small">
+          <el-descriptions-item label="设备状态">
+            {{latest?.pumpState==='fault'?'模拟异常':latest?.pumpState==='running'?'模拟运行':'模拟停止'}}
+          </el-descriptions-item>
+          <el-descriptions-item label="假设压力">{{fmt(latest?.pressureMpa,'MPa')}}</el-descriptions-item>
+          <el-descriptions-item label="假设电流">{{fmt(latest?.currentA,'A')}}</el-descriptions-item>
+          <el-descriptions-item label="假设流量">{{fmt(latest?.flowM3h,'m³/h')}}</el-descriptions-item>
+        </el-descriptions>
+      </section>
 
       <div class="tg-monitor-workflow">
         <div class="tg-monitor-evidence">
@@ -130,12 +135,18 @@ function exportEvidence(){
                 <template #default="{row}">
                   <div class="tg-monitor-rule-expand">
                     <p>{{row.reason}}</p>
-                    <div class="tg-monitor-snapshots">
-                      <span v-for="sample in row.samples" :key="sample.offsetSec"
-                        :class="{bad:sample.quality!=='GOOD',hit:sample.conditionMet===true}">
-                        {{sample.offsetSec}}s · {{sample.value}} · {{sample.quality}}
-                      </span>
-                    </div>
+                    <el-table :data="row.samples" stripe size="small" class="tg-monitor-evidence-table">
+                      <el-table-column label="相对时间" min-width="90">
+                        <template #default="{row:sample}">{{sample.offsetSec}}s</template>
+                      </el-table-column>
+                      <el-table-column prop="value" label="模拟值" min-width="90"/>
+                      <el-table-column prop="quality" label="质量" min-width="80"/>
+                      <el-table-column label="规则条件" min-width="105">
+                        <template #default="{row:sample}">
+                          {{sample.conditionMet===null?'无效':sample.conditionMet?'满足':'不满足'}}
+                        </template>
+                      </el-table-column>
+                    </el-table>
                   </div>
                 </template>
               </el-table-column>
@@ -164,24 +175,31 @@ function exportEvidence(){
 
           <section class="tg-biz-card art-card">
             <div class="tg-biz-card-head">
-              <h2>关联影响</h2>
-              <el-button link @click="router.push('/port/water/supply')">供水保障</el-button>
+              <h2>关联供水影响</h2>
+              <el-button link @click="router.push('/port/water/supply')">查看供水保障</el-button>
             </div>
-            <div class="tg-monitor-impact">
-              <div>
-                <span>模拟供水缺口</span>
-                <strong :class="{warn:r&&r.shortageM3h>0}">{{r?.shortageM3h??0}} m³/h</strong>
-              </div>
-              <div>
-                <span>演示线索</span>
-                <strong>{{r?.events.length??0}} 项</strong>
-              </div>
-              <div>
-                <span>恢复条件</span>
-                <strong>{{current.recoveryCandidate?'合成阈值满足':'尚未满足'}}</strong>
+            <p v-if="impact" class="tg-biz-sub">{{impact.conclusion}}</p>
+            <el-table v-if="impact" :data="impact.affectedTerminals" stripe
+              size="small" class="tg-monitor-affected-table">
+              <el-table-column prop="label" label="演示用水点" min-width="170" show-overflow-tooltip/>
+              <el-table-column label="需求 m³/h" min-width="94" align="right">
+                <template #default="{row}">{{row.demandM3h}}</template>
+              </el-table-column>
+              <el-table-column label="分配 m³/h" min-width="94" align="right">
+                <template #default="{row}">{{row.allocatedM3h}}</template>
+              </el-table-column>
+              <el-table-column label="缺口 m³/h" min-width="94" align="right">
+                <template #default="{row}"><b class="tg-risk-text">{{row.shortageM3h}}</b></template>
+              </el-table-column>
+              <template #empty>当前演示未产生用水点分配缺口</template>
+            </el-table>
+            <div v-if="impact" class="tg-biz-list">
+              <div v-for="check in impact.checkpoints" :key="check.key" class="tg-biz-list-row">
+                <span>{{check.label}}</span>
+                <span class="tg-biz-label">待现场核对</span>
               </div>
             </div>
-            <p class="tg-monitor-sample-note">{{current.recoveryExplanation}}</p>
+            <p class="tg-monitor-sample-note">{{impact?.restriction}}</p>
           </section>
         </div>
 
@@ -190,10 +208,10 @@ function exportEvidence(){
             <h2>模拟核查记录</h2>
             <span class="tg-monitor-secondary">仅当前浏览器 · 不入库</span>
           </div>
-          <div class="tg-monitor-steps">
-            <div :class="{done:store.monitorReview}"><span>01</span><b>接收模拟线索</b></div>
-            <div :class="{done:store.monitorReview?.status==='recorded'}"><span>02</span><b>记录核查结论</b></div>
-            <div><span>03</span><b>现场复核（未开展）</b></div>
+          <div class="tg-biz-steps">
+            <span>模拟线索</span><b>›</b>
+            <span>人工核查记录</span><b>›</b>
+            <span>现场复核待开展</span>
           </div>
           <template v-if="!store.monitorReview">
             <p class="tg-monitor-review-copy">可以开展一次仅在浏览器内有效的核查演练。模拟异常不会进入正式事件中心，也不会自动派工。</p>
@@ -233,64 +251,41 @@ function exportEvidence(){
 </template>
 
 <style scoped>
+/* Use the existing 5190 business tokens/components; no standalone dashboard skin. */
 .tg-monitor-page{min-width:0}
-.tg-monitor-status{display:flex;justify-content:space-between;align-items:center;gap:16px;
-  padding:17px 20px;margin-bottom:12px;border-radius:15px;
-  border:1px solid rgba(213,228,238,.82);background:rgba(255,255,255,.62)}
-.tg-monitor-status>div:first-child{min-width:0}
-.tg-monitor-overline{display:block;font-size:11px;color:#899eae;letter-spacing:.025em;margin-bottom:7px}
-.tg-monitor-status strong{display:block;color:#2b516a;font-weight:700;font-size:19px}
-.tg-monitor-status p{margin:7px 0 0;color:#7f94a3;font-size:11px;line-height:1.5}
+.tg-monitor-status{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}
+.tg-monitor-overline{display:block;font-size:11px;color:var(--art-gray-500,#8297a6);margin-bottom:7px}
+.tg-monitor-status strong{font-size:18px;font-weight:700;color:var(--art-gray-800,#253f55)}
+.tg-monitor-status p{font-size:12px;color:var(--art-gray-500,#8297a6);margin:6px 0 0}
 .tg-monitor-status-tools{display:flex;gap:6px;flex:0 0 auto}
-.tg-monitor-values{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;
-  border:1px solid rgba(213,229,238,.8);background:rgba(255,255,255,.65);border-radius:14px;
-  margin:0 0 14px;overflow:hidden}
-.tg-monitor-values>div{padding:15px 18px;border-right:1px solid rgba(208,225,233,.75)}
-.tg-monitor-values>div:last-child{border-right:0}
-.tg-monitor-values span,.tg-monitor-impact span{display:block;font-size:11px;color:#849dac}
-.tg-monitor-values strong{display:block;margin-top:7px;font-size:17px;color:#315a73;font-weight:670;font-variant-numeric:tabular-nums}
-.tg-monitor-workflow{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(290px,.9fr);gap:14px;align-items:start}
+.tg-monitor-readings{margin-bottom:14px;padding:14px}
+.tg-monitor-readings :deep(.el-descriptions__body){background:transparent}
+.tg-monitor-workflow{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(290px,.9fr);gap:14px;align-items:start}
 .tg-monitor-evidence{display:grid;gap:14px;min-width:0}
-.tg-monitor-secondary{color:#93a7b5;font-size:11px}
-.tg-monitor-rule-table{font-size:12px;background:transparent}
-.tg-monitor-rule-name{font-size:12px;color:#375d76;font-weight:620}
-.tg-monitor-rule-state{color:#638499;font-size:11px;white-space:nowrap}
-.tg-monitor-rule-state.warn{color:#ad7935;font-weight:630}
-.tg-monitor-rule-expand{padding:8px 15px 14px}
-.tg-monitor-rule-expand p{font-size:11px;color:#7c92a2;margin:0 0 9px}
-.tg-monitor-snapshots{display:flex;gap:6px;flex-wrap:wrap}
-.tg-monitor-snapshots span{border:1px solid #d9e7ee;border-radius:7px;
-  background:rgba(243,250,253,.8);padding:5px 7px;font-size:10px;color:#69889b}
-.tg-monitor-snapshots span.hit{border-color:#ead6b4;color:#9c773e;background:#fdf8ec}
-.tg-monitor-snapshots span.bad{border-color:#dfd9d0;background:#f5f4f3}
-.tg-monitor-sample-note{font-size:11px!important;color:#91a3af!important;line-height:1.7!important;margin:11px 0 0!important}
-.tg-monitor-impact{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-.tg-monitor-impact>div{padding:10px 11px;border-radius:9px;background:rgba(242,249,252,.65)}
-.tg-monitor-impact strong{display:block;font-size:15px;color:#38627b;margin-top:7px;white-space:nowrap}
-.tg-monitor-impact strong.warn{color:#bb813e}
+.tg-monitor-secondary{color:var(--art-gray-500,#8ea0ae);font-size:11px}
+.tg-monitor-rule-table,.tg-monitor-affected-table{font-size:12px;background:transparent;margin-top:10px}
+.tg-monitor-rule-name{font-weight:650;color:var(--art-gray-800,#253f55)}
+.tg-monitor-rule-state{color:var(--art-gray-600,#718999);font-size:11px}
+.tg-monitor-rule-state.warn{color:#a57939;font-weight:650}
+.tg-monitor-rule-expand{padding:6px 14px 12px}
+.tg-monitor-rule-expand p{font-size:12px;color:var(--art-gray-600,#718999);margin:0 0 9px}
+.tg-monitor-evidence-table{width:100%}
+.tg-monitor-sample-note{font-size:11px!important;color:var(--art-gray-500,#8297a6)!important;line-height:1.7!important;margin-top:12px!important}
 .tg-monitor-review{min-width:0}
-.tg-monitor-steps{display:grid;gap:10px;margin:14px 0 20px}
-.tg-monitor-steps>div{display:flex;align-items:center;gap:12px;color:#a4b1bc}
-.tg-monitor-steps span{display:grid;place-items:center;width:25px;height:25px;
- border-radius:50%;border:1px solid #d8e4eb;color:#8fa2b1;font-size:10px}
-.tg-monitor-steps b{font-weight:550;font-size:12px}
-.tg-monitor-steps .done{color:#3e738c}
-.tg-monitor-steps .done span{color:#3e738c;border-color:#a4cadc;background:#f0f8fc}
-.tg-monitor-review-copy{font-size:12px;color:#7c94a3;line-height:1.75;margin:0 0 15px}
-.tg-monitor-case{font-size:12px;color:#60829a;font-variant-numeric:tabular-nums;margin-bottom:11px}
-.tg-monitor-choices{display:grid;gap:4px;margin:0 0 14px}
-.tg-monitor-choices :deep(.el-radio){margin-right:0;white-space:normal;min-height:27px}
-.tg-monitor-submit{margin-top:11px;width:100%}
-.tg-monitor-review-error{font-size:11px;color:#bc6647;margin:9px 0 0}
-.tg-monitor-finished{color:#426b83;font-size:15px}
-.tg-monitor-result-note{font-size:12px;line-height:1.8;color:#657e90;white-space:pre-wrap;margin:11px 0}
-.tg-monitor-links{display:flex;gap:5px;flex-wrap:wrap;margin-top:22px;border-top:1px solid #e2edf2;padding-top:16px}
-@media(max-width:1080px){.tg-monitor-workflow{grid-template-columns:minmax(0,1fr)}}
+.tg-monitor-review-copy,.tg-monitor-result-note{font-size:12px;color:var(--art-gray-600,#718999);line-height:1.7}
+.tg-monitor-case{font-size:12px;color:var(--art-gray-600,#718999);margin-bottom:12px}
+.tg-monitor-choices{display:grid;gap:5px;margin-bottom:12px}
+.tg-monitor-choices :deep(.el-radio){margin-right:0;white-space:normal}
+.tg-monitor-submit{width:100%;margin-top:12px}
+.tg-monitor-review-error{font-size:12px;color:#b46c4b;margin:8px 0 0}
+.tg-monitor-finished{display:block;margin:8px 0;color:var(--art-gray-800,#253f55)}
+.tg-monitor-result-note{white-space:pre-wrap;margin:11px 0}
+.tg-monitor-links{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--art-card-border,#dfeaf1);margin-top:18px;padding-top:14px}
+@media(max-width:1120px){.tg-monitor-workflow{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:730px){
  .tg-monitor-status{flex-direction:column;align-items:flex-start}
- .tg-monitor-values{grid-template-columns:repeat(2,minmax(0,1fr))}
- .tg-monitor-values>div:nth-child(2){border-right:0}
- .tg-monitor-values>div:nth-child(-n+2){border-bottom:1px solid rgba(208,225,233,.75)}
- .tg-monitor-impact{grid-template-columns:1fr}
+ .tg-monitor-readings :deep(.el-descriptions__table){min-width:0}
+ .tg-monitor-readings :deep(.el-descriptions__cell){display:block;width:100%!important}
+ .tg-monitor-rule-table,.tg-monitor-affected-table{overflow-x:auto}
 }
 </style>

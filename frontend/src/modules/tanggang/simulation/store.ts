@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { SCENARIOS, calculateScenario, type ScenarioId, type ScenarioInputs } from './engine'
 import { compareSupplyPlans } from './supplyPlans'
 import {assessSimMonitor} from './monitorEvidence'
+import {analyzeSimOperationalImpact} from './impactAnalysis'
 /**
  * 情景推演与生产源数据严格隔离：仅当前浏览器内存有效，不写localStorage、后台API或PLC。
  * 路由切换不会重置；刷新、退出登录、关闭页面即消失。
@@ -21,6 +22,12 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   const running=computed(()=>activeId.value!==null)
   const monitorEvidence=computed(()=>effectiveScenario.value
     ?assessSimMonitor(effectiveScenario.value):null)
+  const impactAnalysis=computed(()=>{
+    if(!effectiveScenario.value||!result.value||!monitorEvidence.value)return null
+    return analyzeSimOperationalImpact(
+      effectiveScenario.value,result.value,monitorEvidence.value,supplyPlans.value,
+    )
+  })
   type SimReviewOutcome='requires-field-check'|'sim-recovery-conditions'
   interface SimReview {
     runNumber:number
@@ -103,7 +110,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   function openConsole(){consoleOpen.value=true}
   function closeConsole(){consoleOpen.value=false}
   return {activeId,activeInputs,runNumber,startedAt,consoleOpen,activeScenario,
-    effectiveScenario,result,supplyPlans,monitorEvidence,monitorReview,
+    effectiveScenario,result,supplyPlans,impactAnalysis,monitorEvidence,monitorReview,
     beginMonitorReview,recordMonitorReview,
     running,start,stop,openConsole,closeConsole}
 })
