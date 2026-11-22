@@ -131,15 +131,15 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       uTime:{value:0},
       // 与场景主光一致：DirectionalLight position (64,104,-44)，阴影朝屏幕右下。
       uSunDir:{value:new T.Vector3(64,104,-44).normalize()},
-      uDeepColor:{value:new T.Color('#125a74')},
-      uShallowColor:{value:new T.Color('#4fa6b6')},
+      uDeepColor:{value:new T.Color('#0d6070')},
+      uShallowColor:{value:new T.Color('#4ab8bd')},
       uSkyZenith:{value:new T.Color('#4c8cba')},
       uSkyHorizon:{value:new T.Color('#c3d9dd')},
       uSunColor:{value:new T.Color('#ffe9c4')},
       // 与 scene.fog 同步；fog 在色彩空间转换后混合，和标准材质一致。
       uFogColor:{value:seaFog},
-      uFogNear:{value:330},
-      uFogFar:{value:1000},
+      uFogNear:{value:190},
+      uFogFar:{value:680},
       uShoreOrigin:{value:new T.Vector2(0,0)},
       uShoreNormal:{value:new T.Vector2(0,1)},
       uShoreWidth:{value:9},
@@ -301,9 +301,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         float lap = .09 + .10 * sin(dot(p,vec2(1.5,.7)) + .6*uTime);
         float fringe = 1.0-smoothstep(.03,.24+footprint,abs(shore-lap));
         vec3 foamColor = vec3(.83,.89,.90);
-        color = mix(color, foamColor, fringe*.50);
+        color = mix(color, foamColor, fringe*.72);
         float foamLine = 1.0-smoothstep(0.0,.06+footprint,abs(shore-lap-1.05));
-        color = mix(color, foamColor, foamLine*.30);
+        color = mix(color, foamColor, foamLine*.42);
         float chop = smoothstep(.55,.95,length(ripples));
         color = mix(color, vec3(.72,.80,.82), chop*.10*nearFine);
         color += uSkyHorizon * 0.04;

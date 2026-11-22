@@ -834,9 +834,9 @@ function resetCameraPosition(){
     // ?cam=pitch,dist,fov,targetZ 仅用于同机位对版校准，不改变正式界面。
     const camOverride=new URLSearchParams(location.search).get('cam')
     const cam=camOverride?camOverride.split(',').map(Number):[]
-    const pitch=THREE.MathUtils.degToRad(Number.isFinite(cam[0])?cam[0]:22)
+    const pitch=THREE.MathUtils.degToRad(Number.isFinite(cam[0])?cam[0]:20)
     const dir=new THREE.Vector3(0,Math.sin(pitch),Math.cos(pitch))
-    const centre=new THREE.Vector3(-1.2,0,Number.isFinite(cam[3])?cam[3]:12)
+    const centre=new THREE.Vector3(-1.2,5,Number.isFinite(cam[3])?cam[3]:12)
     setFieldOfView(Number.isFinite(cam[2])?cam[2]:36)
     const distance=(Number.isFinite(cam[1])?cam[1]:180)*Math.max(1,(1672/941)/aspect)
     orbit.target.copy(centre);camera.position.copy(centre).addScaledVector(dir,distance)
@@ -1741,7 +1741,7 @@ function setup() {
   skyTexture.colorSpace=THREE.SRGBColorSpace
   environmentTextures.push(skyTexture)
   scene.background=skyTexture
-  scene.fog=new THREE.Fog('#d5e5e5',330,1000)
+  scene.fog=new THREE.Fog('#d7e6e8',190,680)
   try{
     const pmrem=new THREE.PMREMGenerator(renderer)
     const env=pmrem.fromEquirectangular(skyTexture)
