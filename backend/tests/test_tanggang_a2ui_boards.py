@@ -15,6 +15,10 @@ from app.models.archive import OperationLog
 from app.models.tanggang_board import TanggangBoard, TanggangBoardRevision
 from app.models.tanggang_equipment_draft import TanggangDemoEquipment
 from app.models.equipment import Equipment
+from app.models.ai_audit import AiAuditLog
+from app.models.tanggang_mock_ai import (
+    TanggangMockAiSession,TanggangMockAiMessage,TanggangMockAiAction,
+)
 
 API='/api/v1/tanggang/boards'
 
@@ -26,6 +30,8 @@ def env(monkeypatch):
         RoleMenu.__table__,UserRole.__table__,
         TanggangBoard.__table__,TanggangBoardRevision.__table__,
         TanggangDemoEquipment.__table__,Equipment.__table__,
+        TanggangMockAiSession.__table__,TanggangMockAiMessage.__table__,
+        TanggangMockAiAction.__table__,AiAuditLog.__table__,
         OperationLog.__table__,
     ])
     Session=sessionmaker(bind=engine,expire_on_commit=False)

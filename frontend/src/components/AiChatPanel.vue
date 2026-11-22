@@ -25,10 +25,10 @@
         <div class="status-row">
           <div>
             <div class="title">智能助手</div>
-            <div class="sub">流式回复 · 查数 / 档案 / 确认后写入</div>
+            <div class="sub">{{ isMock ? '规则驱动的SIM业务演示' : '流式对话 · 查询与受控操作' }}</div>
           </div>
           <div class="status-right">
-            <el-tag :type="healthOk ? 'success' : 'danger'" effect="plain">
+            <el-tag :type="isMock ? 'info' : healthOk ? 'success' : 'danger'" effect="plain">
               {{ healthLabel }}
             </el-tag>
             <el-button size="small" @click="refreshHealth">刷新状态</el-button>
@@ -40,7 +40,7 @@
       <el-card shadow="never" class="chat-card">
         <div ref="listRef" class="messages">
           <div v-if="!messages.length" class="empty">
-            <p>试着问我：</p>
+            <p>{{ isMock ? 'SIM演示操作' : '试着问我' }}</p>
             <div class="examples">
               <el-button
                 v-for="ex in examples"
@@ -89,7 +89,22 @@
                   <strong>{{ pa.title }}</strong>
                 </div>
                 <div class="pending-summary">{{ pa.summary }}</div>
-                <pre v-if="pa.payload" class="pending-payload">{{ formatPayload(pa.payload) }}</pre>
+                <el-descriptions v-if="isMock && pa.payload" :column="1" size="small" border class="pending-demo-details">
+                  <el-descriptions-item v-if="pa.tool==='create_demo_equipment'" label="设备">
+                    {{pa.payload.name}} · {{pa.payload.code}}
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="pa.tool==='create_demo_equipment'" label="来源">
+                    SIM · {{pa.payload.source_note}}
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="pa.tool==='create_sim_board'" label="看板">
+                    {{pa.payload.title}}
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="pa.tool==='create_sim_board'" label="发布位置">
+                    {{pa.payload.target_path}}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="执行范围">仅独立SIM业务表</el-descriptions-item>
+                </el-descriptions>
+                <pre v-else-if="pa.payload" class="pending-payload">{{ formatPayload(pa.payload) }}</pre>
                 <div class="pending-actions">
                   <template v-if="!pa.uiStatus || pa.uiStatus === 'pending'">
                     <el-button
@@ -115,6 +130,8 @@
                   </el-tag>
                 </div>
                 <div v-if="pa.resultText" class="pending-result">{{ pa.resultText }}</div>
+                <el-button v-if="pa.resultPath && pa.uiStatus==='confirmed'" type="primary"
+                  link size="small" @click="router.push(pa.resultPath)">查看结果</el-button>
               </div>
             </div>
           </div>
@@ -140,6 +157,8 @@
 
 <script setup lang="ts">
 import { nextTick, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useScenarioStore } from '@/modules/tanggang/simulation/store'
 import { ElMessage } from 'element-plus'
 import {
   aiCancel,
@@ -151,11 +170,13 @@ import {
   type AiPendingAction,
   type AiSessionSummary,
   type AiToolTraceItem,
+  type AiDemoContext,
 } from '@/api/ai'
 
 interface PendingUI extends AiPendingAction {
   uiStatus?: 'pending' | 'confirmed' | 'cancelled' | 'failed'
   resultText?: string
+  resultPath?: string
 }
 
 interface Msg {
@@ -168,6 +189,29 @@ interface Msg {
 }
 
 const emit = defineEmits<{ (e: 'emotion', mood: 'happy' | 'sad'): void }>()
+const router = useRouter()
+const scenarioStore = useScenarioStore()
+const isMock = ref(false)
+
+function currentDemoContext(): AiDemoContext | undefined {
+  const result = scenarioStore.result
+  const monitor = scenarioStore.monitorEvidence
+  const id = scenarioStore.activeId
+  if (!scenarioStore.running || !id || !result || !monitor) return undefined
+  return {
+    data_mode: 'SIM',
+    field_verified: false,
+    scenario_id: id,
+    run_number: scenarioStore.runNumber,
+    demand_m3h: result.demandedM3h,
+    delivered_m3h: result.deliveredM3h,
+    shortage_m3h: result.shortageM3h,
+    coverage_percent: result.coveragePercent,
+    pool_forecast_m3: result.forecastPoolM3,
+    monitor_risk: monitor.risk,
+    triggered_rules: monitor.rules.filter(r => r.outcome === 'TRIGGERED').map(r => r.label),
+  }
+}
 
 const messages = ref<Msg[]>([])
 const sessions = ref<AiSessionSummary[]>([])
@@ -183,10 +227,10 @@ const healthHint = ref('')
 let abortCtrl: AbortController | null = null
 
 const examples = [
-  '当前有多少条待处理告警？',
-  '测点 700 当前值是多少？',
-  '帮我建一条维修工单（先查设备）',
-  '档案里轴承温度巡检有什么规定？',
+  '当前模拟供水缺口是多少？',
+  '查询演示设备',
+  '在除尘系统新增设备，设备名称：演示喷雾泵，设备编号：SIM-FOG-001，参数：待核实',
+  '帮我生成供水分析看板',
 ]
 
 function fill(text: string) {
@@ -230,6 +274,19 @@ async function openSession(id: string) {
         role: m.role as 'user' | 'assistant',
         content: m.content,
       }))
+    if (isMock.value && data.data?.pending_actions?.length) {
+      const lastAssistant = [...messages.value].reverse().find(m => m.role === 'assistant')
+      if (lastAssistant) {
+        lastAssistant.pending = data.data.pending_actions.map(p => ({
+          ...p,
+          uiStatus: p.status === 'confirmed' ? 'confirmed'
+            : p.status === 'cancelled' ? 'cancelled'
+            : 'pending',
+          resultPath: p.status === 'confirmed' && p.result_path ? p.result_path : undefined,
+          resultText: p.status === 'confirmed' ? 'SIM演示记录已保存' : undefined,
+        }))
+      }
+    }
     await scrollBottom()
   } catch {
     ElMessage.error('加载会话失败')
@@ -250,16 +307,20 @@ async function refreshHealth() {
     const ollama = d?.data?.ollama || d?.ollama
     const ok = Boolean(d?.ok ?? ollama?.ok)
     healthOk.value = ok
+    isMock.value = d?.mode === 'MOCK' || d?.mock === true
     if (ok) {
-      const model = d?.data?.chat_model || ollama?.chat_model || '模型'
-      healthLabel.value = `就绪 · ${model}`
-      healthHint.value = '写操作需确认；对话有频率限制'
+      const model = d?.data?.chat_model || d?.chat_model || ollama?.chat_model || '模型'
+      healthLabel.value = isMock.value ? 'MOCK · 演示' : `就绪 · ${model}`
+      healthHint.value = isMock.value
+        ? '仅SIM演示；规则识别，无真实大模型。写操作必须人工确认。'
+        : '写操作需确认；对话有频率限制'
     } else {
       healthLabel.value = '不可用'
       healthHint.value = d?.error || ollama?.error || '请检查 Ollama 与 ai-service'
     }
   } catch (e: unknown) {
     healthOk.value = false
+    isMock.value = false
     const issue=e as {response?:{status?:number;data?:{detail?:string}}}
     healthLabel.value = issue?.response?.status===503?'未启用':'不可用'
     healthHint.value = issue?.response?.data?.detail || '无法连接 AI 接口'
@@ -342,6 +403,7 @@ async function send() {
         void scrollBottom()
       },
       abortCtrl.signal,
+      currentDemoContext(),
     )
     await loadSessions()
   } catch (e: unknown) {
@@ -373,9 +435,17 @@ async function onConfirm(pa: PendingUI) {
     if (res && typeof res === 'object') {
       const orderNo = (res as { order_no?: string }).order_no
       if (orderNo) pa.resultText = `工单已创建：${orderNo}`
-      else pa.resultText = '执行成功'
+      else if (isMock.value) {
+        pa.resultText = res.status === 'draft'
+          ? 'SIM看板草稿已保存，请前往“我的看板”预览或发布'
+          : 'SIM演示设备已登记，未写入正式设备台账'
+      } else pa.resultText = '执行成功'
+      if (res.path && typeof res.path === 'string' &&
+          ['/port/analysis/boards', '/port/analysis/equipment-drafts'].includes(res.path)) {
+        pa.resultPath = res.path
+      }
     } else {
-      pa.resultText = '执行成功'
+      pa.resultText = isMock.value ? 'SIM演示操作已确认' : '执行成功'
     }
     emitMood(true)
     ElMessage.success(pa.resultText)

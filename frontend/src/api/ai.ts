@@ -13,6 +13,9 @@ interface OllamaHealth {
 export interface AiHealth {
   enabled: boolean
   ok?: boolean
+  mock?: boolean
+  mode?: 'MOCK' | 'REAL'
+  data_mode?: 'SIM'
   error?: string
   ollama?: OllamaHealth
   data?: {
@@ -43,6 +46,7 @@ export interface AiPendingAction {
   payload?: Record<string, unknown>
   risk?: string
   status?: string
+  result_path?: string | null
 }
 
 export interface AiSessionSummary {
@@ -57,6 +61,25 @@ export interface AiSessionMessage {
   role: string
   content: string
   ts?: number
+}
+export interface AiSessionDetail {
+  id: string
+  messages: AiSessionMessage[]
+  pending_actions?: AiPendingAction[]
+  mock?: boolean
+}
+export interface AiDemoContext {
+  data_mode: 'SIM'
+  field_verified: false
+  scenario_id: 'baseline' | 'peak' | 'storm' | 'pump-fault'
+  run_number: number
+  demand_m3h: number
+  delivered_m3h: number
+  shortage_m3h: number
+  coverage_percent: number
+  pool_forecast_m3: number
+  monitor_risk: 'normal' | 'attention' | 'critical' | 'insufficient'
+  triggered_rules: string[]
 }
 
 export type AiStreamEvent =
@@ -89,6 +112,7 @@ export async function aiChatStream(
   sessionId: string | undefined,
   onEvent: (ev: AiStreamEvent) => void,
   signal?: AbortSignal,
+  demoContext?: AiDemoContext,
 ): Promise<void> {
   const user = useUserStore()
   const res = await fetch('/api/v1/ai/chat/stream', {
@@ -101,6 +125,7 @@ export async function aiChatStream(
       message,
       session_id: sessionId || undefined,
       enable_tools: true,
+      ...(demoContext ? { demo_context: demoContext } : {}),
     }),
     signal,
   })
@@ -164,7 +189,7 @@ export function aiSessions() {
 }
 
 export function aiSessionDetail(sessionId: string) {
-  return http.get<ApiResponse<{ id: string; messages: AiSessionMessage[] }>>(
+  return http.get<ApiResponse<AiSessionDetail>>(
     `/ai/sessions/${sessionId}`,
     { silent: true },
   )

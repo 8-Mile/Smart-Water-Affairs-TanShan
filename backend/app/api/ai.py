@@ -1,6 +1,7 @@
 """AI 助手 API：鉴权用户后代理到 ai-service（透传 JWT 供 Tools / 确认写）。"""
 
 import json
+from typing import Literal
 
 from fastapi import APIRouter, Header, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -13,23 +14,47 @@ from app.core.response import ok
 from app.models.ai_audit import AiAuditLog
 from app.models.user import User
 from app.services.ai_client import ai_service_client
+from app.services import tanggang_mock_ai
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
 
+class DemoContext(BaseModel):
+    # Client-supplied SIM snapshot is illustrative; server never regards it
+    # as a measured SCADA reading or as authorization to perform real work.
+    data_mode: Literal["SIM"] = "SIM"
+    field_verified: Literal[False] = False
+    scenario_id: Literal["baseline", "peak", "storm", "pump-fault"]
+    run_number: int = Field(ge=1, le=1000000)
+    demand_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
+    delivered_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
+    shortage_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
+    coverage_percent: float = Field(ge=0, le=100, allow_inf_nan=False)
+    pool_forecast_m3: float = Field(ge=0, le=100000000, allow_inf_nan=False)
+    monitor_risk: Literal["normal", "attention", "critical", "insufficient"]
+    triggered_rules: list[str] = Field(default_factory=list, max_length=8)
+
+
 class ChatBody(BaseModel):
     message: str = Field(..., min_length=1, max_length=8000)
-    session_id: str | None = None
+    session_id: str | None = Field(default=None, max_length=64)
     enable_tools: bool = True
+    demo_context: DemoContext | None = None
 
 
 class ActionBody(BaseModel):
     action_id: str = Field(..., min_length=8)
 
 
+def _mock_mode() -> bool:
+    # MOCK must be opt-in AND never available in production.
+    settings = get_settings()
+    return bool(settings.ai_mock_enabled and not settings.is_prod)
+
+
 def _require_ai_enabled() -> None:
     settings = get_settings()
-    if not settings.ai_enabled:
+    if not settings.ai_enabled and not _mock_mode():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI 功能未启用（AI_ENABLED=false）",
@@ -77,6 +102,13 @@ def _write_audit(
 @router.get("/health")
 def ai_health(current_user: CurrentUser):
     _require_ai_enabled()
+    if _mock_mode():
+        return ok({
+            "enabled": True, "ok": True, "mock": True, "mode": "MOCK",
+            "chat_model": tanggang_mock_ai.MODEL_NAME,
+            "user": current_user.username,
+            "data_mode": "SIM",
+        })
     result = ai_service_client.health()
     return ok(
         {
@@ -91,9 +123,15 @@ def ai_health(current_user: CurrentUser):
 def ai_chat(
     body: ChatBody,
     current_user: CurrentUser,
+    db: DbSession,
     authorization: str | None = Header(default=None, alias="Authorization"),
 ):
     _require_ai_enabled()
+    if _mock_mode():
+        return ok(tanggang_mock_ai.chat(
+            db, current_user, body.message, body.session_id,
+            body.demo_context.model_dump() if body.demo_context else None,
+        ))
     user_token = _bearer(authorization)
     try:
         data = ai_service_client.chat(
@@ -121,10 +159,37 @@ def ai_chat(
 def ai_chat_stream(
     body: ChatBody,
     current_user: CurrentUser,
+    db: DbSession,
     authorization: str | None = Header(default=None, alias="Authorization"),
 ):
-    """SSE 代理到 ai-service（前端优先使用流式）。"""
+    """SSE mode: MOCK events or real ai-service proxy (never mixed)."""
     _require_ai_enabled()
+    if _mock_mode():
+        # Calculate and commit while the request DB session is alive.
+        record = tanggang_mock_ai.chat(
+            db, current_user, body.message, body.session_id,
+            body.demo_context.model_dump() if body.demo_context else None,
+        )
+
+        def mock_events():
+            def line(event):
+                return "data: " + json.dumps(event, ensure_ascii=False) + "\n\n"
+            yield line({"type":"session","session_id":record["session_id"]})
+            yield line({"type":"status","message":"MOCK业务规则分析"})
+            for tool in record["tool_trace"]:
+                yield line({"type":"tool","tool":tool})
+            for action in record["pending_actions"]:
+                yield line({"type":"pending","action":action})
+            # SSE chunks exercise the real UI transport; no simulated model token generation.
+            reply = record["reply"]
+            for i in range(0, len(reply), 48):
+                yield line({"type":"token","text":reply[i:i+48]})
+            yield line({"type":"done", **record})
+        return StreamingResponse(
+            mock_events(),media_type="text/event-stream",
+            headers={"Cache-Control":"no-cache","X-AI-Mode":"MOCK",
+                     "X-Accel-Buffering":"no"},
+        )
     user_token = _bearer(authorization)
 
     def gen():
@@ -169,6 +234,10 @@ def ai_confirm(
 ):
     """确认执行 AI 挂起的写操作。"""
     _require_ai_enabled()
+    if _mock_mode():
+        return ok(tanggang_mock_ai.resolve(
+            db, current_user, body.action_id, confirm=True,
+        ), message="SIM演示操作已确认")
     user_token = _bearer(authorization)
     try:
         data = ai_service_client.confirm_action(
@@ -207,6 +276,10 @@ def ai_cancel(
     authorization: str | None = Header(default=None, alias="Authorization"),
 ):
     _require_ai_enabled()
+    if _mock_mode():
+        return ok(tanggang_mock_ai.resolve(
+            db, current_user, body.action_id, confirm=False,
+        ), message="SIM演示操作已取消")
     user_token = _bearer(authorization)
     try:
         data = ai_service_client.cancel_action(
@@ -237,8 +310,10 @@ def ai_cancel(
 
 
 @router.get("/sessions")
-def ai_sessions(current_user: CurrentUser):
+def ai_sessions(current_user: CurrentUser, db: DbSession):
     _require_ai_enabled()
+    if _mock_mode():
+        return ok(tanggang_mock_ai.list_sessions(db, current_user))
     try:
         rows = ai_service_client.list_sessions(user_id=str(current_user.id))
     except Exception as e:  # noqa: BLE001
@@ -250,8 +325,10 @@ def ai_sessions(current_user: CurrentUser):
 
 
 @router.get("/sessions/{session_id}")
-def ai_session_detail(session_id: str, current_user: CurrentUser):
+def ai_session_detail(session_id: str, current_user: CurrentUser, db: DbSession):
     _require_ai_enabled()
+    if _mock_mode():
+        return ok(tanggang_mock_ai.get_session(db, current_user, session_id))
     try:
         data = ai_service_client.get_session(session_id)
     except Exception as e:  # noqa: BLE001

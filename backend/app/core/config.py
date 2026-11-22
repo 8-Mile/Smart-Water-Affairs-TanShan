@@ -52,6 +52,8 @@ class Settings(BaseSettings):
 
     # 本地 AI（阶段 4+）
     ai_enabled: bool = True
+    # Explicitly opt-in, development-only. Never activates in production.
+    ai_mock_enabled: bool = False
     ai_service_url: str = "http://127.0.0.1:8200"
     ai_service_api_prefix: str = "/api/v1"
     ai_service_token: str = "dev-ai-service-token-change-me"
