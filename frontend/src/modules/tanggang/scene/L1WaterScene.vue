@@ -59,6 +59,11 @@ import type {
 } from './types/cad'
 import { pipeLegend, systemColors } from './config/pipeLayers'
 import { loadSceneDatasets } from './data/loadSceneDatasets'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+// 帧耗采样放在模块级对象上，避免 SFC 编译重命名局部数组后验收函数读到旧作用域。
+const perfLog={frames:[] as number[]}
 
 const root = ref<HTMLDivElement | null>(null)
 const busy = ref(true)
@@ -78,6 +83,102 @@ const sourceMode = computed(() => businessSystems.value.find(s=>s.id===systemMod
 const focusedPipeLayerSet = computed(() => new Set(sourceMode.value?.focusPipeLayers || []))
 const referencePipeLayerSet = computed(() => new Set(sourceMode.value?.referencePipeLayers || []))
 const firePipeLayers = ['$管综-室外消防','$管综-室内消防']
+// —— 七类管网图例：唯一有效图层集合 ——
+// 总览保存用户勾选；切入工艺按主层/参照层初始化；独显临时覆盖；恢复默认一步复位。
+const legendLayers = pipeLegend.map(p=>p.layer)
+const allLayersOn = ()=>Object.fromEntries(legendLayers.map(layer=>[layer,true])) as Record<string,boolean>
+const layerVisible = ref<Record<string,boolean>>(allLayersOn())
+const soloLayer = ref<string|null>(null)
+const overviewLayerSnapshot = ref<Record<string,boolean>|null>(null)
+const VIEW_STATE_KEY = 'tanggang.dashboard.view.v2'
+const legendIsFire = (layer:string)=>firePipeLayers.includes(layer)
+function layerEnabled(layer:string){
+  if(soloLayer.value){
+    if(legendIsFire(soloLayer.value))return legendIsFire(layer)&&showFireOverlay.value
+    return layer===soloLayer.value
+  }
+  if(legendIsFire(layer))return showFireOverlay.value
+  return layerVisible.value[layer]!==false
+}
+function legendOn(layer:string){return layerEnabled(layer)}
+function isSoloLayer(layer:string){
+  if(!soloLayer.value)return false
+  if(legendIsFire(soloLayer.value))return legendIsFire(layer)
+  return soloLayer.value===layer
+}
+function toggleLayer(layer:string){
+  if(legendIsFire(layer)){toggleFireLayer();return}
+  if(soloLayer.value){
+    // 独显中点同一项 = 退出独显；点其他项 = 退出独显并切换该项。
+    if(isSoloLayer(layer)){soloLayer.value=null}
+    else{
+      soloLayer.value=null
+      const next=layerVisible.value[layer]===false
+      layerVisible.value={...layerVisible.value,[layer]:next}
+    }
+  } else {
+    const next=layerVisible.value[layer]===false
+    layerVisible.value={...layerVisible.value,[layer]:next}
+  }
+  syncDetailWithLayers()
+  refresh()
+}
+function soloLegend(layer:string){
+  soloLayer.value=isSoloLayer(layer)?null:layer
+  if(legendIsFire(layer)&&!showFireOverlay.value){
+    showFireOverlay.value=true
+    try{localStorage.setItem(firePreferenceKey,'on')}catch{/* 当前标签页仍保留选择 */}
+  }
+  syncDetailWithLayers()
+  refresh()
+}
+function resetLegend(){
+  soloLayer.value=null
+  layerVisible.value=allLayersOn()
+  showFireOverlay.value=readFirePreference()
+  syncDetailWithLayers()
+  refresh()
+}
+function applySystemLegend(mode:BusinessSystem|null,fromOverview=false){
+  soloLayer.value=null
+  if(!mode){
+    layerVisible.value=overviewLayerSnapshot.value?{...overviewLayerSnapshot.value}:allLayersOn()
+    return
+  }
+  if(fromOverview)overviewLayerSnapshot.value={...layerVisible.value}
+  const focus=new Set(mode.focusPipeLayers||[]),ref=new Set(mode.referencePipeLayers||[])
+  layerVisible.value=Object.fromEntries(legendLayers.map(layer=>[layer,focus.has(layer)||ref.has(layer)]))
+}
+function syncDetailWithLayers(){
+  if(detail.value?.type==='pipe'&&!layerEnabled(detail.value.data.layer))detail.value=null
+}
+const legendStatus = computed(()=>{
+  if(!sourceMode.value&&!soloLayer.value&&legendLayers.every(layer=>!layerEnabled(layer)))
+    return '已隐藏全部管网；建筑、道路与绿化保留，可逐项恢复或点“恢复默认”'
+  if(!sourceMode.value)return soloLayer.value?'独显中 · 再次点击“独”退出':'点击图例可多选显示；右侧“独”为单类独显'
+  if(!sourceMode.value.focusPipeLayers.length&&!sourceMode.value.referencePipeLayers.length)
+    return '该系统无已核专属管线，重点在水务设施区域'
+  return `${soloLayer.value?'独显中':'已按系统主层与参照层初始化'} · 站内可继续勾选`
+})
+const processRoute = computed(()=>sourceMode.value&&systemModeId.value!=='all'?`/port/process/${sourceMode.value.id}`:'')
+function openProcess(){
+  if(!processRoute.value)return
+  persistViewState()
+  void router.push(processRoute.value)
+}
+function persistViewState(){
+  if(!camera||!orbit)return
+  try{
+    sessionStorage.setItem(VIEW_STATE_KEY,JSON.stringify({
+      system:systemModeId.value,layers:layerVisible.value,solo:soloLayer.value,
+      flow:flowToggle.value,fire:showFireOverlay.value,
+      camera:{pos:camera.position.toArray(),target:orbit.target.toArray(),fov:camera.fov},
+    }))
+  }catch{/* 存储不可用不影响当前视图 */}
+}
+function readViewState():{system?:string;layers?:Record<string,boolean>;solo?:string|null;flow?:boolean;fire?:boolean;camera?:{pos:number[];target:number[];fov?:number}}|null{
+  try{return JSON.parse(sessionStorage.getItem(VIEW_STATE_KEY)||'null')}catch{return null}
+}
 const availableRegions = computed<SiteRegion[]>(()=>{
   const mode=sourceMode.value
   if(!mode)return regions.value
@@ -95,6 +196,69 @@ const visiblePipeHandles = computed(()=>{
 })
 const systemDescription = computed(()=>sourceMode.value?.intro || '港区设施总览 · 按系统选择管网与设备 · CAD源图元候选')
 const detail = ref<Entry | null>(null)
+// 统一对象详情的运营口径：先给设施名称、关联工艺、最多三项核心指标与数据状态，
+// CAD handle、底图版本与位置精度收进“定位依据”，不在首屏堆工程字段。
+const detailName = computed(()=>{
+  const d=detail.value
+  if(!d)return ''
+  if(d.type==='anchor')return d.data.name
+  if(d.type==='yardBand')return d.data.yardAnchorLabels.join(' / ')||d.data.id
+  if(d.type==='matchedContour')return d.data.labels.join(' / ')||d.data.handle
+  return d.data.layer.replace('$管综-','')
+})
+const detailKindLabel = computed(()=>{
+  const d=detail.value
+  if(!d)return ''
+  if(d.type==='anchor')return '水务设施'
+  if(d.type==='yardBand')return '堆场区域'
+  if(d.type==='matchedContour')return '池体轮廓候选'
+  return '输水管段'
+})
+const detailSystemLabel = computed(()=>sourceMode.value?.name||'全场总览')
+const detailKpis = computed<[string,string][]>(()=>{
+  const d=detail.value
+  if(!d)return []
+  if(d.type==='anchor'){
+    const n=d.data.name
+    if(n.includes('洗车'))return [['今日车辆','未接入'],['当日用水量','未接入'],['最近采样','未接入']]
+    if(n.includes('集水')||n.includes('湖')||n.includes('蓄水'))return [['当前液位','未接入'],['进水流量','未接入'],['最近采样','未接入']]
+    if(n.includes('污水')||n.includes('处理'))return [['进出水量','未接入'],['运行状态','未接入'],['最近采样','未接入']]
+    return [['运行状态','未接入'],['关联测点','未接入'],['最近采样','未接入']]
+  }
+  if(d.type==='pipe')return [['管线用途',d.data.layer.replace('$管综-','')],['关联测点','未接入'],['流量 / 压力','未接入']]
+  return [['区域身份','按原图候选'],['监测测点','未接入'],['最近采样','未接入']]
+})
+const floatingKpis = computed<[string,string][]>(()=>{
+  const mark=floatingDetail.value
+  if(!mark)return []
+  const n=mark.name
+  if(n.includes('洗车'))return [['今日车辆','未接入'],['当日用水量','未接入'],['最近采样','未接入']]
+  if(n.includes('池')||n.includes('湖')||n.includes('蓄水'))return [['当前液位','未接入'],['进出水量','未接入'],['最近采样','未接入']]
+  return [['运行状态','未接入'],['关联测点','未接入'],['最近采样','未接入']]
+})
+const floatingNote = computed(()=>{
+  const mark=floatingDetail.value
+  if(!mark)return ''
+  const n=mark.name
+  if(n.includes('洗车'))return '洗车台区按原图定位；车辆计数与用水量由厂家设备接入后显示，不从模型车辆推算。'
+  if(n.includes('湖'))return '人工湖作为调蓄关联对象；当前无液位与补水实测，容量以审查资料为准。'
+  if(n.includes('集水'))return '集水池位置按设计口径表达；液位、提升泵状态待接入后显示。'
+  if(n.includes('泊位'))return '泊位用于查看码头用水与作业关联；港机数量不从船舶模型反推。'
+  return '设施按原图锚点定位；运营读数与测点状态待接入。'
+})
+// 选中工艺时高亮该系统的区域锚点标牌；不改变相机与几何位置。
+const focusAnchorIds = computed(()=>{
+  const ids=new Set<string>()
+  const mode=sourceMode.value
+  if(!mode)return ids
+  for(const item of mode.areaEquipment){
+    const region=regions.value.find(r=>r.id===item.regionId)
+    if(!region)continue
+    region.anchorIds.forEach(id=>ids.add(id))
+    region.contourHandles.forEach(handle=>ids.add(handle))
+  }
+  return ids
+})
 
 // —— 与 5175 唐港首页的受控接口 ——
 watch(
@@ -473,7 +637,7 @@ function disposeHighlights() {
   }
 }
 function refresh() {
-  fireAccessories.visible = showFireOverlay.value
+  fireAccessories.visible = showFireOverlay.value && layerEnabled('$管综-室外消防')
   for (const cloud of continuityDebugGroup.children) {
     cloud.visible = !cloud.userData.fireLayer || showFireOverlay.value
   }
@@ -503,25 +667,25 @@ function refresh() {
     const mode=sourceMode.value
     const focus=!!mode && focusedPipeLayerSet.value.has(batch.layer)
     const reference=!!mode && referencePipeLayerSet.value.has(batch.layer)
-    const fire=showFireOverlay.value && firePipeLayers.includes(batch.layer)
-    // Review mode reveals the target pipe layer and dims others for context,
-    // avoiding artificial 'vanishing' from business-layer opacity filters.
+    const fire=legendIsFire(batch.layer)
+    const enabled=layerEnabled(batch.layer)
+    // 图例勾选是唯一显隐依据：隐藏即不渲染、不拾取、不保留漂浮阀门。
+    // 工艺模式只提高主层对比、降低参照层，不再偷偷显示未勾选图层。
     const opacity=continuityOpen.value
       ?(selectedContinuity.value?(selectedContinuity.value.layer===batch.layer?1:0.26):0.85)
-      :mode?((focus||fire)?1:(reference?0.28:0.09))
-       :1
-    batch.mesh.visible = !firePipeLayers.includes(batch.layer) || showFireOverlay.value
-    batch.mesh.userData.selectable = batch.mesh.visible && (!mode || focus || fire)
+      :enabled?((focus||fire)?1:(reference?0.55:1)):0
+    batch.mesh.visible = enabled
+    batch.mesh.userData.selectable = enabled
     const material=batch.mesh.material as THREE.MeshStandardMaterial
     material.transparent=opacity<1
     material.opacity=opacity
     material.depthWrite=opacity>.5
-    material.emissiveIntensity=(focus||fire)?0.55:0.22
+    material.emissiveIntensity=(focus||fire)?0.55:0.28
     material.needsUpdate=true
     // 流带只跟随演示主管 139320 的顶点：默认批次里其余管段保持静态，
-    // 选中系统时仅在演示层被关注时继续流动。
+    // 选中系统时仅在演示层被关注且该层可见时继续流动。
     const layerFocused=!sourceMode.value||focusedPipeLayerSet.value.has(batch.layer)
-    const flowActive=flowToggle.value&&!grayMode.value&&!!batch.demo&&layerFocused
+    const flowActive=flowToggle.value&&!grayMode.value&&!!batch.demo&&layerFocused&&enabled
     if(batch.onAttr&&batch.flowBase){
       const values=batch.onAttr.array as Float32Array
       let changed=false
@@ -536,7 +700,7 @@ function refresh() {
     material.color.copy(batch.mesh.userData.baseColor as THREE.Color)
   }
   disposeHighlights()
-  if(detail.value?.type==='pipe' && (!firePipeLayers.includes(detail.value.data.layer) || showFireOverlay.value)) {
+  if(detail.value?.type==='pipe' && layerEnabled(detail.value.data.layer)) {
     const selected=detail.value.data
     const points=pipeDisplayPoints(selected)
     const mat=new THREE.MeshStandardMaterial({color:'#b4ffff',emissive:'#05d9f5',
@@ -594,8 +758,10 @@ function toggleFlow(){
 function chooseSystem(next: string) {
   if(next!=='all' && !businessSystems.value.some(s=>s.id===next))return
   sampleMode.value=false
+  const fromOverview=systemModeId.value==='all'
   systemModeId.value=next
   const mode=businessSystems.value.find(s=>s.id===next)
+  applySystemLegend(mode??null,fromOverview)
   activeSystem.value='全部'
   selectedRegionId.value=mode?.primaryRegionId||'REG-YARD'
   showRegionPanel.value=false
@@ -665,25 +831,28 @@ function resetCameraPosition(){
     }
     // 1672×941 的水务首页由堆场四角、洗车台、人工湖和岸线共同标定。
     // 取景仅改变相机。较窄桌面退后，为东西两侧设施和船体保留空间。
-    const pitch=THREE.MathUtils.degToRad(20.78)
+    // ?cam=pitch,dist,fov,targetZ 仅用于同机位对版校准，不改变正式界面。
+    const camOverride=new URLSearchParams(location.search).get('cam')
+    const cam=camOverride?camOverride.split(',').map(Number):[]
+    const pitch=THREE.MathUtils.degToRad(Number.isFinite(cam[0])?cam[0]:30)
     const dir=new THREE.Vector3(0,Math.sin(pitch),Math.cos(pitch))
-    const centre=new THREE.Vector3(-5.79,0,14.76)
-    setFieldOfView(9.86)
-    const distance=310.27*Math.max(1,(1670/877)/aspect)
+    const centre=new THREE.Vector3(-1.2,0,Number.isFinite(cam[3])?cam[3]:-4)
+    setFieldOfView(Number.isFinite(cam[2])?cam[2]:32)
+    const distance=(Number.isFinite(cam[1])?cam[1]:170)*Math.max(1,(1672/941)/aspect)
     orbit.target.copy(centre);camera.position.copy(centre).addScaledVector(dir,distance)
     orbit.update();return
   }
-  setFieldOfView(34)
+  setFieldOfView(36)
   if(sampleMode.value){
     const target=at(-4,-40,1.05)
     orbit.target.copy(target)
     camera.position.copy(target).addScaledVector(new THREE.Vector3(.40,.79,1).normalize(),aspect<1?81:49)
     orbit.update();return
   }
-  const dir=new THREE.Vector3(.19,aspect<.85?.94:.62,1).normalize()
+  const dir=new THREE.Vector3(.19,aspect<.85?.94:.52,1).normalize()
   const right=new THREE.Vector3(dir.z,0,-dir.x).normalize()
   const vertical=new THREE.Vector3().crossVectors(dir,right)
-  const centre=new THREE.Vector3(-4,0,9)
+  const centre=new THREE.Vector3(-4,0,-8)
   const tan=Math.tan(THREE.MathUtils.degToRad(camera.fov/2))
   let distance=0
   for(const x of [-47,46])for(const z of [-48,68]){
@@ -692,7 +861,7 @@ function resetCameraPosition(){
       depth+Math.abs(p.dot(vertical))/(tan*(aspect<.85?.77:.88)))
   }
   orbit.target.copy(centre)
-  camera.position.copy(centre).addScaledVector(dir,distance)
+  camera.position.copy(centre).addScaledVector(dir,distance*1.18)
   orbit.update()
 }
 function showRegion(id:string) {
@@ -1394,7 +1563,7 @@ function initWaterReflection(){
   if(!renderer||!relief)return
   const size=new THREE.Vector2()
   renderer.getDrawingBufferSize(size)
-  const scale=window.innerWidth<900?.35:.5
+  const scale=window.innerWidth<900?.5:.72
   const w=Math.max(256,Math.floor(size.x*scale)),h=Math.max(256,Math.floor(size.y*scale))
   reflectionRT=new THREE.WebGLRenderTarget(w,h,{type:THREE.HalfFloatType,depthBuffer:true})
   reflectionRT.texture.minFilter=THREE.LinearFilter
@@ -1410,7 +1579,7 @@ function initWaterReflection(){
 function resizeWaterReflection(){
   if(!reflectionRT||!renderer)return
   const size=new THREE.Vector2();renderer.getDrawingBufferSize(size)
-  const scale=window.innerWidth<900?.35:.5
+  const scale=window.innerWidth<900?.5:.72
   reflectionRT.setSize(Math.max(256,Math.floor(size.x*scale)),Math.max(256,Math.floor(size.y*scale)))
   reflectionFrames=0
 }
@@ -1460,7 +1629,9 @@ function maybeUpdateWaterReflection(cam:THREE.PerspectiveCamera){
   if(!reflectionRT)return
   const sig=cam.position.toArray().map(v=>v.toFixed(3)).join(',')
     +cam.quaternion.toArray().map(v=>v.toFixed(4)).join(',')
-  if(sig===reflectionSignature&&reflectionFrames>8)return
+  const moving=sig!==reflectionSignature
+  // 相机移动时逐帧刷新；静止后复用上一帧，水面动态由 shader 波纹承担。
+  if(!moving&&reflectionFrames>8)return
   reflectionSignature=sig
   updateWaterReflection(cam)
 }
@@ -1469,7 +1640,7 @@ function setup() {
   const el=root.value
   scene=new THREE.Scene()
   camera=new THREE.PerspectiveCamera(34,Math.max(el.clientWidth,1)/Math.max(el.clientHeight,1),.1,1500)
-  camera.position.set(95,145,154)
+  camera.position.set(72,92,116)
   renderer=new THREE.WebGLRenderer({alpha:false,antialias:true,powerPreference:'default'})
   // Bound WebGL framebuffer area on Retina/4K to avoid memory spikes.
   const initialW=Math.max(el.clientWidth,1),initialH=Math.max(el.clientHeight,1)
@@ -1578,9 +1749,8 @@ function setup() {
     environmentTextures.push(env.texture)
     pmrem.dispose()
   }catch{/* environment map is optional */}
-  // 阴天/薄云 HDR：柔化直射光，以 IBL 为主；作为背景与 PMREM 环境。
-  // 加载成功后接管背景与 IBL；失败则继续使用 Canvas 天空。
-  new RGBELoader().load(import.meta.env.BASE_URL+'tanggang/environment/kloofendal_partly_cloudy_2k.hdr',(hdr)=>{
+  // 晴天 HDR：设计图为淡蓝晴空，用 clear puresky 接管背景与 IBL。
+  new RGBELoader().load(import.meta.env.BASE_URL+'tanggang/environment/syferfontein_clear_puresky_2k.hdr',(hdr)=>{
     if(!active||!scene||!renderer)return
     hdr.mapping=THREE.EquirectangularReflectionMapping
     const pmrem=new THREE.PMREMGenerator(renderer)
@@ -1590,7 +1760,7 @@ function setup() {
     scene.backgroundRotation.set(0,THREE.MathUtils.degToRad(0),0)
     scene.environmentRotation.copy(scene.backgroundRotation)
     scene.backgroundIntensity=1.0
-    scene.environmentIntensity=.75
+    scene.environmentIntensity=.92
     environmentTextures.push(hdr,env.texture)
     hdrSky=hdr
     reflectionFrames=0;reflectionSignature=''
@@ -1617,10 +1787,10 @@ function setup() {
   resetCameraPosition()
   scene.add(new THREE.HemisphereLight(0xdfeef8,0x6d855a,.60))
   const sun=new THREE.DirectionalLight(0xfff0d8,1.7)
-  sun.position.set(64,104,44);sun.castShadow=true;shadowSun=sun
+  sun.position.set(64,104,-44);sun.castShadow=true;shadowSun=sun
   Object.assign(sun.shadow.camera,{left:-92,right:92,top:96,bottom:-96,near:1,far:285})
   sun.shadow.camera.updateProjectionMatrix()
-  sun.shadow.mapSize.set(2048,2048);sun.shadow.normalBias=.03;sun.shadow.bias=-.0002;sun.shadow.radius=3.5
+  sun.shadow.mapSize.set(2048,2048);sun.shadow.normalBias=.05;sun.shadow.bias=-.0005;sun.shadow.radius=3.5
   sun.shadow.autoUpdate=false;sun.shadow.needsUpdate=true
   scene.add(sun)
   const edge=new THREE.DirectionalLight(0xc4ebf5,.20);edge.position.set(-66,48,-42);scene.add(edge)
@@ -1659,8 +1829,12 @@ function setup() {
   let n=0
   let flowPrev=0
   let labelSig=''
+  let framePrev=performance.now()
   const tick=()=>{
     if(!active)return
+    const frameNow=performance.now()
+    perfLog.frames.push(frameNow-framePrev);framePrev=frameNow
+    if(perfLog.frames.length>240)perfLog.frames.shift()
     frameId=requestAnimationFrame(tick)
     if(studyOpen.value&&!busy.value)return
     orbit?.update()
@@ -1676,13 +1850,12 @@ function setup() {
     // 逐显示帧绘制：跳过帧会让转动时物体与标牌抖动。标签只在相机变化时重排，
     // 静止时每 30 帧兜底一次（数据更新走 refresh，不依赖逐帧重算）。
     const cam=camera!
-    // Give the distant yard enough depth precision while keeping nearby views accessible.
     const range = orbit ? cam.position.distanceTo(orbit.target) : 0
-    const elevationWeight = THREE.MathUtils.smoothstep(cam.position.y, 18, 54)
-    const overviewWeight = THREE.MathUtils.smoothstep(range, 95, 235)
-    const nextNear = 0.1 + 7.9 * elevationWeight * overviewWeight
-    if (Math.abs(cam.near - nextNear) > 0.001) {
-      cam.near = nextNear
+    // 近裁剪面只按档位切换，避免转动时逐帧改变深度精度造成共面闪烁。
+    // 远景档收紧远距深度误差，近景档保留贴近查看的可用性。
+    const targetNear = range > 150 ? 2.4 : range < 110 ? 0.4 : 0
+    if (targetNear && Math.abs(cam.near - targetNear) > 0.01) {
+      cam.near = targetNear
       cam.updateProjectionMatrix()
     }
     const sig=`${cam.position.x.toFixed(2)},${cam.position.y.toFixed(2)},${cam.position.z.toFixed(2)},${cam.quaternion.x.toFixed(3)},${cam.quaternion.y.toFixed(3)},${cam.quaternion.z.toFixed(3)},${cam.quaternion.w.toFixed(3)}`
@@ -1713,6 +1886,34 @@ function installDebugProbe(){
       project:(x:number,z:number)=>proj(x,z),
     }
   }
+  // 植树排查：复算最终树心与当前可绘制道路中心折线的平面距离。
+  ;(window as any).__treeAudit=(full=false)=>{
+    const sites=relief?.treeSites??[]
+    const segs=relief?.roadSegments??[]
+    const half=relief?.roadHalfWidth??.66
+    let inside=0,west=0,east=0
+    const hits:{x:number;z:number;d:number;handle:string}[]=[]
+    const rows:{index:number;x:number;z:number;handle:string;d:number;west:number;east:number}[]=[]
+    sites.forEach((site,index)=>{
+      let best=Infinity,handle=''
+      for(const s of segs){
+        const dx=s.bx-s.ax,dz=s.bz-s.az,len2=dx*dx+dz*dz
+        const t=len2>0?Math.max(0,Math.min(1,((site.x-s.ax)*dx+(site.z-s.az)*dz)/len2)):0
+        const d=Math.hypot(s.ax+dx*t-site.x,s.az+dz*t-site.z)
+        if(d<best){best=d;handle=s.handle}
+      }
+      const inWest=site.x>-57&&site.x<-39&&site.z>-45&&site.z<35?1:0
+      const inEast=site.x>22?1:0
+      if(full)rows.push({index,x:+site.x.toFixed(4),z:+site.z.toFixed(4),handle,d:+best.toFixed(4),west:inWest,east:inEast})
+      if(best<half){
+        inside++
+        if(inWest)west++
+        if(inEast)east++
+        hits.push({x:site.x,z:site.z,d:best,handle})
+      }
+    })
+    return {count:sites.length,inside,west,east,halfWidth:half,hits:hits.slice(0,40),rows:full?rows:undefined}
+  }
   // 旋转稳定性复核：仅调试页可用，按角度绕当前目标水平转动相机。
   ;(window as any).__spin=(deg:number)=>{
     if(!camera||!orbit)return null
@@ -1732,17 +1933,33 @@ function installDebugProbe(){
     return camera.position.toArray()
   }
   // 真实渲染统计：renderer.info 只统计已提交的 draw，用于验收记录帧耗与批次。
-  ;(window as any).__stats=()=>({
-    frame:renderer?.info.render.frame??-1,
-    calls:renderer?.info.render.calls??-1,
-    triangles:renderer?.info.render.triangles??-1,
-    geometries:renderer?.info.memory.geometries??-1,
-    textures:renderer?.info.memory.textures??-1,
-  })
+  ;(window as any).__stats=()=>{
+    const sorted=[...perfLog.frames].sort((a,b)=>a-b)
+    const at=(q:number)=>sorted.length?sorted[Math.min(sorted.length-1,Math.floor(sorted.length*q))]:0
+    return {
+      frame:renderer?.info.render.frame??-1,
+      calls:renderer?.info.render.calls??-1,
+      triangles:renderer?.info.render.triangles??-1,
+      geometries:renderer?.info.memory.geometries??-1,
+      textures:renderer?.info.memory.textures??-1,
+      samples:sorted.length,medianMs:+at(.5).toFixed(2),p95Ms:+at(.95).toFixed(2),
+      fps:at(.5)>0?+(1000/at(.5)).toFixed(1):0,
+    }
+  }
 }
 onMounted(async()=>{
   try {
     setup()
+    // 从工艺页返回时恢复相机、系统与图例状态；首次进入没有存档则使用默认机位。
+    const restored=readViewState()
+    const calibration=!!new URLSearchParams(location.search).get('cam')
+    if(!calibration&&restored?.camera&&camera&&orbit){
+      camera.position.fromArray(restored.camera.pos)
+      orbit.target.fromArray(restored.camera.target)
+      if(restored.camera.fov!==undefined&&Number.isFinite(restored.camera.fov))setFieldOfView(restored.camera.fov)
+      orbit.update()
+    }
+    if(typeof restored?.flow==='boolean')flowToggle.value=restored.flow
     const datasets=await loadSceneDatasets()
     const data=datasets.cad
     build(data)
@@ -1761,9 +1978,9 @@ onMounted(async()=>{
       scene?.add(relief.group)
       initWaterReflection()
       const built=relief
-      built.loadGallery().then(loaded=>{
-        if(active&&relief===built){galleryReady.value=loaded;if(shadowSun)shadowSun.shadow.needsUpdate=true}
-      }).catch(()=>{if(active)regionLoadError.value='廊架样板模型加载失败'})
+      built.loadStockpiles().then(loaded=>{
+        if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
+      }).catch(()=>{if(active)regionLoadError.value='堆场精细模型加载失败'})
       built.loadPortAssets().then(loaded=>{
         if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
       }).catch(()=>{if(active)regionLoadError.value='港口设备表现模型加载失败'})
@@ -1788,7 +2005,15 @@ onMounted(async()=>{
       regions.value=datasets.regions.regions
       selectedRegionId.value='REG-YARD'
       if(spatialData)createFloatingMarks(data,spatialData)
-      if(datasets.systems)businessSystems.value=datasets.systems.systems
+      if(datasets.systems){
+        businessSystems.value=datasets.systems.systems
+        if(restored?.system&&businessSystems.value.some(s=>s.id===restored.system)){
+          systemModeId.value=restored.system
+          if(restored.layers)layerVisible.value={...allLayersOn(),...restored.layers}
+          soloLayer.value=restored.solo??null
+          if(typeof restored.fire==='boolean')showFireOverlay.value=restored.fire
+        }
+      }
       refresh()
     }
   } catch(e) { failure.value=e instanceof Error?e.message:'三维场景初始化失败' }
@@ -1801,6 +2026,7 @@ onMounted(async()=>{
   }
 })
 onBeforeUnmount(()=>{
+  persistViewState()
   active=false
   cancelAnimationFrame(frameId)
   observer?.disconnect()
@@ -1856,7 +2082,6 @@ defineExpose({
         <div>
           <div class="l1-eyebrow"><i></i> CAD DESIGN SOURCE <span>51 / 52</span></div>
           <h2>港区水务总览</h2>
-          <p>{{systemDescription}}</p>
         </div>
         <div class="l1-actions">
           <button v-if="!busy && !failure" type="button" class="l1-fire-switch" data-overlay="fire"
@@ -1864,7 +2089,7 @@ defineExpose({
             消防管网<i aria-hidden="true"></i>
           </button>
           <button class="l1-tool-toggle" :class="{active:toolsOpen}" @click="toolsOpen=!toolsOpen"
-            :aria-expanded="toolsOpen" aria-controls="l1-tool-stack">
+            :aria-expanded="toolsOpen">
             {{toolsOpen?'收起工具':'工具 / 系统核查'}}
           </button>
           <template v-if="toolsOpen">
@@ -1881,17 +2106,20 @@ defineExpose({
           </template>
         </div>
       </header>
-      <div class="l1-filters" id="l1-tool-stack" v-if="!busy&&!failure&&toolsOpen" aria-label="六个业务子系统与专业图层">
-        <template v-if="showFilters">
-          <button class="l1-filter l1-system-tab" data-system="all" :class="{chosen:systemModeId==='all'}"
-            :aria-pressed="systemModeId==='all'" @click="chooseSystem('all')">全场总览</button>
-          <button v-for="(mode,index) in businessSystems" :key="mode.id"
-            class="l1-filter l1-system-tab" :data-system="mode.id"
-            :class="{chosen:systemModeId===mode.id}"
-            :aria-pressed="systemModeId===mode.id" @click="chooseSystem(mode.id)">
-            <i :style="{background:mode.accent}"></i>{{String(index+1).padStart(2,'0')}} {{mode.name}}
-          </button>
-        </template>
+      <!-- 顶栏下就近的单行入口：全场总览 + 六工艺；不遮挡场景时也能直接切换。 -->
+      <div class="l1-filters l1-system-row" v-if="!busy&&!failure&&showFilters"
+        aria-label="全场总览与六个业务子系统">
+        <button class="l1-filter l1-system-tab" data-system="all" :class="{chosen:systemModeId==='all'}"
+          :aria-pressed="systemModeId==='all'" @click="chooseSystem('all')">全场总览</button>
+        <button v-for="(mode,index) in businessSystems" :key="mode.id"
+          class="l1-filter l1-system-tab" :data-system="mode.id"
+          :class="{chosen:systemModeId===mode.id}"
+          :aria-pressed="systemModeId===mode.id" @click="chooseSystem(mode.id)">
+          <i :style="{background:mode.accent}"></i>{{String(index+1).padStart(2,'0')}} {{mode.name}}
+        </button>
+        <button v-if="processRoute" class="l1-filter l1-process-link" @click="openProcess">
+          进入{{sourceMode?.name}}工艺页 →
+        </button>
       </div>
       <div v-if="!busy&&!failure" class="l1-site-legend">
         <span>A侧8位 · B侧8位 <b>边线推算</b></span>
@@ -1981,7 +2209,25 @@ defineExpose({
         <button v-if="sampleMode&&solidMode" type="button" data-open-gallery @click="studyOpen=true">廊架构造</button>
       </div>
       <GalleryStudy v-if="studyOpen && !busy && !failure" @close="studyOpen=false"/>
-      <div v-if="solidMode && !busy && !failure" class="home-pipe-legend" aria-label="管线用途图例"><span v-for="p in pipeLegend" :key="p.layer" :class="{muted:p.name==='消防'&&!showFireOverlay}"><i :style="{background:p.color}"></i>{{p.name}}</span></div>
+      <div v-if="solidMode && !busy && !failure" class="home-pipe-legend" role="group"
+        aria-label="七类管网用途图例，可多选显示、单类独显与恢复默认">
+        <div class="l1-legend-head">
+          <strong>管网图例</strong>
+          <button class="l1-legend-reset" type="button" @click="resetLegend">恢复默认</button>
+        </div>
+        <div class="l1-legend-items">
+          <span v-for="p in pipeLegend" :key="p.layer" class="l1-legend-item"
+            :class="{muted:!legendOn(p.layer),soloed:isSoloLayer(p.layer)}">
+            <button type="button" class="l1-legend-toggle" :aria-pressed="legendOn(p.layer)"
+              :title="'显示或隐藏：'+p.name" @click="toggleLayer(p.layer)">
+              <i :style="{background:p.color}"></i>{{p.name}}
+            </button>
+            <button type="button" class="l1-legend-solo" :aria-pressed="isSoloLayer(p.layer)"
+              :aria-label="'仅看'+p.name" :title="'仅看'+p.name" @click="soloLegend(p.layer)">独</button>
+          </span>
+        </div>
+        <small class="l1-legend-status">{{legendStatus}}</small>
+      </div>
       <div v-if="busy" class="l1-message">正在加载原始 CAD 三维审查数据…</div>
       <div v-if="failure" class="l1-message l1-error">{{failure}}</div>
       <div v-if="help" class="l1-help">
@@ -2006,7 +2252,7 @@ defineExpose({
         <button v-for="item in labelItems" :key="item.id" class="l1-label l1-float-label"
           :class="{yard:item.kind==='yardCandidate',pool:item.kind==='poolContour',
             poolGroup:item.kind==='poolGroup',chain:item.kind==='chainBucketWash',
-            chosen:floatingDetail?.id===item.id}"
+            chosen:floatingDetail?.id===item.id,systemFocus:focusAnchorIds.has(item.id)}"
           :style="{left:item.x+'px',top:item.y+'px'}"
           :title="item.note" :data-point-id="item.id" @click="openFloatingMark(item.id)">
           <span class="l1-label-pulse"></span>{{item.name}}
@@ -2017,9 +2263,18 @@ defineExpose({
           top:Math.max(190,Math.min(floatingPopupPosition.y-17,root?.clientHeight ?root.clientHeight-140:800))+'px'}">
         <div class="l1-point-popover-header"><b>{{floatingDetail.name}}</b>
           <button @click="floatingDetail=null" aria-label="关闭点位详情">×</button></div>
-        <small>{{floatingDetail.status}}</small>
-        <p>{{floatingDetail.note}}</p>
-        <p class="l1-point-source">源CAD：{{floatingDetail.sourceHandle}}</p>
+        <small>{{floatingDetail.status}} · 数据状态：未接入实时采集</small>
+        <div class="l1-point-kpis">
+          <div v-for="[label,value] in floatingKpis" :key="label">
+            <small>{{label}}</small><b>{{value}}</b>
+          </div>
+        </div>
+        <p>{{floatingNote}}</p>
+        <details class="l1-point-evidence">
+          <summary>定位依据</summary>
+          <p>{{floatingDetail.note}}</p>
+          <p>源CAD：{{floatingDetail.sourceHandle}}；模型位置为展示锚点。</p>
+        </details>
         <button v-if="floatingDetail.id==='TG-CAD-16'||floatingDetail.id==='HOME-1028AB'"
           type="button" class="l1-point-open" data-inspect-east @click="inspectEastFacility(floatingDetail)">从厂区侧查看</button>
         <button v-if="floatingDetail.regionId&&availableRegions.some(r=>r.id===floatingDetail!.regionId)"
@@ -2045,68 +2300,74 @@ defineExpose({
         :system-intro="sourceMode?.intro||''"
         :system-disclaimer="sourceMode?.disclaimer||''"
         @select-region="showRegion" @toggle-nav="regionNavOpen=!regionNavOpen" />
-      <div v-if="detail" class="l1-selection">
-        <div class="l1-detail-top"><span>{{detail.type==='anchor'?'CAD文字定位':
-          detail.type==='yardBand'?'原CAD堆场带状区域':
-          detail.type==='matchedContour'?'闭合轮廓与文字匹配':'源管线候选图元'}}</span>
-          <button title="关闭" @click="chooseEntry(null)">×</button></div>
-        <strong>{{detail.type==='anchor'?detail.data.name:
-          detail.type==='yardBand'?detail.data.yardAnchorLabels.join(' / '):
-          detail.type==='matchedContour'?detail.data.labels.join(' / '):
-          detail.data.layer.replace('$管综-','')}}</strong>
-        <dl v-if="detail.type==='anchor'">
-          <div><dt>原图Handle</dt><dd>{{detail.data.sourceHandle||'无'}}</dd></div>
-          <div><dt>原图层</dt><dd>{{detail.data.sourceLayer}}</dd></div>
-          <div><dt>原图文字</dt><dd>{{detail.data.sourceText}}</dd></div>
-          <div><dt>CAD坐标</dt><dd>{{detail.data.sourceCADXY.map(v=>Math.round(v)).join(' / ')}}</dd></div>
-          <div><dt>原图轮廓线索</dt><dd>{{sourceMatchesForAnchor(detail.data)}}</dd></div>
-          <div><dt>模型状态</dt><dd>独立设施边界/身份待核</dd></div>
-          <div><dt>水量/测点</dt><dd>未接入</dd></div>
-        </dl>
-        <dl v-else-if="detail.type==='yardBand'">
-          <div><dt>候选区域</dt><dd>{{detail.data.id}}</dd></div>
-          <div><dt>堆场标签</dt><dd>{{detail.data.yardAnchorLabels.join('、')}}</dd></div>
-          <div><dt>源边界Handle</dt><dd>{{detail.data.sourceEdgeHandles.join(' / ')}}</dd></div>
-          <div><dt>CAD图层</dt><dd>{{detail.data.sourceLayer}}</dd></div>
-          <div><dt>侧边界</dt><dd>两条原图长线有证据</dd></div>
-          <div><dt>内部青色长线</dt><dd>中压除尘管 {{detail.data.parallelInternalMiddlePressurePipeHandle}}</dd></div>
-          <div><dt>端部封口</dt><dd>计算构造，未核实</dd></div>
-          <div><dt>两座分界</dt><dd>未确认，不画假分割线</dd></div>
-        </dl>
-        <dl v-else-if="detail.type==='matchedContour'">
-          <div><dt>源Handle</dt><dd>{{detail.data.handle}}</dd></div>
-          <div><dt>源CAD图层</dt><dd>{{detail.data.sourceLayer}}</dd></div>
-          <div><dt>CAD文字点</dt><dd>{{detail.data.labels.join('、')}}</dd></div>
-          <div><dt>几何关联</dt><dd>原闭合面包围原文字点</dd></div>
-          <div><dt>设施身份</dt><dd>尚未工程验收</dd></div>
-          <div><dt>内部池体</dt><dd>尚未逐个核对</dd></div>
-        </dl>
-        <dl v-else>
-          <div><dt>源图元</dt><dd>{{detail.data.handle}}</dd></div>
-          <div><dt>原始图层</dt><dd>{{detail.data.layer}}</dd></div>
-          <div><dt>原图起点</dt><dd>{{detail.data.originalCADPoint.join(' / ')}}</dd></div>
-          <div><dt>连通关系</dt><dd>尚未工程验收</dd></div>
-          <div><dt>阀门/设备</dt><dd>尚未匹配</dd></div>
-          <div><dt>流量/压力</dt><dd>未接入</dd></div>
-          <template v-if="detail.data.handle===DEMO_PIPE_HANDLE">
-            <div><dt>流动演示</dt><dd>{{flowToggle?'流带运行 · 演示数据':'已停流 · 管身保留'}}</dd></div>
-            <div><dt>关联设施候选</dt><dd>除尘泵房 TG-CAD-12（同系统文字锚点，实际接管未核）</dd></div>
-            <div><dt>方向依据</dt><dd>按折线绘制方向演示，不作水力方向证据</dd></div>
-          </template>
-        </dl>
-        <p>{{detail.type==='yardBand'||detail.type==='matchedContour'?detail.data.limitations:
-          '当前为原CAD审查信息，不代表已完成物理管网或设施单体的建模验收。'}}</p>
+      <div v-if="detail" class="l1-selection" role="dialog" aria-label="对象详情">
+        <div class="l1-detail-top"><span>{{detailKindLabel}} · {{detailSystemLabel}}</span>
+          <button title="关闭" aria-label="关闭对象详情" @click="chooseEntry(null)">×</button></div>
+        <strong>{{detailName}}</strong>
+        <p class="l1-detail-sub">关联工艺：{{detailSystemLabel}} · 数据状态：未接入实时采集</p>
+        <div class="l1-kpis">
+          <div v-for="[label,value] in detailKpis" :key="label">
+            <small>{{label}}</small><b>{{value}}</b>
+          </div>
+        </div>
+        <p class="l1-detail-alert">告警：未接入 · 不显示推测趋势或虚构读数</p>
+        <details class="l1-evidence">
+          <summary>定位依据（CAD 源与位置精度）</summary>
+          <dl v-if="detail.type==='anchor'">
+            <div><dt>源Handle</dt><dd>{{detail.data.sourceHandle||'无'}}</dd></div>
+            <div><dt>原图层</dt><dd>{{detail.data.sourceLayer}}</dd></div>
+            <div><dt>原图文字</dt><dd>{{detail.data.sourceText}}</dd></div>
+            <div><dt>CAD坐标</dt><dd>{{detail.data.sourceCADXY.map(v=>Math.round(v)).join(' / ')}}</dd></div>
+            <div><dt>轮廓线索</dt><dd>{{sourceMatchesForAnchor(detail.data)}}</dd></div>
+            <div><dt>位置精度</dt><dd>文字锚点；独立边界与设施身份待核</dd></div>
+          </dl>
+          <dl v-else-if="detail.type==='yardBand'">
+            <div><dt>候选区域</dt><dd>{{detail.data.id}}</dd></div>
+            <div><dt>堆场标签</dt><dd>{{detail.data.yardAnchorLabels.join('、')}}</dd></div>
+            <div><dt>源边界Handle</dt><dd>{{detail.data.sourceEdgeHandles.join(' / ')}}</dd></div>
+            <div><dt>CAD图层</dt><dd>{{detail.data.sourceLayer}}</dd></div>
+            <div><dt>内部中压管</dt><dd>{{detail.data.parallelInternalMiddlePressurePipeHandle}}</dd></div>
+            <div><dt>端部封口</dt><dd>计算构造，未核实</dd></div>
+            <div><dt>两座分界</dt><dd>未确认，不画假分割线</dd></div>
+          </dl>
+          <dl v-else-if="detail.type==='matchedContour'">
+            <div><dt>源Handle</dt><dd>{{detail.data.handle}}</dd></div>
+            <div><dt>源CAD图层</dt><dd>{{detail.data.sourceLayer}}</dd></div>
+            <div><dt>CAD文字点</dt><dd>{{detail.data.labels.join('、')}}</dd></div>
+            <div><dt>几何关联</dt><dd>原闭合面包围原文字点</dd></div>
+            <div><dt>位置精度</dt><dd>轮廓与文字匹配；设施身份未验收</dd></div>
+          </dl>
+          <dl v-else>
+            <div><dt>源图元</dt><dd>{{detail.data.handle}}</dd></div>
+            <div><dt>原始图层</dt><dd>{{detail.data.layer}}</dd></div>
+            <div><dt>原图起点</dt><dd>{{detail.data.originalCADPoint.join(' / ')}}</dd></div>
+            <div><dt>连通关系</dt><dd>尚未工程验收</dd></div>
+            <div><dt>阀门/设备</dt><dd>尚未匹配</dd></div>
+            <template v-if="detail.data.handle===DEMO_PIPE_HANDLE">
+              <div><dt>流动演示</dt><dd>{{flowToggle?'流带运行 · 演示数据':'已停流 · 管身保留'}}</dd></div>
+              <div><dt>关联设施候选</dt><dd>除尘泵房 TG-CAD-12（同系统文字锚点，实际接管未核）</dd></div>
+              <div><dt>方向依据</dt><dd>按折线绘制方向演示，不作水力方向证据</dd></div>
+            </template>
+          </dl>
+          <p v-if="detail.type==='yardBand'||detail.type==='matchedContour'">{{detail.data.limitations}}</p>
+          <p v-else-if="detail.type==='anchor'">当前为原CAD审查信息，不代表已完成物理管网或设施单体的建模验收。</p>
+        </details>
         <div v-if="linkedRegions.length" class="l1-related-areas">
           <strong>对应区域（空间或专业关联，不代表水力连通）</strong>
           <button v-for="item in linkedRegions.slice(0,5)" :key="item.id" @click="showRegion(item.id)">
             {{item.name}} · {{item.devices.length}}类设计设备
           </button>
         </div>
-        <a v-if="detail.type==='anchor'" :href="'/tanggang/audit/cad-review/index.html?focus='+detail.data.id.replace('TG-CAD-','')"
-          target="_blank" rel="noopener">在二维CAD定位</a>
-        <a v-else-if="detail.type==='pipe'" :href="'/tanggang/audit/cad-review/index.html?line='+detail.data.handle"
-          target="_blank" rel="noopener">在二维CAD高亮源图元</a>
-        <a v-else href="/tanggang/audit/cad-review/v2/index.html" target="_blank" rel="noopener">查看V2.2区域证据图</a>
+        <div class="l1-detail-actions">
+          <button v-if="processRoute" class="l1-detail-primary" @click="openProcess">
+            进入{{sourceMode?.name}}工艺页
+          </button>
+          <a v-if="detail.type==='anchor'" :href="'/tanggang/audit/cad-review/index.html?focus='+detail.data.id.replace('TG-CAD-','')"
+            target="_blank" rel="noopener">二维CAD定位</a>
+          <a v-else-if="detail.type==='pipe'" :href="'/tanggang/audit/cad-review/index.html?line='+detail.data.handle"
+            target="_blank" rel="noopener">CAD高亮源图元</a>
+          <a v-else href="/tanggang/audit/cad-review/v2/index.html" target="_blank" rel="noopener">查看区域证据图</a>
+        </div>
       </div>
       <div v-if="regionLoadError&&!busy" class="l1-region-load-error">{{regionLoadError}}</div>
 
@@ -2115,11 +2376,15 @@ defineExpose({
 </template>
 
 <style scoped>
-.l1-scene {pointer-events:none}
+.l1-scene {pointer-events:none;
+  --tg-glass-surface:linear-gradient(150deg,rgba(255,255,255,.84) 0%,rgba(244,250,255,.73) 49%,rgba(231,242,251,.68) 100%);
+  --tg-glass-border:rgba(255,255,255,.74);
+  --tg-glass-outline:rgba(108,159,194,.24);
+  --tg-glass-shadow:0 8px 25px rgba(39,89,135,.12),inset 0 1px 0 rgba(255,255,255,.60)}
 .l1-zone {background:radial-gradient(ellipse 75% 83% at 52% 45%,#fafeff 5%,#e3f1fa 85%); pointer-events:auto}
 .l1-view,.l1-webgl {position:absolute;inset:0;width:100%;height:100%}
 .l1-view {z-index:0}
-.l1-hud {position:absolute;z-index:4;top:17px;left:20px;right:20px;display:flex;align-items:start;justify-content:space-between;gap:12px;pointer-events:none}
+.l1-hud {position:absolute;z-index:4;top:44px;left:20px;right:20px;display:flex;align-items:start;justify-content:space-between;gap:12px;pointer-events:none}
 .l1-hud h2 {font-size:20px;color:#2a5671;margin:6px 0 3px;font-weight:760}
 .l1-hud p {font-size:10px;color:#7594a8;line-height:1.5}
 .l1-eyebrow {display:flex;align-items:center;gap:8px;font-size:10px;font-weight:750;letter-spacing:1.05px;color:#448b9d}
@@ -2128,16 +2393,31 @@ defineExpose({
 .l1-actions {display:flex;align-items:center;gap:6px;pointer-events:auto}
 .l1-actions a,.l1-actions button {padding:8px 9px;border-radius:9px;border:1px solid #dcebf3;background:#fffc;font-size:11px;color:#498099;white-space:nowrap}
 .l1-actions :is(a,button):hover {background:#fff;color:#207f9f;border-color:#add8e7}
-.l1-filters {position:absolute;top:101px;left:20px;right:20px;display:flex;gap:6px;align-items:center;overflow-x:auto;z-index:4}
-.l1-filter {display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:17px;border:1px solid #e1edf3;background:#ffffffd9;color:#6b8497;font-size:10px;white-space:nowrap}
+.l1-filters {position:absolute;top:6px;left:16px;right:112px;display:flex;gap:5px;align-items:center;overflow-x:auto;scrollbar-width:none;z-index:6}
+.l1-filter {display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:17px;border:1px solid #d7e6ee;background:var(--tg-glass-surface);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);color:#5d7f92;font-size:10px;white-space:nowrap;box-shadow:0 3px 12px #3f7f9720}
 .l1-filter i {width:7px;height:7px;border-radius:50%}
-.l1-filter.chosen,.l1-filter:hover {border-color:#79c7de;background:#fff;color:#287f9c}
+.l1-filter.chosen,.l1-filter:hover {border-color:#79c7de;background:#fff;color:#1f7591}
+.l1-filter:focus-visible,.l1-legend-toggle:focus-visible,.l1-legend-solo:focus-visible,.l1-legend-reset:focus-visible{outline:2px solid #1b7396;outline-offset:1px}
+.l1-process-link{margin-left:auto;color:#1d7d96;border-color:#8fcadd;background:#e9f9fd}
 .l1-count {margin-left:auto;font-size:10px;color:#809baa;white-space:nowrap;background:#ffffffca;padding:6px 9px;border-radius:12px}
 .l1-label-layer {position:absolute;inset:0;z-index:2;pointer-events:none}
 .l1-label {position:absolute;pointer-events:auto;transform:translate(-50%,-130%);padding:4px 7px;font-size:10px;font-weight:660;white-space:nowrap;background:#ffffffed;border:1px solid #d8e9f1;border-left:3px solid #3a9cbc;color:#4a6b7e;box-shadow:0 4px 12px #5591a423;border-radius:6px}
 .l1-label.yard {border-left-color:#d8a656;color:#916e36;background:#fffaf2f0}
 .l1-label:hover {background:#fff;border-color:#4dacc8;z-index:4}
-.l1-selection {position:absolute;z-index:5;right:17px;top:141px;width:288px;border-radius:14px;background:linear-gradient(140deg,#fffefdf2,#ecf8fdf4);padding:14px 16px;box-shadow:0 8px 28px #5c8bad36;border:1px solid #fff;color:#486b81;backdrop-filter:blur(13px)}
+.l1-selection {position:absolute;z-index:5;right:17px;top:132px;width:292px;border-radius:14px;background:var(--tg-glass-surface);padding:14px 16px;box-shadow:var(--tg-glass-shadow);border:1px solid var(--tg-glass-border);color:#486b81;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}
+.l1-detail-sub{font-size:10px;color:#6d8ea3;margin:2px 0 10px}
+.l1-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 8px}
+.l1-kpis>div{padding:7px 6px;border-radius:9px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.72)}
+.l1-kpis small{display:block;font-size:9px;color:#7d98a8;line-height:1.35}
+.l1-kpis b{display:block;font-size:12px;color:#2f6f88;margin-top:4px;font-weight:720}
+.l1-detail-alert{font-size:9px;color:#9a7a5c;background:rgba(255,247,236,.7);border:1px solid rgba(230,213,178,.8);border-radius:7px;padding:5px 7px;margin:0 0 8px}
+.l1-evidence{border:1px solid rgba(214,234,241,.9);border-radius:9px;padding:7px 9px;background:rgba(255,255,255,.45);margin:0 0 9px}
+.l1-evidence summary{font-size:10px;color:#3f7f93;cursor:pointer;font-weight:640}
+.l1-evidence dl{margin-top:7px}
+.l1-evidence p{font-size:9px;line-height:1.6;color:#8198a5;margin:7px 0 0}
+.l1-detail-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.l1-detail-primary{background:#e0f5fa;border:1px solid #8fcadd;border-radius:8px;color:#1d7d96;font-size:10px;padding:7px 9px}
+.l1-detail-primary:hover{background:#d0eff7}
 .l1-detail-top {display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#358fa8;letter-spacing:.5px;font-weight:720}
 .l1-detail-top button {font-size:21px;color:#7e9fb1}
 .l1-selection strong {font-size:16px;display:block;color:#315671;margin:7px 0 11px}
@@ -2189,9 +2469,9 @@ defineExpose({
 .l1-mode-label{color:#1d879f;font-weight:770}
 .l1-evidence-warning{color:#a78f78;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(min-width:950px){
- .l1-region-navigator{top:167px}
- .l1-system-evidence{top:133px}
- .l1-selection{top:169px!important}
+ .l1-region-navigator{top:140px}
+ .l1-system-evidence{top:140px}
+ .l1-selection{top:140px!important}
 }
 @media(max-width:949px){
  .l1-system-evidence{top:137px;left:12px;max-width:calc(100% - 24px)}
@@ -2220,13 +2500,11 @@ defineExpose({
 .l1-compass-arrow{position:absolute;top:17px;color:#e08e71;font-size:17px;line-height:1}
 .l1-compass-s{position:absolute;bottom:2px;font-size:9px;font-weight:650;color:#7796a4}
 .l1-compass-caption{font-size:9px;margin-top:5px;color:#7b99a9}
-.l1-site-legend{position:absolute;top:134px;left:17px;z-index:4;display:flex;align-items:center;gap:8px;
+.l1-site-legend{position:absolute;top:122px;left:17px;z-index:4;display:flex;align-items:center;gap:8px;
  max-width:calc(100% - 35px);white-space:nowrap;overflow-x:auto;scrollbar-width:none;pointer-events:none}
-@media (min-width:1000px){
- .l1-zone:not(:has(.l1-tool-toggle[aria-expanded="true"])) .l1-site-legend{top:83px}
-}
-.l1-site-legend>span{display:inline-flex;gap:6px;align-items:center;border:1px solid #dceaf1;background:#ffffffd9;
- font-size:10px;padding:4px 7px;border-radius:9px;color:#497c90}
+.l1-site-legend>span{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--tg-glass-border);background:var(--tg-glass-surface);
+ -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
+ font-size:10px;padding:4px 7px;border-radius:9px;color:#497c90;box-shadow:0 3px 12px #3f7f9718}
 .l1-site-legend b{color:#ad8f6e;font-size:9px;font-weight:550}
 .l1-float-stems{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .l1-float-label{transform:translate(-50%,-100%);display:flex;align-items:center;gap:5px;
@@ -2239,12 +2517,22 @@ defineExpose({
 .l1-float-label.pool{background:#e9faffed;border-left-color:#1f9bb7;color:#357a99}
 .l1-float-label.poolGroup{background:#d7f6ff;border-color:#6cbcd1;color:#247c93;font-weight:820}
 .l1-float-label.chosen,.l1-float-label:hover{background:#fff;box-shadow:0 0 0 2px #67c1d56e,0 7px 20px #398fa339;z-index:10}
+.l1-float-label.systemFocus{background:#fff8ea;border-color:#e6b26b;border-left-color:#d2762f;color:#8a5720;
+ font-weight:800;box-shadow:0 0 0 2px #e2a74e59,0 8px 20px #8f5f1c33;z-index:9}
+.l1-float-label.systemFocus .l1-label-pulse{background:#e0842f;box-shadow:0 0 0 3px #e0842f33}
+.l1-point-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:7px 0}
+.l1-point-kpis>div{padding:5px 6px;border-radius:7px;background:#f5fbff;border:1px solid #e2f0f5}
+.l1-point-kpis small{display:block;font-size:9px;color:#7d98a8;line-height:1.35}
+.l1-point-kpis b{display:block;font-size:11px;color:#2f6f88;margin-top:3px;font-weight:720}
+.l1-point-evidence{margin:6px 0;padding:5px 7px;border:1px solid #e2f0f5;border-radius:7px;background:#f8fcff}
+.l1-point-evidence summary{font-size:9px;color:#4b87a0;cursor:pointer}
+.l1-point-evidence p{font-size:9px;line-height:1.55;color:#7a93a1;margin:4px 0 0}
 .l1-label-pulse{width:6px;height:6px;flex:none;border-radius:50%;background:#4eabc0;box-shadow:0 0 0 3px #4eabc025}
 .l1-float-label.yard .l1-label-pulse{background:#d6a55d;box-shadow:0 0 0 3px #dfb27429}
 .l1-point-popover{position:absolute;z-index:9;width:290px;max-width:calc(100% - 20px);
  transform:translate(-50%,-100%);padding:12px 13px;border-radius:13px;
- background:linear-gradient(135deg,#fffffff7,#e8f8fdf7);border:1px solid #c5e2ec;
- box-shadow:0 8px 28px #5b97ac40;backdrop-filter:blur(15px)}
+ background:var(--tg-glass-surface);border:1px solid var(--tg-glass-border);
+ box-shadow:var(--tg-glass-shadow);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}
 .l1-point-popover-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .l1-point-popover-header b{font-size:13px;color:#296d84}
 .l1-point-popover-header button{font-size:19px;color:#829da9;cursor:pointer}
@@ -2381,11 +2669,31 @@ defineExpose({
 </style>
 
 <style scoped>
-.home-pipe-legend{position:absolute;z-index:4;right:14px;bottom:14px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:9px 12px;background:#f9fcffed;border:1px solid #d4e1e9;border-radius:8px;color:#29465b;font-size:11px;box-shadow:0 3px 12px #283d5215}
-.home-pipe-legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}.home-pipe-legend i{width:18px;height:4px;border-radius:3px}.home-pipe-legend .muted{opacity:.39}
+.home-pipe-legend{position:absolute;z-index:6;left:50%;bottom:14px;transform:translateX(-50%);
+ display:flex;flex-direction:column;gap:5px;padding:8px 11px;border-radius:12px;
+ background:var(--tg-glass-surface);border:1px solid var(--tg-glass-border);
+ -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
+ color:#29465b;font-size:11px;box-shadow:var(--tg-glass-shadow);
+ max-width:min(760px,calc(100% - 40px))}
+.l1-legend-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.l1-legend-head strong{font-size:11px;letter-spacing:.5px;color:#356c84}
+.l1-legend-items{display:flex;flex-wrap:wrap;gap:4px 6px}
+.l1-legend-item{display:inline-flex;align-items:center;border:1px solid #d9e8ef;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.72)}
+.l1-legend-item.muted{opacity:.45}
+.l1-legend-item.soloed{border-color:#2b9fb8;box-shadow:0 0 0 2px #2b9fb82e}
+.l1-legend-toggle{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;font-size:10px;color:#2f5568;background:transparent;white-space:nowrap}
+.l1-legend-toggle i{width:14px;height:4px;border-radius:3px}
+.l1-legend-toggle[aria-pressed="false"]{text-decoration:line-through;color:#7f97a3}
+.l1-legend-solo{padding:3px 5px;border-left:1px solid #e2eef3;font-size:9px;color:#7c98a6;background:#f6fbfd}
+.l1-legend-solo[aria-pressed="true"]{background:#d9f2f7;color:#1a7f96;font-weight:700}
+.l1-legend-reset{font-size:10px;color:#3c8299;padding:2px 6px;border:1px solid #c9e0e8;border-radius:6px;background:#f4fbfd;white-space:nowrap}
+.l1-legend-status{font-size:9px;color:#7b95a4;line-height:1.4}
+@media(prefers-reduced-transparency:reduce){
+ .home-pipe-legend,.l1-filter,.l1-site-legend>span,.l1-selection,.l1-point-popover{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(250,253,255,.96)}
+}
+@media(max-width:950px){.home-pipe-legend{max-width:calc(100% - 40px);gap:3px 8px;font-size:10px}}
+@media(max-width:640px){.home-pipe-legend{bottom:49px;left:8px;right:auto;transform:none;max-width:calc(100% - 16px);padding:5px 7px}.l1-legend-toggle i{width:11px}}
 .relief-controls button[aria-pressed="true"]{background:#245978;color:white}
-@media(max-width:950px){.home-pipe-legend{max-width:55%;gap:3px 8px;font-size:10px}}
-@media(max-width:640px){.home-pipe-legend{bottom:49px;left:8px;right:auto;max-width:calc(100% - 16px);padding:5px 7px}.home-pipe-legend i{width:11px}}
 </style>
 
 <style src="./styles/scene-shell.css"></style>

@@ -81,7 +81,7 @@ export const landmarks: Landmark[] = [
     "x": 32.478,
     "z": 1.655,
     "kind": "parking",
-    "width": 6.2,
+    "width": 7.6,
     "depth": 4.1,
     "height": 0.07
   },
@@ -252,23 +252,23 @@ export const landmarks: Landmark[] = [
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": -17.78064,
-    "z": -42.6,
+    "z": -46.0,
     "kind": "pool",
-    "width": 6.2,
-    "depth": 2.6,
+    "width": 7.6,
+    "depth": 3.8,
     "height": 0.23,
     "evidenceLevel": "anchor_only",
-    "evidence": "CAD 文字锚点 10AE0B 经 TG-CAD-10「南部集水池（原图“集水池”）」定位（x=-17.78064、z=-46.49161）。与 10AE12、10AE14、10AE0E、10AE10 组成南池设计 5 座；池体轮廓待核。为避开前置管架遮挡，首页显示位置较文字点贴靠堆场南缘并北移约 3.9 单位；进深为可读性示意，不是实测池壁尺寸。"
+    "evidence": "CAD 文字锚点 10AE0B 经 TG-CAD-10「南部集水池（原图“集水池”）」定位（x=-17.78064、z=-46.49161）。与 10AE12、10AE14、10AE0E、10AE10 组成南池设计 5 座；池体轮廓待核。首页按 CAD 文字点南侧布置，避开堆场南端管架与场坪遮挡；进深为可读性示意，不是实测池壁尺寸。"
   },
   {
     "handle": "10AE12",
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": -34.28,
-    "z": -42.6,
+    "z": -46.0,
     "kind": "pool",
     "width": 6.6,
-    "depth": 2.6,
+    "depth": 3.8,
     "height": 0.23
   },
   {
@@ -276,10 +276,10 @@ export const landmarks: Landmark[] = [
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": -8.39,
-    "z": -42.6,
+    "z": -46.0,
     "kind": "pool",
     "width": 5.6,
-    "depth": 2.6,
+    "depth": 3.8,
     "height": 0.23
   },
   {
@@ -287,10 +287,10 @@ export const landmarks: Landmark[] = [
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": -1.2,
-    "z": -42.6,
+    "z": -46.0,
     "kind": "pool",
     "width": 5.0,
-    "depth": 2.6,
+    "depth": 3.8,
     "height": 0.23
   },
   {
@@ -298,10 +298,43 @@ export const landmarks: Landmark[] = [
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": 15.48,
-    "z": -42.6,
+    "z": -46.0,
     "kind": "pool",
     "width": 6.4,
-    "depth": 2.6,
+    "depth": 3.8,
     "height": 0.23
+  },
+  {
+    "handle": "344AD8",
+    "name": "消防水池补水管 DN200",
+    "layer": "$管综-雨水",
+    "x": -76.32333,
+    "z": -17.24964,
+    "kind": "pipe-note",
+    "width": 1.6,
+    "depth": 1.6,
+    "height": 0.2
+  },
+  {
+    "handle": "344AD0",
+    "name": "污水站设备间补水管 DN65",
+    "layer": "$管综-雨水",
+    "x": -7.08913,
+    "z": 76.78867,
+    "kind": "pipe-note",
+    "width": 1.6,
+    "depth": 1.6,
+    "height": 0.2
+  },
+  {
+    "handle": "344AD1",
+    "name": "清水池补水管 DN100",
+    "layer": "$管综-雨水",
+    "x": -16.70813,
+    "z": 76.78169,
+    "kind": "pipe-note",
+    "width": 1.6,
+    "depth": 1.6,
+    "height": 0.2
   }
 ]

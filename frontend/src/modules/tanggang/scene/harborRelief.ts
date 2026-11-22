@@ -68,16 +68,16 @@ function stockpile(left:number,right:number,length:number,height:number,seed:num
   const vertices:number[]=[],colors:number[]=[],uv:number[]=[],indices:number[]=[]
   const rows=168,cols=48
   const hash=(v:number)=>{const n=Math.sin(v*127.1+seed*311.7)*43758.5453;return n-Math.floor(n)}
-  const base=new T.Color(['#7c7d77','#807e78','#787a76','#837f78'][seed%4])
+  const base=new T.Color('#ffffff')
   // 平顶宽度（占半宽比例）与肩部收折宽度：设计图是窄平台 + 折线肩，不是圆丘。
-  const crest=.28
-  const shoulder=.05
+  const crest=.38
+  const shoulder=.07
   for(let j=0;j<=rows;j++){
     const t=j/rows,zc=(t-.5)*length
     // 端部推土机切面：比早期版本拉长，读出设计图里明显的斜端面。
-    const endF=Math.min(1,Math.min(t,1-t)*length/4.5)
+    const endF=Math.min(1,Math.min(t,1-t)*length/9.0)
     // 脊线沿长度轻微起伏，只保留毫米级不平整。
-    const ridge=1+.010*Math.sin(t*6.1+seed*.9)+.006*Math.sin(t*15.3+seed*2.3)
+    const ridge=1+.030*Math.sin(t*6.1+seed*.9)+.018*Math.sin(t*15.3+seed*2.3)
     for(let i=0;i<=cols;i++){
       const u=i/cols*2-1,k=j*(cols+1)+i,d=Math.abs(u)
       // 平台→折肩→直坡：肩部只占 5% 半宽，保留一条清楚的堆顶棱线。
@@ -90,12 +90,13 @@ function stockpile(left:number,right:number,length:number,height:number,seed:num
       const x=u*(u<0?left:right)*(1-.008*(1-Math.cos(t*6+seed)))
       const y=.02+height*endF*Math.max(0,face)*ridge+rough*height
       vertices.push(x,Math.max(.02,y),zc)
-      uv.push((x+y*.45)*.52,zc*.52)
+      uv.push((x+y*.45)*.34,zc*.34)
       // 顺坡向的推土纹：按列固定、沿长度低频变化，形成竖向条纹而不是横条。
-      const streak=.87+.13*hash(i*3.7+seed*1.9)+.04*Math.sin(t*6.3+i*.43+seed)
-      // 顶部浮灰明显偏亮、坡脚煤体压暗；端部略压暗。
-      const topLight=.40+.60*Math.pow(Math.max(0,face),.7)
-      const endShade=.82+.18*Math.min(1,Math.min(t,1-t)*length/3.0)
+      const streak=.92+.08*hash(i*3.7+seed*1.9)+.03*Math.sin(t*6.3+i*.43+seed)
+      // 顶部浮灰明显偏亮、坡脚煤体压暗；端部略压暗。阴面下限抬高，
+      // 避免默认机位把堆体读成纯黑剪影（设计稿为深炭灰并保留坡面层次）。
+      const topLight=.72+.32*Math.pow(Math.max(0,face),.65)
+      const endShade=.90+.10*Math.min(1,Math.min(t,1-t)*length/3.0)
       const channel=streak*topLight*endShade
       colors.push(base.r*channel,base.g*channel,base.b*channel)
       if(j<rows&&i<cols){const n=k+cols+1;indices.push(k,n,k+1,k+1,n,n+1)}
@@ -128,10 +129,10 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const sea=new T.ShaderMaterial({
     uniforms:{
       uTime:{value:0},
-      // 与场景主光一致：DirectionalLight position (64,104,44)。
-      uSunDir:{value:new T.Vector3(64,104,44).normalize()},
-      uDeepColor:{value:new T.Color('#1d7590')},
-      uShallowColor:{value:new T.Color('#59b0c4')},
+      // 与场景主光一致：DirectionalLight position (64,104,-44)，阴影朝屏幕右下。
+      uSunDir:{value:new T.Vector3(64,104,-44).normalize()},
+      uDeepColor:{value:new T.Color('#125a74')},
+      uShallowColor:{value:new T.Color('#4fa6b6')},
       uSkyZenith:{value:new T.Color('#4c8cba')},
       uSkyHorizon:{value:new T.Color('#c3d9dd')},
       uSunColor:{value:new T.Color('#ffe9c4')},
@@ -141,7 +142,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       uFogFar:{value:1000},
       uShoreOrigin:{value:new T.Vector2(0,0)},
       uShoreNormal:{value:new T.Vector2(0,1)},
-      uShoreWidth:{value:6},
+      uShoreWidth:{value:9},
       // 平面反射：由 L1WaterScene 每帧写入镜像相机的纹理矩阵与 RTT。
       uReflection:{value:null as T.Texture|null},
       uHasReflection:{value:0},
@@ -208,9 +209,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         float dist = length(vViewDirW);
         // 细节随距离衰减，防止远处短波在像素尺度下闪烁；
         // 默认机位水面在数百单位外，衰减阈值放宽以保留可读的波浪层次。
-        float nearFull = 1.0 - smoothstep(400.0, 2400.0, dist);
-        float nearMid  = 1.0 - smoothstep(250.0, 1600.0, dist);
-        float nearFine = 1.0 - smoothstep(120.0, 1000.0, dist);
+        float nearFull = 1.0 - smoothstep(600.0, 2800.0, dist);
+        float nearMid  = 1.0 - smoothstep(400.0, 2000.0, dist);
+        float nearFine = 1.0 - smoothstep(180.0, 1400.0, dist);
 
         vec2 p = vWorldPos.xz;
         // 低频域扭曲，让长涌浪不成平行条纹。
@@ -238,11 +239,11 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         vec2 gust = vec2(sin(w.y*.18+w.x*.052+.31*uTime), sin(w.x*.14-w.y*.075-.24*uTime));
         vec2 finePos = w + gust*1.62 + vec2(sin(w.x*.32+w.y*.23),cos(w.y*.27-w.x*.18))*.53;
         vec2 ripples = waveSlope(finePos, normalize(vec2(.80,.60)), 2.7, .040, .88, uTime)
-                     * (1.0-smoothstep(.37,.88,footprint));
+                     * (1.0-smoothstep(.50,1.10,footprint));
         ripples += waveSlope(finePos, normalize(vec2(.64,.77)), 1.3, .016, 1.17, uTime)
-                 * (1.0-smoothstep(.17,.44,footprint));
+                 * (1.0-smoothstep(.26,.62,footprint));
         ripples += waveSlope(finePos, normalize(vec2(.18,.98)), .67, .007, 1.45, uTime)
-                 * (1.0-smoothstep(.08,.23,footprint));
+                 * (1.0-smoothstep(.13,.34,footprint));
         slope += ripples;
         vec3 N = normalize(vec3(-slope.x, 1.0, -slope.y));
         float ndv = clamp(dot(N, V), 0.0, 1.0);
@@ -255,8 +256,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         vec3 body = mix(uDeepColor, uShallowColor, shelf * 0.9);
         float offshore = smoothstep(20.0, 160.0, max(shore, 0.0));
         body = mix(body, uDeepColor * 0.85, offshore * 0.55);
-        float contact = 1.0 - smoothstep(0.0, 2.2, max(shore, 0.0));
-        body *= 1.0 - contact * 0.25;
+        float contact = 1.0 - smoothstep(0.0, 3.0, max(shore, 0.0));
+        body *= 1.0 - contact * 0.34;
 
         // 大尺度风生明暗带，避免整片水色均匀。
         float streaks = sin(dot(p, vec2(0.021, 0.013)) + uTime * 0.05)
@@ -270,20 +271,20 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         if(uHasReflection > 0.5){
           vec2 ruv = vReflectCoord.xy / max(vReflectCoord.w, 0.0001);
           // 扰动随距离增强，打破镜面倒影；三次采样模拟水面模糊。
-          vec2 duv = vec2(N.x, N.z) * (0.10 + 0.14 / (1.0 + dist * 0.006));
+          vec2 duv = vec2(N.x, N.z) * (0.07 + 0.11 / (1.0 + dist * 0.006));
           vec3 mirrored = texture2D(uReflection, clamp(ruv + duv, vec2(0.002), vec2(0.998))).rgb * 0.5
                         + texture2D(uReflection, clamp(ruv + duv * 0.45 + vec2(0.0035, 0.0015), vec2(0.002), vec2(0.998))).rgb * 0.25
                         + texture2D(uReflection, clamp(ruv + duv * 0.45 - vec2(0.0035, 0.0015), vec2(0.002), vec2(0.998))).rgb * 0.25;
           float reflFade = 1.0 - smoothstep(220.0, 820.0, dist);
-          sky = mix(sky, mirrored * 0.62, 0.34 * reflFade);
+          sky = mix(sky, mirrored, 0.68 * reflFade);
         }
         // 波面起伏让反射明暗随坡度变化，避免掠射角读成一整片均匀亮面。
-        sky *= 1.0 - 0.20 * clamp(length(slope) * 1.8, 0.0, 1.0);
+        sky *= 1.0 - 0.28 * clamp(length(slope) * 1.8, 0.0, 1.0);
         // 长涌浪的明暗交替：波峰迎光偏亮，波谷偏暗。
         float swellH = sin(dot(w, normalize(vec2( 0.92,  0.39))) * 0.033 + uTime * 0.32)
                      + 0.55 * sin(dot(w, normalize(vec2( 0.63, -0.78))) * 0.053 + uTime * 0.45);
         sky *= 1.0 + swellH * 0.045;
-        vec3 color = mix(body, sky, clamp(fresnel * 0.76 + 0.03, 0.0, 1.0));
+        vec3 color = mix(body, sky, clamp(fresnel * 0.62 + 0.02, 0.0, 1.0));
 
         // 太阳高光：宽光泽 + 紧高光 + 近景碎闪。
         vec3 H = normalize(uSunDir + V);
@@ -300,9 +301,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         float lap = .09 + .10 * sin(dot(p,vec2(1.5,.7)) + .6*uTime);
         float fringe = 1.0-smoothstep(.03,.24+footprint,abs(shore-lap));
         vec3 foamColor = vec3(.83,.89,.90);
-        color = mix(color, foamColor, fringe*.30);
+        color = mix(color, foamColor, fringe*.50);
         float foamLine = 1.0-smoothstep(0.0,.06+footprint,abs(shore-lap-1.05));
-        color = mix(color, foamColor, foamLine*.16);
+        color = mix(color, foamColor, foamLine*.30);
         float chop = smoothstep(.55,.95,length(ripples));
         color = mix(color, vec3(.72,.80,.82), chop*.10*nearFine);
         color += uSkyHorizon * 0.04;
@@ -317,7 +318,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   })
   materials.push(sea)
   const hull=palette('#1d2c37',.45,.3), red=palette('#9b5a46',.6,.1), hatch=palette('#456a7a',.45,.3)
-  const canopy=palette('#33603b',.97,0), canopyLight=palette('#527a45',.97,0)
+  const canopy=palette('#375b3d',.97,0), canopyLight=palette('#566f47',.97,0)
   const concrete=palette('#b9bdb4',.95,0), coalPad=palette('#474f4d',.95,0)
   const orangeMetal=palette('#d2762f',.5,.38), silver=palette('#c3ced2',.3,.78)
   const clarifier=palette('#9fb0b3',.46,.42), fence=palette('#3f93c8',.55,.25)
@@ -327,9 +328,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // L1 池体示意材质：浅色池沿、暗内壁、下沉水面；不是实测池壁构造。
   const basinWall=palette('#ccd7d2',.74,.03)
   const basinInner=palette('#2b4149',.9,.03)
-  const basinWater=palette('#13637f',.23,.06)
-  basinWater.envMapIntensity=.28
-  basinWater.emissive=new T.Color('#14647c');basinWater.emissiveIntensity=.46
+  const basinWater=palette('#2a93b0',.18,.05)
+  basinWater.envMapIntensity=.5
+  basinWater.emissive=new T.Color('#0e5d78');basinWater.emissiveIntensity=.85
   const walkway=palette('#c3cbc4',.93,0)
   const grating=palette('#8b9999',.52,.56)
   const glazing=palette('#5d90a7',.30,.20)
@@ -342,10 +343,16 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // 池体拾取代理：不可见但参与射线拾取，避免为水面/池壁重复建可点击面。
   const poolPick=new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})
   materials.push(poolPick)
+  // 地面贴片与场坪只差几厘米：统一给压在地面上的薄层做深度偏移，
+  // 避免远机位转动时与基层共面竞争产生闪斑（不修改 CAD 位置）。
+  for(const m of [deck,edge,road,stripe,soil,leaf,grass,grassAlt,grassDry,coalPad,
+    walkway,forestFloor,concrete,plinthMat,pondBank,poolRim,basinWall]){
+    m.polygonOffset=true;m.polygonOffsetFactor=-2;m.polygonOffsetUnits=-4
+  }
   const ore=palette('#aaada5',.99,.02);ore.vertexColors=true
   ore.envMapIntensity=.45
   // 矿料阴面只补极弱环境色；过强会把煤堆洗成灰蓝色块。
-  ore.emissive=new T.Color('#161819');ore.emissiveIntensity=.3
+  ore.emissive=new T.Color('#1c1e1f');ore.emissiveIntensity=.34
   const textures:T.Texture[]=[]
   function waterRipples(){
     const size=128, pixels=new Uint8Array(size*size*4)
@@ -370,12 +377,27 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   }
   ore.map=mineralMap('ore-grain.jpg',true)
   ore.normalMap=mineralMap('ore-normal.jpg');ore.normalScale.set(1.0,1.0)
+  // 堆场三套离线烘焙材质：煤、褐矿、灰矿。颜色与法线由
+  // modeling/harbor/bake_stockpile_materials.py 生成，按世界 UV 平铺。
+  const pileKinds=['coal','brown','grey'] as const
+  type PileKind=typeof pileKinds[number]
+  const pileMaterials=Object.fromEntries(pileKinds.map(kind=>{
+    const m=new T.MeshStandardMaterial({color:'#ffffff',roughness:1,metalness:.02,vertexColors:true})
+    const folder='pbr/stockpile/'+kind+'/'
+    m.map=mineralMap(folder+'color.png?v=4',true)
+    m.normalMap=mineralMap(folder+'normal.png?v=4');m.normalScale.set(.7,.7)
+    m.roughnessMap=mineralMap(folder+'rough.png?v=4')
+    m.envMapIntensity=.75
+    materials.push(m)
+    return [kind,m]
+  })) as Record<PileKind,T.MeshStandardMaterial>
   // CC0 PBR 地面：沥青道路、混凝土场坪、草地。UV 已按世界单位生成（prism）。
   const asphalt=mineralMap('pbr/asphalt/color.jpg',true)
   const asphaltN=mineralMap('pbr/asphalt/normal.jpg')
   const asphaltR=mineralMap('pbr/asphalt/rough.jpg')
   asphalt.repeat.set(1,1);asphaltN.repeat.set(1,1);asphaltR.repeat.set(1,1)
-  const roadPbr=palette('#a4aaa1',.94,0)
+  const roadPbr=palette('#969c94',.94,0)
+  roadPbr.polygonOffset=true;roadPbr.polygonOffsetFactor=-3;roadPbr.polygonOffsetUnits=-6
   roadPbr.map=asphalt;roadPbr.normalMap=asphaltN;roadPbr.roughnessMap=asphaltR
   roadPbr.normalScale.set(.55,.55)
   const concreteMap=mineralMap('pbr/concrete/color.jpg',true)
@@ -442,6 +464,29 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   function add(g:T.BufferGeometry,m:T.Material){
     const batch=batches.get(m)||[];batch.push(g);batches.set(m,batch)
   }
+  // 道路网：CAD「00-总图01推荐 道路中心线」按 7m 车行道生成，补路缘与中心虚线。
+  const buildRoads=()=>{
+    for(const line of data.lines){
+      if(line.layer!=='00-总图01推荐 道路中心线')continue
+      const p=line.displayPoints
+      for(let i=0;i<p.length-1;i++){
+        const a=p[i],b=p[i+1],len=distance(a,b)
+        if(len<5)continue
+        add(strip(a,b,7,.05,.02),road)
+        const dx=(b[0]-a[0])/len,dz=(b[1]-a[1])/len
+        for(const side of [-1,1]){
+          const ox=-dz*side*3.62,oz=dx*side*3.62
+          add(strip([a[0]+ox,a[1]+oz],[b[0]+ox,b[1]+oz],.3,.12,.02),coping)
+        }
+        const n=Math.max(1,Math.floor(len/6))
+        for(let k=0;k<n;k++){
+          const t0=(k+.12)/n,t1=(k+.62)/n
+          add(strip([a[0]+(b[0]-a[0])*t0,a[1]+(b[1]-a[1])*t0],
+                    [a[0]+(b[0]-a[0])*t1,a[1]+(b[1]-a[1])*t1],.12,.02,.075),stripe)
+        }
+      }
+    }
+  }
   // 异步模型加载完成后追加的静态构件：直接入组，并纳入统一几何释放。
   function addNow(g:T.BufferGeometry,m:T.Material){
     const mesh=new T.Mesh(g,m);mesh.castShadow=true;mesh.receiveShadow=true
@@ -472,9 +517,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   }
   // 矩形池体 L1 示意：外挑池沿、暗色内壁、低于池沿的水面、分格墙与检修梯。
   // 尺度取地标显示尺寸，不代表实测池壁厚度或有效水深。
-  function basin(x:number,z:number,w:number,d:number){
-    // 池壁抬到远景可读的高度，水面下沉到压顶以下，近侧池沿仍不遮住整片水面。
-    const tw=.13,wallH=.26,y0=.055
+  function basin(x:number,z:number,w:number,d:number,raised=0){
+    // 集水池按设计图做成半地上池：池沿高出场坪，避免被堆场南端管架与场坪遮住。
+    const tw=.13,wallH=.26+raised,y0=.055
     // 池外散水与巡检通道
     add(new T.BoxGeometry(w+1.15,.055,d+1.15).translate(x,y0-.005,-z),concrete)
     add(new T.BoxGeometry(w+.70,.045,.46).translate(x,y0+.02,-(z-d/2-.48)),walkway)
@@ -494,7 +539,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     add(new T.BoxGeometry(.025,.09,d-2*tw-.02).translate(x-w/2+tw+.012,y0+wallH-.05,-z),basinInner)
     add(new T.BoxGeometry(.025,.09,d-2*tw-.02).translate(x+w/2-tw-.012,y0+wallH-.05,-z),basinInner)
     // 下沉水面：低于压顶和池壁顶，读作有池壁的水池而不是平铺色块
-    add(new T.BoxGeometry(w-2*tw-.08,.03,d-2*tw-.08).translate(x,y0+.17,-z),basinWater)
+    add(new T.BoxGeometry(w-2*tw-.08,.03,d-2*tw-.08).translate(x,y0+wallH*.55,-z),basinWater)
     // 超长池才加分格墙，避免把南侧五池读成十个格子
     if(w>9){
       add(new T.BoxGeometry(.10,wallH*.8,d-2*tw).translate(x,y0+wallH*.4,-z),basinWall)
@@ -591,6 +636,25 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // gets a real corridor cut here (FB499 along the east edge of YB-04), so the road
   // surface is not buried under the 0.108-high pad top.
   const roadLines=data.lines.filter(l=>l.layer.includes('道路中心线')&&l.displayPoints.length>=2)
+  // 植树最终坐标写入前的道路硬判定：所有树源（林带、路树、CAD 绿化散点、旧冠层）
+  // 都按最近可绘制道路中心折线求平面距离，低值即位于车道面内。
+  const roadSegments=roadLines.flatMap(l=>{
+    const pts=l.displayPoints
+    return pts.slice(1).map((p,i)=>({ax:pts[i][0],az:pts[i][1],bx:p[0],bz:p[1],handle:l.handle}))
+  })
+  const ROAD_HALF_WIDTH=.66
+  function distanceToRoad(x:number,z:number){
+    let best=Infinity
+    for(const s of roadSegments){
+      const dx=s.bx-s.ax,dz=s.bz-s.az
+      const len2=dx*dx+dz*dz
+      const t=len2>0?Math.max(0,Math.min(1,((x-s.ax)*dx+(z-s.az)*dz)/len2)):0
+      const px=s.ax+dx*t-x,pz=s.az+dz*t-z
+      const d=Math.hypot(px,pz)
+      if(d<best)best=d
+    }
+    return best
+  }
   const yardPads=data.yardBands.map(b=>{
     const xs=b.displayXZ.map(p=>p[0]), zs=b.displayXZ.map(p=>p[1])
     const bx0=Math.min(...xs),bx1=Math.max(...xs),bz0=Math.min(...zs),bz1=Math.max(...zs)
@@ -607,17 +671,26 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     return poly
   })
   for(const pad of yardPads)if(pad.length>=3)add(prism(pad,.10,.008),coalPad)
-  // Each yard number carries an A-side and a B-side CAD text anchor. They mark the
-  // north and south ends of the same stockpile, so they are paired into one long pile.
-  const pileGroups=new Map<string,{xs:number[];zs:number[];bandId:string;id:string;handle:string}>()
+  // CAD 只给出 8 个纵向堆场编号，每个编号带 A/B 两个文字锚点。
+  // 设计图把每列读成南北两堆，因此在带中点切分；这是表现层推定，
+  // 原图没有中间横向分割线（spatial-candidates-v2.6 已注明）。
+  type YardColumn={key:string;bandId:string;x:number;anchors:{side:string;id:string;handle:string;z:number}[]}
+  const yardColumns=new Map<string,YardColumn>()
   for(const yard of spatial.yardSideCandidates){
     const key=(yard.label||yard.id).replace(/^[AB]侧\s*/,'')||yard.id
-    const g=pileGroups.get(key)||{xs:[],zs:[],bandId:yard.bandId,id:yard.id,handle:yard.sourceTextHandle}
-    // 首页每列采用 A 侧业务 ID，与同列标牌及详情共用。
-    if(yard.side==='A'){g.id=yard.id;g.handle=yard.sourceTextHandle}
-    g.xs.push(yard.sceneXZ[0]);g.zs.push(yard.sceneXZ[1])
-    pileGroups.set(key,g)
+    const c=yardColumns.get(key)||{key,bandId:yard.bandId,x:0,anchors:[]}
+    const count=c.anchors.length
+    c.x=(c.x*count+yard.sceneXZ[0])/(count+1)
+    c.anchors.push({side:yard.side,id:yard.id,handle:yard.sourceTextHandle,z:yard.sceneXZ[1]})
+    yardColumns.set(key,c)
   }
+  const columnsByBand=new Map<string,YardColumn[]>()
+  for(const c of yardColumns.values()){
+    const list=columnsByBand.get(c.bandId)||[]
+    list.push(c);columnsByBand.set(c.bandId,list)
+  }
+  for(const list of columnsByBand.values())list.sort((a,b)=>a.x-b.x)
+  const yardBandsById=new Map(data.yardBands.map(b=>[b.id,b]))
   // Contact shadow texture: soft AO under piles and buildings, no measured shading data.
   function contactShadow(){
     const size=128,cv=document.createElement('canvas');cv.width=cv.height=size
@@ -633,49 +706,62 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const shadowMat=new T.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:.72})
   const softShadowMat=new T.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:.42})
   materials.push(shadowMat,softShadowMat)
-  const centreX=(g:{xs:number[]})=>g.xs.reduce((sum,v)=>sum+v,0)/g.xs.length
-  for(const [id,g] of pileGroups){
-    const band=data.yardBands.find(b=>b.id===g.bandId)
+  const splitGap=4.2
+  // 程序化堆体先保证首屏可读；Blender GLB 加载完成后隐藏并由精细资产接管。
+  const proceduralPiles:T.Mesh[]=[]
+  // 南北端各留 2 单位道路，避开 CAD 集水池轮廓：北池 z≥38.2，南池 z≤-45.5。
+  const poolZ=spatial.poolContourCandidates.flatMap(p=>p.displayXZ.map(v=>v[1]))
+  const northPoolEdge=Math.min(...poolZ.filter(z=>z>0))
+  const southPoolEdge=Math.max(...poolZ.filter(z=>z<0))
+  for(const columns of columnsByBand.values()){
+    const band=yardBandsById.get(columns[0].bandId)
     if(!band)continue
-    const x=centreX(g)
-    const peers=[...pileGroups.values()].filter(v=>v.bandId===g.bandId).map(centreX).sort((a,b)=>a-b)
-    const i=peers.indexOf(x),xs=band.displayXZ.map(p=>p[0])
-    // 按 A/B 列中心和场坪两侧边线独立收坡。两堆之间留出检修带。
-    const left=i>0?(x-peers[i-1])/2-.6:x-Math.min(...xs)-.22
-    const right=i<peers.length-1?(peers[i+1]-x)/2-.6:Math.max(...xs)-x-.22
-    if(Math.min(left,right)<.65)continue
-    const width=left+right,footX=x+(right-left)/2
-    // Run length is presentation geometry: the A/B text anchors sit near the ends.
-    const z0=Math.min(...g.zs)-18,z1=Math.max(...g.zs)+11.5
-    const length=z1-z0,cz=(z0+z1)/2
-    const h=3.35+.12*(Number(id.replace(/\D/g,''))%3)
-    const geo=stockpile(left,right,length,h,Number(id.replace(/\D/g,''))||1)
-    geo.translate(x,.112,-cz)
-    interactive(geo,ore,{pick:'reliefPoint',pointId:g.id,sourceHandle:g.handle})
-    // Soft contact shadow keeps the pile visually planted on the pad.
-    const sh=new T.PlaneGeometry(width+1.2,length+1.2).rotateX(-Math.PI/2).translate(footX,.1115,-cz)
-    add(sh,shadowMat)
-    // 堆脚积煤/尘土：沿两侧与端部铺不规则暗斑，让堆体与场坪之间有过浆脏边。
-    for(const s of [-1,1]){
-      const dx=footX+s*(width/2+.62)
-      add(stripUv(strip([dx,cz-length/2-.6],[dx,cz+length/2+.6],1.45,.0016,.1104),3.6),dustMat)
-    }
-    for(const z of [cz-length/2-.55,cz+length/2+.55])
-      add(stripUv(strip([footX-width/2-.9,z],[footX+width/2+.9,z],1.35,.0016,.1104),3.6),dustMat)
-  }
-  // 堆间检修带：8 列堆体之间铺浅色通道，远景不再把相邻两堆粘成一条长堆。
-  // 通道沿既有堆列走向，不新增横向实测边界。
-  {
-    const xs=[...new Set([...pileGroups.values()].map(g=>g.xs.reduce((a,b)=>a+b,0)/g.xs.length))].sort((a,b)=>a-b)
-    const zs=[...pileGroups.values()].flatMap(g=>g.zs)
-    if(xs.length&&zs.length){
-      const cz0=Math.min(...zs)-18,cz1=Math.max(...zs)+11.5
-      for(let i=1;i<xs.length;i++){
-        const gap=xs[i]-xs[i-1]
-        if(gap<4.6)continue
-        add(new T.BoxGeometry(Math.min(1.6,gap-3.2),.02,cz1-cz0)
-          .translate((xs[i]+xs[i-1])/2,.115,-(cz0+cz1)/2),walkway)
+    const bx=band.displayXZ.map(p=>p[0]),bz=band.displayXZ.map(p=>p[1])
+    const bMinX=Math.min(...bx),bMaxX=Math.max(...bx)
+    const zMin=Math.min(...bz),zMax=Math.max(...bz)
+    const mid=(zMin+zMax)/2
+    const yardNorth=Math.min(zMax,northPoolEdge-2)
+    const yardSouth=Math.max(zMin,southPoolEdge+2)
+    columns.forEach((c,ci)=>{
+      const left=ci>0?(c.x-columns[ci-1].x)/2-.4:c.x-bMinX-.22
+      const right=ci<columns.length-1?(columns[ci+1].x-c.x)/2-.4:bMaxX-c.x-.22
+      if(Math.min(left,right)<.65)return
+      const width=left+right,footX=c.x+(right-left)/2
+      const n=Number(c.key.replace(/\D/g,''))||1
+      for(const north of [true,false]){
+        const anchor=c.anchors.find(a=>north?a.side==='A':a.side==='B')||c.anchors[0]
+        if(!anchor)continue
+        const z0=north?mid+splitGap/2:yardSouth
+        const z1=north?yardNorth:mid-splitGap/2
+        const length=z1-z0
+        if(length<3)continue
+        const cz=(z0+z1)/2
+        const seed=n*2+(north?0:1)
+        const h=2.70+.15*((n+(north?0:1))%3)
+        const kind=pileKinds[(n-1+(north?0:1))%pileKinds.length]
+        const geo=stockpile(left,right,length,h,seed)
+        geo.translate(c.x,.112,-cz)
+        // 北堆绑 A 侧锚点、南堆绑 B 侧锚点；拾取详情仍回到原 CAD 候选。
+        const pileMesh=interactive(geo,pileMaterials[kind],{pick:'reliefPoint',pointId:anchor.id,sourceHandle:anchor.handle})
+        proceduralPiles.push(pileMesh)
+        // Soft contact shadow keeps the pile visually planted on the pad.
+        const sh=new T.PlaneGeometry(width+1.2,length+1.2).rotateX(-Math.PI/2).translate(footX,.1115,-cz)
+        add(sh,shadowMat)
+        // 堆脚积煤/尘土：沿两侧与端部铺不规则暗斑，让堆体与场坪之间有过浆脏边。
+        for(const s of [-1,1]){
+          const dx=footX+s*(width/2+.62)
+          add(stripUv(strip([dx,cz-length/2-.6],[dx,cz+length/2+.6],1.45,.0016,.1104),3.6),dustMat)
+        }
+        for(const z of [cz-length/2-.55,cz+length/2+.55])
+          add(stripUv(strip([footX-width/2-.9,z],[footX+width/2+.9,z],1.35,.0016,.1104),3.6),dustMat)
       }
+    })
+    // 同一堆场带内两列之间铺浅色检修带；带间是道路，不跨带铺。
+    for(let i=1;i<columns.length;i++){
+      const gap=columns[i].x-columns[i-1].x
+      if(gap<4.6)continue
+      add(new T.BoxGeometry(Math.min(1.6,gap-3.2),.02,zMax-zMin)
+        .translate((columns[i].x+columns[i-1].x)/2,.115,-(zMin+zMax)/2),walkway)
     }
   }
   for(const l of data.lines){
@@ -967,6 +1053,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const blocked=(x:number,z:number)=>{
     // 洗车台棚架范围内不种树，避免树冠穿出棚顶。
     if(Math.abs(x+45.5)<7.6&&Math.abs(z+6.3)<10.6)return true
+    // 车道面内不种树：树干为硬碰撞，冠幅也要退出车道与转弯扫掠带。
+    if(distanceToRoad(x,z)<ROAD_HALF_WIDTH+.62)return true
     if(lakeSite){
       const dx=(x-(lakeSite.x+lakeDisplayOffset.x))/(lakeSite.width*1.55),dz=(z-(lakeSite.z+lakeDisplayOffset.z))/(lakeSite.depth*1.30)
       if(dx*dx+dz*dz<1)return true
@@ -1000,7 +1088,12 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   }
   let internalTrees=0
   // Street trees along the open north band and the east/west service roads.
-  for(let x=-62;x<58;x+=3.9)pushTree(x+(rng()-.5)*.7,46.6+(rng()-.5)*1.1,.7+rng()*.25,true)
+  for(let x=-62;x<58;x+=3.9){
+    // 路树同样执行车道硬判定：路口处让位于可绘制道路。
+    const px=x+(rng()-.5)*.7,pz=46.6+(rng()-.5)*1.1
+    if(distanceToRoad(px,pz)<ROAD_HALF_WIDTH+.62)continue
+    pushTree(px,pz,.7+rng()*.25,true)
+  }
   for(let z=-40;z<32;z+=4.1){
     const ex=44.4+(rng()-.5)*.8,ez=z+(rng()-.5)*.8,wx=-49.6+(rng()-.5)*.8,wz=z+(rng()-.5)*.8
     if(!blocked(ex,ez))pushTree(ex,ez,.68+rng()*.28,true)
@@ -1190,6 +1283,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   }
   for(const f of sites){
     const {x,z,width,depth,height,kind}=f
+    // 补水管只有 CAD 文字点、没有设施体量：只保留标签，不生成建筑。
+    if(kind==='pipe-note')continue
     const token={pick:'reliefPoint',pointId:landmarkPointId(f.handle,x,z),sourceHandle:f.handle}
     // Soft ground contact shading under every facility mass.
     if(kind!=='lake'&&kind!=='pool'&&kind!=='parking')
@@ -1236,9 +1331,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         // 两处同名“生态蓄水池”文字点：只保留来源记录与低矮自然水面，不表示两座已建水池。
         pond(x,z,width,depth,token)
       }else{
-        basin(x,z,width,depth)
+        basin(x,z,width,depth,.65)
         // 池体本身可拾取；水面与池壁随池体一起选中，不额外生成重复标牌面。
-        const hitGeo=new T.BoxGeometry(width+.2,.42,depth+.2).translate(x,.22,-z)
+        const hitGeo=new T.BoxGeometry(width+.2,1.25,depth+.2).translate(x,.62,-z)
         interactive(hitGeo,poolPick,token)
       }
     }else if(kind==='parking'){
@@ -1308,43 +1403,39 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       if(kind==='treatment')for(let i=0;i<2;i++)add(new T.CylinderGeometry(.28,.28,.82,12).translate(x-width*.2+i*.63,height+.57,-z),steel)
     }
   }
-  // Reuse one Blender truss bay along the longest source edge in the belt assembly layer.
-  // Parallel belt edges are not counted as separate conveyors. The section/height is illustrative.
-  const spanLength=(line:Path)=>distance(line.displayPoints[0],line.displayPoints[1])
-  const gallerySource=data.lines.filter(l=>l.layer==='++皮带机'&&l.displayPoints.length===2)
-    .sort((a,b)=>spanLength(b)-spanLength(a))[0]
-  const galleryInstances:T.InstancedMesh[]=[]
-  const galleryResources=new Set<T.Material|T.BufferGeometry>()
-  async function loadGallery(){
-    if(!gallerySource)return false
-    const {scene:model}=await new GLTFLoader().loadAsync(import.meta.env.BASE_URL+'tanggang/models/harbor/gallery-bay.glb')
-    const [a,b]=gallerySource.displayPoints,len=distance(a,b),count=Math.max(1,Math.round(len/4)),step=len/count
-    const dx=(b[0]-a[0])/len,dz=(b[1]-a[1])/len,host=new T.Object3D()
-    model.updateMatrixWorld(true)
-    tuneBuildingMaterials(model)
-    model.traverse(part=>{
-      if(!(part instanceof T.Mesh))return
-      galleryResources.add(part.geometry)
-      for(const m of Array.isArray(part.material)?part.material:[part.material])galleryResources.add(m)
-      if(disposed)return
-      const batch=new T.InstancedMesh(part.geometry,part.material,count)
-      batch.name='Gallery bay · '+gallerySource.handle;batch.userData.sourceHandle=gallerySource.handle
-      for(let i=0;i<count;i++){
-        host.position.set(a[0]+dx*step*i,.07,-a[1]-dz*step*i)
-        // 沿线廊道截面高度为表现参数：压低到门式刚架量级，避免遮挡岸侧人工湖与铺面。
-        host.rotation.y=Math.atan2(dz,dx);host.scale.set(step/4,.55,1);host.updateMatrix()
-        batch.setMatrixAt(i,new T.Matrix4().multiplyMatrices(host.matrix,part.matrixWorld))
-      }
-      batch.instanceMatrix.needsUpdate=true;batch.computeBoundingSphere()
-      batch.castShadow=batch.receiveShadow=true;galleryInstances.push(batch);group.add(batch);assignGray(batch)
-    })
-    if(disposed)galleryResources.forEach(r=>r.dispose())
-    return !disposed
-  }
+  // 蓝色封闭皮带廊与黄色转运站已按业务要求移除：界面以管网流向为主，
+  // 纵向廊道无 CAD 依据，横廊也会遮挡堆场与集水池。
   // ---------------------------------------------------------------- Blender assets
   // Ships, ship loaders, stacker-reclaimers and the enclosed belt gallery are authored
   // in modeling/harbor/create_port_assets.py. Placement follows CAD berth anchors and
   // yard band centres; the asset form itself is presentation geometry.
+  const stockpileResources=new Set<T.Material|T.BufferGeometry>()
+  // 16 堆精细资产：Blender 按 CAD 平面生成多峰堆体，几何与顶点色随 GLB 载入；
+  // 材质仍复用前端三套 PBR，保证颜色与贴图统一。
+  async function loadStockpiles(){
+    const gltf=await new GLTFLoader().loadAsync(import.meta.env.BASE_URL+'tanggang/models/harbor/stockpiles-16.glb?v=4')
+    if(disposed)return false
+    const model=gltf.scene
+    model.traverse(part=>{
+      if(!(part instanceof T.Mesh))return
+      const kind=String(part.userData.kind||'coal') as PileKind
+      const anchorId=String(part.userData.anchorId||'')
+      const handle=String(part.userData.handle||'')
+      part.material=pileMaterials[kind]||pileMaterials.coal
+      part.castShadow=part.receiveShadow=true
+      part.userData={pick:'reliefPoint',pointId:anchorId,sourceHandle:handle}
+      stockpileResources.add(part.geometry)
+      picks.push(part)
+    })
+    group.add(model)
+    // 隐藏程序化长条，避免与精细堆体叠在一起。
+    for(const mesh of proceduralPiles){
+      mesh.visible=false
+      const index=picks.indexOf(mesh)
+      if(index>=0)picks.splice(index,1)
+    }
+    return true
+  }
   const portResources=new Set<T.Material|T.BufferGeometry>()
   const portInstances:T.Object3D[]=[]
   function registerPort(root:T.Object3D){
@@ -1427,21 +1518,15 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       // The GLB boom points +Z; add PI so it reaches over the vessel.
       if(loaderTpl)placeAsset(loaderTpl.scene,new T.Vector3(lx,.06,-lz),theta,1.35,'装船机 · 表现模型')
     })
-    if(stackTpl)for(const [,g] of pileGroups){
-      const x=g.xs.reduce((a,b)=>a+b,0)/g.xs.length
-      const z0=Math.min(...g.zs)-18,z1=Math.max(...g.zs)+11.5
-      // 每堆一台门式堆取料机，跨堆布置；支腿落在堆间通道，桥架高于堆顶。
-      placeAsset(stackTpl.scene,new T.Vector3(x,.02,-((z0+z1)/2)),0,1,
-        '堆取料机 · 表现模型')
-    }
-    const belt=data.lines.filter(l=>l.layer==='++皮带机'&&l.displayPoints.length===2)
-      .sort((a,b)=>distance(b.displayPoints[0],b.displayPoints[1])-distance(a.displayPoints[0],a.displayPoints[1]))[0]
-    if(belt&&galleryTpl){
-      const [a,b]=belt.displayPoints,len=distance(a,b),count=Math.floor(len/10)
-      const dx=(b[0]-a[0])/len,dz=(b[1]-a[1])/len
-      for(let i=0;i<count;i++)
-        placeAsset(galleryTpl.scene,new T.Vector3(a[0]+dx*(i*10+5),.06,-(a[1]+dz*(i*10+5))),
-          Math.atan2(dz,dx),1,'封闭皮带机廊道 · 表现模型')
+    if(stackTpl)for(const columns of columnsByBand.values()){
+      const band=yardBandsById.get(columns[0].bandId)
+      if(!band)continue
+      const bz=band.displayXZ.map(p=>p[1])
+      const cz=(Math.min(...bz)+Math.max(...bz))/2
+      // 每列一台门式堆取料机，跨南北两堆；支腿落在带内通道，桥架高于堆顶。
+      for(const c of columns)
+        placeAsset(stackTpl.scene,new T.Vector3(c.x,.02,-cz),0,1,
+          '堆取料机 · 表现模型')
     }
     return !disposed
   }
@@ -1724,6 +1809,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     return !disposed
   }
   // Batch static primitives by material. Keep only interactive source features as individual meshes.
+  buildRoads()
   const waterMeshes:T.Mesh[]=[]
   for(const [m,list] of batches){
     const normalized=list.map(g=>{
@@ -1772,13 +1858,15 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   }
   function dispose(){
     disposed=true
-    textures.forEach(t=>t.dispose());galleryInstances.forEach(i=>i.dispose());galleryResources.forEach(r=>r.dispose())
+    textures.forEach(t=>t.dispose());stockpileResources.forEach(r=>r.dispose())
     treeBatches.forEach(i=>i.dispose());treeResources.forEach(r=>r.dispose())
     portInstances.length=0;portResources.forEach(r=>r.dispose())
     originals.clear()
     group.removeFromParent()
     geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose())
   }
-  return {group,picks,dispose,setGray,loadGallery,loadPortAssets,loadBuildings,loadTrees,loadProcessBuildings,loadWashStation,loadTrucks,update,
-    seaMaterial:sea,waterMeshes,waterLevel:.055}
+  return {group,picks,dispose,setGray,loadStockpiles,loadPortAssets,loadBuildings,loadTrees,loadProcessBuildings,loadWashStation,loadTrucks,update,
+    seaMaterial:sea,waterMeshes,waterLevel:.055,
+    // 验收复算用：生成树心的最终坐标与可绘制道路中心折线（非 CAD 资产 ID）。
+    treeSites,roadSegments,roadHalfWidth:ROAD_HALF_WIDTH}
 }
