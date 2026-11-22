@@ -1,0 +1,274 @@
+/* 5190系统统一顶部：舍弃5188独立装饰、顶部背景图、演示身份与物流页脚。
+   仅覆盖首页头部，不改Three.js及其他业务卡片。 */
+
+/* 同主系统的紧凑工具栏高度，释放屏幕空间给3D引擎。 */
+@media (min-width:950px) {
+  .tanggang-home .screen-stage:has(>.scene-layer) {
+    grid-template-rows:64px minmax(0,1fr)!important;
+  }
+}
+.tanggang-home .screen-stage>.topbar.port-header.tg-system-header {
+  z-index:30;
+  position:relative;
+  display:flex!important;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  height:64px!important;
+  min-height:64px!important;
+  box-sizing:border-box;
+  gap:clamp(9px,1.1vw,22px)!important;
+  padding:0 clamp(16px,1.15vw,28px)!important;
+  /* 背景图与传统彩色顶栏均取消，只用轻微磨砂与界限保持可读性。 */
+  background:rgba(250,252,254,.90)!important;
+  background-image:none!important;
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  box-shadow:none!important;
+  border:0!important;
+  border-bottom:1px solid rgba(147,184,220,.23)!important;
+  border-radius:0!important;
+  color:#30495d;
+  overflow:visible;
+}
+.tanggang-home .screen-stage>.topbar.port-header.tg-system-header::before,
+.tanggang-home .screen-stage>.topbar.port-header.tg-system-header::after {
+  content:none!important;
+  background:none!important;
+  display:none!important;
+}
+.tanggang-home .port-header.tg-system-header .tg-system-brand {
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px;
+  min-width:0;
+  max-width:35%;
+  height:100%;
+  white-space:nowrap;
+  color:#263e53;
+  font-size:clamp(15px,1vw,18px);
+  font-weight:750;
+  letter-spacing:.015em;
+  background:none;
+  border:0;
+  cursor:pointer;
+  padding:0;
+}
+.tanggang-home .port-header.tg-system-header .tg-system-brand:hover {color:#246f9a}
+.tanggang-home .port-header.tg-system-header .tg-system-brand span {
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.tanggang-home .port-header.tg-system-header .tg-system-logo {
+  width:36px;
+  height:36px;
+  flex:none;
+  border-radius:50%;
+  object-fit:contain;
+  box-shadow:0 2px 8px rgba(41,95,142,.065);
+}
+.tanggang-home .screen-stage>.topbar.port-header.tg-system-header nav.port-nav.tg-top-nav {
+  position:relative;
+  flex:1 1 auto!important;
+  min-width:0!important;
+  max-width:none;
+  height:100%;
+  align-self:stretch;
+  margin:0!important;
+  gap:0!important;
+  display:flex!important;
+  align-items:stretch;
+  justify-content:center;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:none;
+  border:0!important;
+}
+.tanggang-home .screen-stage>.topbar.port-header.tg-system-header nav.port-nav.tg-top-nav::-webkit-scrollbar {display:none}
+.tanggang-home .port-header.tg-system-header .tg-top-nav .el-dropdown {
+  flex:0 0 auto;
+  display:flex;
+  height:100%;
+  align-items:stretch;
+  outline:none;
+}
+.tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-trigger {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  white-space:nowrap;
+  padding:0 clamp(8px,.68vw,15px);
+  background:none!important;
+  border:0;
+  border-radius:0;
+  color:#5b6d7c;
+  font-size:clamp(12px,.68vw,14px);
+  font-weight:650;
+  font-family:inherit;
+  line-height:1;
+  position:relative;
+  cursor:pointer;
+  transition:color .18s ease;
+}
+.tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-trigger:hover,
+.tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-trigger.is-active {
+  color:#236f9a;
+}
+.tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-trigger.is-active::after {
+  position:absolute;
+  content:'';
+  display:block;
+  left:22%;
+  right:22%;
+  bottom:0;
+  height:2px;
+  border-radius:2px;
+  background:#418baa;
+}
+.tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-icon {width:16px;height:16px;flex:none}
+.tanggang-home .port-header.tg-system-header .tg-system-tools {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex:0 0 auto;
+  min-width:0;
+  height:100%;
+  gap:clamp(8px,.65vw,18px);
+}
+.tanggang-home .port-header.tg-system-header .tg-system-clock {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:3px;
+  font-variant-numeric:tabular-nums;
+  color:#536d80;
+  white-space:nowrap;
+  font-style:normal;
+}
+.tanggang-home .port-header.tg-system-header .tg-system-clock strong {
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.025em;
+  line-height:1.2;
+}
+.tanggang-home .port-header.tg-system-header .tg-system-clock small {font-size:10px;color:#91a2af}
+.tanggang-home .port-header.tg-system-header .tg-system-alert {
+  width:34px;height:34px;
+  border:0;
+  border-radius:9px;
+  display:grid;
+  place-items:center;
+  flex:none;
+  position:relative;
+  background:transparent;
+  color:#607f91;
+  cursor:pointer;
+  transition:background-color .2s,color .2s;
+}
+.tanggang-home .port-header.tg-system-header .tg-system-alert svg {width:19px;height:19px}
+.tanggang-home .port-header.tg-system-header .tg-system-alert:hover {background:rgba(103,173,211,.12);color:#287aab}
+.tanggang-home .port-header.tg-system-header .tg-system-count {
+  position:absolute;top:-1px;right:-4px;
+  min-width:15px;height:15px;padding:0 3px;border-radius:9px;
+  font:650 9px/15px inherit;
+  text-align:center;
+  color:#fff;background:#d18f52;
+}
+.tanggang-home .port-header.tg-system-header .tg-system-user {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  height:37px;
+  padding:3px 2px 3px 3px;
+  border:0;
+  border-radius:9px;
+  background:none!important;
+  color:#39596e;
+  cursor:pointer;
+  font-family:inherit;
+}
+.tanggang-home .port-header.tg-system-header .tg-system-user:hover {color:#216d91}
+.tanggang-home .port-header.tg-system-header .tg-system-avatar {
+  width:30px;height:30px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  background:linear-gradient(135deg,#549dbd,#2b729a);
+  font-weight:700;
+  font-size:12px;
+}
+.tanggang-home .port-header.tg-system-header .tg-system-username {
+  max-width:90px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:13px;
+  font-weight:650;
+}
+.tanggang-home .port-header.tg-system-header .tg-user-chevron {width:12px;height:12px;color:#849ead}
+.tanggang-home .port-header.tg-system-header button:focus-visible {
+  outline:2px solid #318ebc;
+  outline-offset:-3px;
+}
+.tg-top-menu.el-popper,.tg-system-user-dropdown.el-popper {
+  border:1px solid #dce9f0;
+  border-radius:10px;
+  box-shadow:0 8px 23px rgba(33,78,108,.10);
+}
+.tg-top-menu .el-dropdown-menu__item {font-size:13px;min-width:148px}
+@media(max-width:1600px) {
+  .tanggang-home .port-header.tg-system-header .tg-system-brand {max-width:27%;font-size:15px}
+  .tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-icon {display:none}
+  .tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-trigger {padding:0 9px}
+  .tanggang-home .port-header.tg-system-header .tg-system-clock small {display:none}
+}
+@media(max-width:1100px) {
+  .tanggang-home .screen-stage>.topbar.port-header.tg-system-header nav.port-nav.tg-top-nav {justify-content:flex-start}
+  .tanggang-home .port-header.tg-system-header .tg-system-brand {max-width:27%;gap:5px;font-size:13px}
+  .tanggang-home .port-header.tg-system-header .tg-system-logo {width:30px;height:30px}
+  .tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-trigger {padding:0 7px;font-size:12px}
+  .tanggang-home .port-header.tg-system-header .tg-system-username,
+  .tanggang-home .port-header.tg-system-header .tg-user-chevron {display:none}
+}
+@media(max-width:650px) {
+  .tanggang-home .screen-stage:has(>.scene-layer)>.topbar.port-header.tg-system-header {
+    height:92px!important;
+    min-height:92px!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:49px 42px;
+    grid-template-areas:"brand tools" "nav nav";
+    gap:0 6px!important;
+    padding:0 12px!important;
+  }
+  .tanggang-home .port-header.tg-system-header .tg-system-brand {
+    grid-area:brand;
+    height:49px;
+    max-width:none;
+    font-size:14px;
+  }
+  .tanggang-home .port-header.tg-system-header .tg-system-tools {
+    grid-area:tools;
+    height:49px;
+    gap:6px;
+  }
+  .tanggang-home .port-header.tg-system-header .tg-system-clock small {display:none}
+  .tanggang-home .port-header.tg-system-header .tg-system-clock strong {font-size:12px}
+  .tanggang-home .port-header.tg-system-header .tg-system-alert {width:28px;height:28px}
+  .tanggang-home .port-header.tg-system-header .tg-system-user {height:31px}
+  .tanggang-home .port-header.tg-system-header .tg-system-avatar {width:26px;height:26px;font-size:11px}
+  .tanggang-home .screen-stage>.topbar.port-header.tg-system-header nav.port-nav.tg-top-nav {
+    grid-area:nav;
+    min-width:0!important;
+    width:100%;
+    max-width:100%;
+    justify-content:flex-start;
+    height:42px;
+    border-top:1px solid rgba(147,184,220,.18)!important;
+  }
+  .tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-trigger {font-size:12px;padding:0 11px}
+}

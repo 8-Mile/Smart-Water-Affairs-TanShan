@@ -31,6 +31,7 @@ import {
 } from './data/demo'
 import { readImage, storeImage } from './data/display'
 import './styles/tanggang-home.css'
+import './styles/system-header.css'
 
 function currentPage(): Page {
   return 'overview'
@@ -223,10 +224,6 @@ onBeforeUnmount(() => {
         />
       </main>
 
-      <footer class="screen-footer">
-        <span>FLOWOPS <i>/</i> 物流运营中心</span
-        ><span>本地演示数据 · 截至 {{ snap.date }} 16:00</span>
-      </footer>
     </DashboardStage>
     <ElConfigProvider :locale="zhCn"
       ><ElDrawer
