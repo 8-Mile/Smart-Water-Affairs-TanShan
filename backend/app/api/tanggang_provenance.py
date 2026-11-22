@@ -2,6 +2,7 @@
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import or_
 from pydantic import BaseModel, Field, model_validator
 from pydantic_core import PydanticCustomError
 
@@ -15,6 +16,7 @@ from app.models.tanggang_provenance import (
 )
 from app.services.tanggang_catalog import SYSTEMS
 from app.services.tanggang_provenance import BASIS_TYPES, data_context
+from app.services.tanggang_readiness import integration_readiness
 
 router = APIRouter(prefix="/tanggang", tags=["tanggang-provenance"])
 
@@ -56,6 +58,12 @@ def read_data_context(_: CurrentUser):
     return ok(data_context())
 
 
+@router.get("/integration-readiness")
+def read_integration_readiness(db: DbSession, _: CurrentUser):
+    """Read-only completeness overview for the six business systems."""
+    return ok(integration_readiness(db))
+
+
 @router.get("/point-audit")
 def list_point_audit(
     db: DbSession, _: CurrentUser,
@@ -77,13 +85,23 @@ def list_point_audit(
             ScadaPoint.description.contains(keyword)
         )
     if system_id is not None:
-        query = query.filter(
-            ScadaPoint.id.in_(
-                db.query(TanggangPointReview.point_id).filter(
-                    TanggangPointReview.system_id == system_id
-                )
-            )
+        # Include both documented review assignments and *candidate* metric
+        # relations from object mapping. Without this, the most important
+        # unreviewed points disappear from the per-system audit list.
+        reviewed_ids = db.query(TanggangPointReview.point_id).filter(
+            TanggangPointReview.system_id == system_id
         )
+        linked_ids = db.query(TanggangLinkMetric.point_id).join(
+            TanggangObjectLink,
+            TanggangLinkMetric.link_id == TanggangObjectLink.id,
+        ).filter(
+            TanggangObjectLink.system_id == system_id,
+            TanggangObjectLink.deleted == 0,
+        )
+        query = query.filter(or_(
+            ScadaPoint.id.in_(reviewed_ids),
+            ScadaPoint.id.in_(linked_ids),
+        ))
     if basis_type == "UNVERIFIED":
         query = query.filter(
             ~ScadaPoint.id.in_(db.query(TanggangPointReview.point_id))

@@ -67,3 +67,57 @@ export function fetchTanggangPointAudit(params:{
 export function saveTanggangPointReview(pointId:number,body:PointReviewBody){
   return http.put<ApiResponse<PointAuditItem>>('/tanggang/point-reviews/'+pointId,body,{silent:true})
 }
+
+export interface SystemReadinessItem {
+  id:TanggangSystemId
+  name:string
+  object_links:number
+  object_identity_reviewed:number
+  object_source_refs:number
+  linked_facility_ids:string[]
+  asset_bound_facility_ids:string[]
+  asset_links:number
+  point_links:number
+  point_candidates:number
+  point_document_references:number
+  point_assumptions:number
+  point_demo_values:number
+  point_without_review:number
+  point_without_object_link:number
+  point_system_discrepancies:number
+  stale_asset_links:number
+  stale_point_links:number
+  issues:string[]
+  status:'DOCUMENT_PREPARATION_ONLY'
+  field_verified:false
+  scada_commissioned:false
+  hydraulic_topology_verified:false
+}
+export interface TanggangReadinessResponse {
+  stage:'DOCUMENT_BASED_DEMO'
+  basis:'PERSISTED_SOFTWARE_CONFIGURATION'
+  field_verified:false
+  scada_commissioned:false
+  measured_point_count:0
+  systems:SystemReadinessItem[]
+  inventory:{
+    registered_scada_points:number
+    unassigned_scada_points:number
+    reviewed_scada_points:number
+    registered_object_links:number
+  }
+  notice:string
+}
+export interface PointReviewRevision {
+  point_id:number
+  actor_id:number
+  created_at:string
+  before:PointReviewBody|null
+  after:PointReviewBody
+}
+export const fetchTanggangReadiness=()=>http.get<ApiResponse<TanggangReadinessResponse>>(
+  '/tanggang/integration-readiness',{silent:true},
+)
+export const fetchPointReviewHistory=(pointId:number)=>http.get<ApiResponse<PointReviewRevision[]>>(
+  '/tanggang/point-reviews/'+pointId+'/revisions',{silent:true},
+)

@@ -3,10 +3,12 @@ import {computed,onMounted,reactive,ref} from 'vue'
 import {ElMessage} from 'element-plus'
 import {usePermissions} from '@/utils/permissions'
 import {
-  fetchTanggangPointAudit,saveTanggangPointReview,POINT_BASIS_LABEL,
+  fetchTanggangPointAudit,saveTanggangPointReview,fetchTanggangReadiness,
+  fetchPointReviewHistory,POINT_BASIS_LABEL,
   type PointAuditItem,type PointBasis,type PointReviewBody,type PointAuditResponse,
+  type TanggangReadinessResponse,type PointReviewRevision,type SystemReadinessItem,
 } from '@/api/tanggangProvenance'
-import {loadTanggangCatalog,type TanggangCatalog} from '../mapping/tanggangCatalog'
+import {loadTanggangCatalog,summarizeSystem,type TanggangCatalog} from '../mapping/tanggangCatalog'
 import type {TanggangSystemId} from '@/api/tanggang'
 import './business.css'
 
@@ -19,6 +21,33 @@ const pageSize=20
 const info=ref<PointAuditResponse|null>(null)
 const loading=ref(false)
 const error=ref('')
+const readiness=ref<TanggangReadinessResponse|null>(null)
+const readinessLoading=ref(false)
+const readinessError=ref('')
+const selectedSystem=ref<TanggangSystemId|null>(null)
+const historyRows=ref<PointReviewRevision[]>([])
+const historyVisible=ref(false)
+const historyLoading=ref(false)
+const historyPoint=ref<PointAuditItem|null>(null)
+const systemMatrix=computed(()=>readiness.value?.systems.map(row=>{
+  const design=catalog.value?.systemMap.get(row.id)
+  const stats=design&&catalog.value?summarizeSystem(design,catalog.value):null
+  const designIds=design
+    ?[...new Set(design.areaEquipment.flatMap(e=>e.equipmentIds))]:[]
+  const linked=new Set(row.linked_facility_ids)
+  const withAsset=new Set(row.asset_bound_facility_ids)
+  const nameFor=(id:string)=>catalog.value?.deviceMap.get(id)?.name||id
+  return {...row,
+    designCategories:stats?.designCategories??null,
+    unlocated:stats?.unlocated??null,
+    notMappedDesign:designIds.filter(id=>!linked.has(id)).map(nameFor),
+    withoutAssetDesign:designIds.filter(id=>linked.has(id)&&!withAsset.has(id)).map(nameFor),
+    designNameDifference:design&&design.name!==row.name
+      ?'设计文件：'+design.name+'；业务目录：'+row.name : null,
+    focusLayers:design?.focusPipeLayers??[],
+    topologyHint:design?.disclaimer||'设计工艺拓扑尚需现场逐段核实',
+  }
+})||[])
 const editing=ref<PointAuditItem|null>(null)
 const editorVisible=ref(false)
 const saving=ref(false)
@@ -29,6 +58,63 @@ const form=reactive<{system_id:TanggangSystemId|'';basis_type:PointBasis;source_
 const systemOptions=computed(()=>catalog.value?.systems.map(s=>({value:s.id,label:s.name}))||[])
 const designCount=computed(()=>catalog.value?.deviceMap.size??0)
 let serial=0
+async function refreshReadiness(){
+  readinessLoading.value=true
+  readinessError.value=''
+  try{
+    const {data}=await fetchTanggangReadiness()
+    readiness.value=data.data
+  }catch{
+    readinessError.value='六系统接入准备度读取失败'
+    readiness.value=null
+  }finally{readinessLoading.value=false}
+}
+function chooseSystem(id:TanggangSystemId){
+  selectedSystem.value=selectedSystem.value===id?null:id
+  filter.system_id=selectedSystem.value||''
+  page.value=1
+  void refresh()
+}
+function csvDownload(filename:string,header:string[],rows:unknown[][]){
+  const escapeCsv=(value:unknown)=>'"'+String(value??'').replace(/"/g,'""')+'"'
+  const csv='\ufeff'+[header,...rows].map(row=>row.map(escapeCsv).join(',')).join('\r\n')
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'})
+  const url=URL.createObjectURL(blob)
+  const a=document.createElement('a')
+  a.href=url;a.download=filename
+  document.body.append(a);a.click();a.remove()
+  window.setTimeout(()=>URL.revokeObjectURL(url),1500)
+}
+function exportReadiness(){
+  if(!readiness.value)return
+  csvDownload('唐港-六系统资料与接入准备核对.csv',[
+    '业务系统','设计设施类别（参考）','工程对象关联记录','有工程来源的对象关系',
+    '设备台账关联','SCADA测点关联','测点候选总数',
+    '上传资料引用测点','依据资料推导','演示假设测点',
+    '已关联但未核对测点','资料已登记但未绑定对象','测点系统归属待核',
+    '失效设备关联','失效测点关联','设计设施未关联对象',
+    '已关联对象但无设备台账','设计与业务名称差异','待核实问题','现场接入状态',
+  ],systemMatrix.value.map(x=>[
+    x.name,x.designCategories??'未载入',
+    x.object_links,x.object_source_refs,x.asset_links,x.point_links,
+    x.point_candidates,x.point_document_references,x.point_assumptions,
+    x.point_demo_values,x.point_without_review,x.point_without_object_link,
+    x.point_system_discrepancies,x.stale_asset_links,x.stale_point_links,
+    x.notMappedDesign.join('；'),x.withoutAssetDesign.join('；'),
+    x.designNameDifference||'',x.issues.join('；'),'未现场核实',
+  ]))
+}
+async function showHistory(row:PointAuditItem){
+  historyPoint.value=row
+  historyRows.value=[]
+  historyVisible.value=true
+  historyLoading.value=true
+  try{
+    const res=await fetchPointReviewHistory(row.point_id)
+    historyRows.value=res.data.data||[]
+  }catch{ElMessage.error('核对历史读取失败')}
+  finally{historyLoading.value=false}
+}
 async function refresh(){
   const id=++serial
   error.value=''
@@ -49,6 +135,7 @@ async function refresh(){
 function search(){page.value=1;void refresh()}
 function reset(){
   filter.keyword='';filter.system_id='';filter.basis_type=''
+  selectedSystem.value=null
   page.value=1;void refresh()
 }
 function changePage(nextPage:number){
@@ -93,7 +180,7 @@ async function save(){
     await saveTanggangPointReview(editing.value.point_id,body)
     ElMessage.success('资料对账记录已保存')
     editorVisible.value=false
-    await refresh()
+    await Promise.all([refresh(),refreshReadiness()])
   }catch(e){editError.value=formatError(e)}
   finally{saving.value=false}
 }
@@ -125,7 +212,7 @@ function exportDesignReference(){
 }
 onMounted(async()=>{
   try{catalog.value=await loadTanggangCatalog()}catch{/* the point ledger remains available */}
-  await refresh()
+  await Promise.all([refresh(),refreshReadiness()])
 })
 </script>
 
@@ -148,12 +235,84 @@ onMounted(async()=>{
       <span>现场确认 <strong>0</strong></span>
     </div>
 
+    <section class="tg-review-workspace tg-readiness-section" v-loading="readinessLoading">
+      <div class="tg-biz-card-head">
+        <h2>六系统资料接入准备</h2>
+        <div class="tg-biz-actions">
+          <el-button size="small" plain :disabled="!readiness" @click="exportReadiness">导出核对清单</el-button>
+          <el-button size="small" text @click="refreshReadiness">刷新</el-button>
+        </div>
+      </div>
+      <p v-if="readinessError" class="tg-review-error" role="alert">{{readinessError}}</p>
+      <el-table v-else :data="systemMatrix" size="small" row-key="id"
+        class="tg-review-table" stripe highlight-current-row @row-click="(row:SystemReadinessItem)=>chooseSystem(row.id)">
+        <el-table-column label="业务系统" min-width="170">
+          <template #default="{row}">
+            <strong class="tg-review-sys-name">{{row.name}}</strong>
+          </template>
+        </el-table-column>
+        <el-table-column label="设计设施类别" min-width="108" align="right">
+          <template #default="{row}">{{row.designCategories??'—'}}</template>
+        </el-table-column>
+        <el-table-column label="工程关联" min-width="90" align="right">
+          <template #default="{row}">{{row.object_links}}</template>
+        </el-table-column>
+        <el-table-column label="设备关联" min-width="90" align="right">
+          <template #default="{row}">{{row.asset_links}}</template>
+        </el-table-column>
+        <el-table-column label="测点关联" min-width="90" align="right">
+          <template #default="{row}">{{row.point_links}}</template>
+        </el-table-column>
+        <el-table-column label="资料依据测点" min-width="110" align="right">
+          <template #default="{row}">{{row.point_document_references}}</template>
+        </el-table-column>
+        <el-table-column label="待补齐事项" min-width="250" show-overflow-tooltip>
+          <template #default="{row}">{{row.issues.join('；')||'资料层面暂未发现缺项，仍未现场核实'}}</template>
+        </el-table-column>
+        <el-table-column label="查看" width="72">
+          <template #default="{row}">
+            <el-button link type="primary" @click.stop="chooseSystem(row.id)">
+              {{selectedSystem===row.id?'取消':'核对'}}
+            </el-button>
+          </template>
+        </el-table-column>
+        <template #empty>暂无可用的六系统资料映射统计</template>
+      </el-table>
+      <div v-if="selectedSystem" class="tg-readiness-detail">
+        <template v-for="entry in systemMatrix.filter(x=>x.id===selectedSystem)" :key="entry.id">
+          <div class="tg-readiness-details-row">
+            <span>已有测点资料核对 {{entry.point_candidates}} 项</span>
+            <span>设计对象来源 {{entry.object_source_refs}} 项</span>
+            <span>仅资料归属待核 {{entry.point_system_discrepancies}} 项</span>
+            <span>未绑定对象 {{entry.point_without_object_link}} 项</span>
+          </div>
+          <div v-if="entry.notMappedDesign.length" class="tg-readiness-details-row">
+            <strong>尚未登记工程关联（{{entry.notMappedDesign.length}}）</strong>
+            <span>{{entry.notMappedDesign.slice(0,12).join('、')}}{{entry.notMappedDesign.length>12?'等':''}}</span>
+          </div>
+          <div v-if="entry.withoutAssetDesign.length" class="tg-readiness-details-row">
+            <strong>尚未关联设备台账（{{entry.withoutAssetDesign.length}}）</strong>
+            <span>{{entry.withoutAssetDesign.slice(0,12).join('、')}}{{entry.withoutAssetDesign.length>12?'等':''}}</span>
+          </div>
+          <div v-if="entry.designNameDifference" class="tg-readiness-details-row">
+            <strong>工艺范围待核</strong>
+            <span>{{entry.designNameDifference}}</span>
+          </div>
+          <div class="tg-readiness-details-row">
+            <span>设计管线图层：{{entry.focusLayers.join('、')||'尚无可确认的独立专属管线'}}</span>
+          </div>
+          <p class="tg-mini-note">{{entry.topologyHint}}</p>
+        </template>
+      </div>
+      <p class="tg-review-safety">统计来自当前软件配置及设计资料，不是现场接入数量。归属核对和已登记依据均不等于传感器、PLC或水力管网验收通过。</p>
+    </section>
+
     <section class="tg-review-workspace">
       <div class="tg-review-toolbar">
         <el-input v-model="filter.keyword" clearable placeholder="测点名称或NodeId"
           class="tg-review-search" @keyup.enter="search" @clear="search"/>
         <el-select v-model="filter.system_id" clearable placeholder="全部系统" class="tg-review-select"
-          @change="search">
+          @change="()=>{selectedSystem=(filter.system_id as TanggangSystemId)||null;search()}">
           <el-option v-for="s in systemOptions" :key="s.value"
             :label="s.label" :value="s.value"/>
         </el-select>
@@ -172,7 +331,11 @@ onMounted(async()=>{
         <el-table-column prop="node_id" label="NodeId" min-width="135" show-overflow-tooltip/>
         <el-table-column label="归属系统" min-width="145">
           <template #default="{row}">
-            {{systemOptions.find(s=>s.value===row.system_id)?.label||'待核对'}}
+            {{systemOptions.find(s=>s.value===row.system_id)?.label||
+              (row.linked_systems?.length
+                ? '关联候选：'+row.linked_systems.map((id:TanggangSystemId)=>
+                    systemOptions.find(s=>s.value===id)?.label||id).join('、')
+                : '待核对')}}
           </template>
         </el-table-column>
         <el-table-column label="依据类别" min-width="122">
@@ -181,9 +344,10 @@ onMounted(async()=>{
         <el-table-column label="资料与假设依据" min-width="210" show-overflow-tooltip>
           <template #default="{row}">{{row.source_ref||row.assumption_note||'—'}}</template>
         </el-table-column>
-        <el-table-column label="操作" width="80" align="right">
+        <el-table-column label="操作" width="135" align="right">
           <template #default="{row}">
             <el-button v-if="canEdit" link type="primary" @click="edit(row)">核对</el-button>
+            <el-button link @click="showHistory(row)">历史</el-button>
           </template>
         </el-table-column>
         <template #empty>暂无符合条件的测点资料</template>
@@ -196,6 +360,21 @@ onMounted(async()=>{
           @current-change="changePage"/>
       </div>
     </section>
+
+    <el-dialog v-model="historyVisible" append-to-body destroy-on-close
+      width="min(730px,96vw)" title="测点资料核对历史">
+      <div class="tg-point-review-code">{{historyPoint?.tag_name}}</div>
+      <el-table v-loading="historyLoading" :data="historyRows" stripe size="small">
+        <el-table-column label="记录时间" prop="created_at" min-width="165"/>
+        <el-table-column label="核对来源" min-width="145">
+          <template #default="{row}">{{POINT_BASIS_LABEL[row.after.basis_type as PointBasis]||'尚未核对'}}</template>
+        </el-table-column>
+        <el-table-column label="引用资料" min-width="220" show-overflow-tooltip>
+          <template #default="{row}">{{row.after.source_ref||row.after.assumption_note||'—'}}</template>
+        </el-table-column>
+        <template #empty>尚无核对修订记录</template>
+      </el-table>
+    </el-dialog>
 
     <el-dialog v-model="editorVisible" append-to-body destroy-on-close width="min(520px,95vw)"
       class="tg-point-review-dialog" title="测点资料核对" :close-on-click-modal="false">
@@ -231,6 +410,12 @@ onMounted(async()=>{
 </template>
 
 <style scoped>
+.tg-readiness-section{margin-bottom:15px}
+.tg-readiness-section .tg-biz-card-head{margin-bottom:13px}
+.tg-review-sys-name{font-weight:600;font-size:12px}
+.tg-readiness-detail{border-top:1px solid var(--el-border-color-lighter);margin-top:12px;padding:11px 0 2px}
+.tg-readiness-details-row{display:flex;gap:12px 24px;flex-wrap:wrap;font-size:12px;margin-bottom:7px}
+.tg-readiness-detail .tg-mini-note{font-size:11px;margin:5px 0}
 .tg-review-summary{display:flex;align-items:center;gap:clamp(15px,3vw,43px);
   padding:14px 19px;margin:12px 0 20px;border-radius:14px;
   background:rgba(255,255,255,.54);box-shadow:0 3px 17px rgba(53,88,111,.04);
