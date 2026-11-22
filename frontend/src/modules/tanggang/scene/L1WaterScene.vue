@@ -834,11 +834,11 @@ function resetCameraPosition(){
     // ?cam=pitch,dist,fov,targetZ 仅用于同机位对版校准，不改变正式界面。
     const camOverride=new URLSearchParams(location.search).get('cam')
     const cam=camOverride?camOverride.split(',').map(Number):[]
-    const pitch=THREE.MathUtils.degToRad(Number.isFinite(cam[0])?cam[0]:16)
+    const pitch=THREE.MathUtils.degToRad(Number.isFinite(cam[0])?cam[0]:24)
     const dir=new THREE.Vector3(0,Math.sin(pitch),Math.cos(pitch))
-    const centre=new THREE.Vector3(-1.2,3,Number.isFinite(cam[3])?cam[3]:12)
-    setFieldOfView(Number.isFinite(cam[2])?cam[2]:38)
-    const distance=(Number.isFinite(cam[1])?cam[1]:180)*Math.max(1,(1672/941)/aspect)
+    const centre=new THREE.Vector3(-1.2,3,Number.isFinite(cam[3])?cam[3]:8)
+    setFieldOfView(Number.isFinite(cam[2])?cam[2]:36)
+    const distance=(Number.isFinite(cam[1])?cam[1]:150)*Math.max(1,(1672/941)/aspect)
     orbit.target.copy(centre);camera.position.copy(centre).addScaledVector(dir,distance)
     orbit.update();return
   }
@@ -1790,7 +1790,7 @@ function setup() {
   sun.position.set(64,104,-44);sun.castShadow=true;shadowSun=sun
   Object.assign(sun.shadow.camera,{left:-92,right:92,top:96,bottom:-96,near:1,far:285})
   sun.shadow.camera.updateProjectionMatrix()
-  sun.shadow.mapSize.set(2048,2048);sun.shadow.normalBias=.05;sun.shadow.bias=-.0005;sun.shadow.radius=3.5
+  sun.shadow.mapSize.set(2048,2048);sun.shadow.normalBias=.16;sun.shadow.bias=-.0008;sun.shadow.radius=3.5
   sun.shadow.autoUpdate=false;sun.shadow.needsUpdate=true
   scene.add(sun)
   const edge=new THREE.DirectionalLight(0xc4ebf5,.20);edge.position.set(-66,48,-42);scene.add(edge)

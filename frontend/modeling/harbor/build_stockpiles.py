@@ -20,7 +20,7 @@ SCENE = os.path.join(ROOT, 'public/tanggang/cad/l1-v2_2/scene-v2.2.json')
 SPATIAL = os.path.join(ROOT, 'public/tanggang/cad/l1-v2_6/spatial-candidates-v2.6.json')
 OUT = os.path.join(ROOT, 'public/tanggang/models/harbor/stockpiles-16.glb')
 
-NU, NV = 26, 64
+NU, NV = 44, 120
 SPLIT_GAP = 4.2
 KINDS = ['coal', 'brown', 'grey']
 
@@ -44,12 +44,14 @@ def build_mesh(name, left, right, length, height, seed, kind):
         t = j / NV
         z = (t - 0.5) * length
         end_f = min(1.0, min(t, 1 - t) * length / 9.0)
-        # 沿长度叠三个锥峰：峰间落到 58%，形成料堆之间的鞍部，而不是一条平脊。
+        # 每堆 2–4 个锥峰：峰数与峰位随 seed 变化，避免 16 堆都长成同样的三峰长条。
         peak = 0.42
-        for k in range(3):
-            centre = (k + 0.5) / 3 + (hash01(k, seed, 1) - 0.5) * 0.10
-            amp = 0.82 + 0.18 * hash01(k, seed, 2)
-            peak = max(peak, math.exp(-((t - centre) / 0.13) ** 2) * amp)
+        n_peaks = 2 + int(hash01(seed, 7, 3) * 3)
+        for k in range(n_peaks):
+            centre = (k + 0.5) / n_peaks + (hash01(k, seed, 1) - 0.5) * 0.10
+            amp = 0.80 + 0.20 * hash01(k, seed, 2)
+            width = 0.13 + 0.03 * hash01(k, seed, 4)
+            peak = max(peak, math.exp(-((t - centre) / width) ** 2) * amp)
         for i in range(NU + 1):
             u = i / NU * 2 - 1
             d = abs(u)
@@ -60,17 +62,28 @@ def build_mesh(name, left, right, length, height, seed, kind):
             else:
                 slope = (d - crest - shoulder) / (1.0 - crest - shoulder)
                 face = 0.94 * (1.0 - slope) ** 1.15
-            rough = (hash01(i * 1.7, j * 0.31, seed) * 2 - 1) * 0.024 * face * (1 - face) * 4
-            x = u * (left if u < 0 else right)
-            y = 0.02 + height * end_f * max(0.0, face) * peak + rough * height
+            # 逐顶点随机高度会让法线逐点跳动，远景读成“迷宫/鱼鳞”亮暗斑。
+            # 坡面起伏改由下面连续的低频 bump 承担，法线保持平滑。
+            rough = 0.0
+            x = u * (left if u < 0 else right) * (0.74 + 0.26 * abs(math.sin(t * math.pi * 3.0 + seed * 0.9)))
+            # 多尺度起伏：只留低频，避免坡面出现规则波纹。
+            bump = (0.16 * math.sin(x * 0.42 + z * 0.23 + seed)
+                    + 0.05 * math.sin(x * 1.10 - z * 0.63 + seed * 2.7))
+            y = 0.02 + height * end_f * max(0.0, face) * peak + rough * height + bump * end_f * max(0.0, face)
             verts.append((x, z, max(0.02, y)))
-            channel = (0.72 + 0.32 * max(0.0, face)) * (0.94 + 0.05 * math.sin(t * 3.1 + i * 0.12 + seed))
+            # 低频明暗斑块（约 5 单位尺度），去掉逐顶点 grain，避免混叠亮线。
+            shade = 0.90 + 0.10 * hash01(math.floor(x * 0.18), math.floor(z * 0.18), seed)
+            # 顶面浮灰明显亮、坡脚压暗：把“长条平面”读成有厚度的锥形堆体。
+            channel = shade * (0.50 + 0.58 * max(0.0, face))
             colors.append(min(1.0, channel))
     for j in range(NV):
         for i in range(NU):
             a = j * (NU + 1) + i
             b = a + NU + 1
-            faces.append((a, b, a + 1, b + 1))
+            # 必须沿四边形边界顺序 (a, a+1, b+1, b) 环绕；
+            # 旧写法 (a, b, a+1, b+1) 是自交“蝴蝶结”，三角化与法线都会乱掉，
+            # 远景堆面因此出现棋盘/迷宫状花斑。
+            faces.append((a, a + 1, b + 1, b))
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(verts, [], faces)
     mesh.update()
@@ -83,7 +96,9 @@ def build_mesh(name, left, right, length, height, seed, kind):
     uv_layer = mesh.uv_layers.new(name='UVMap')
     for loop in mesh.loops:
         co = mesh.vertices[loop.vertex_index].co
-        uv_layer.data[loop.index].uv = (co.x * 0.14, co.y * 0.14)
+        uo = hash01(seed, 0, 11) * 9.0
+        # 纹理沿堆体长轴铺，避免横向重复形成“瓦楞”条纹。
+        uv_layer.data[loop.index].uv = (co.y * 0.09 + uo, co.x * 0.09 + uo * 0.73)
     mesh.polygons.foreach_set('use_smooth', [True] * len(mesh.polygons))
     mesh.update()
     return mesh
@@ -153,7 +168,7 @@ def main():
                     continue
                 kind = KINDS[(number - 1 + (0 if north else 1)) % len(KINDS)]
                 seed = number * 2 + (0 if north else 1)
-                height = 3.05 + 0.15 * ((number + (0 if north else 1)) % 3)
+                height = 2.75 + 0.85 * hash01(number, 0 if north else 1, 5.0)
                 name = 'pile_%s_%s_%s' % (band_id, col['key'], 'N' if north else 'S')
                 mesh = build_mesh(name, left, right, length, height, seed, kind)
                 mesh.materials.append(material(kind))

@@ -121,7 +121,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const wall=palette('#eef2ef',.62,.04), roof=palette('#8f948e',.66,.10), steel=palette('#677e86',.5,.42)
   const accent=palette('#cf7628',.52,.3), pool=palette('#2c8fa9',.16,.18), coping=palette('#dbe6e1',.7,.05)
   pool.emissive=new T.Color('#124a5c');pool.emissiveIntensity=.5
-  const poolRim=palette('#e9f2ef',.55,.06), poolInner=palette('#35606a',.86,.05)
+  const poolRim=palette('#cfd8d4',.62,.05), poolInner=palette('#35606a',.86,.05)
   const glint=palette('#dcf4f2',.3)
   // 海面：多方向重力波的解析法线 + Fresnel 天空反射 + 太阳高光/闪点。
   // 不再依赖可平铺法线贴图，避免近景重复纹理与远景整片镜面。
@@ -328,9 +328,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // L1 池体示意材质：浅色池沿、暗内壁、下沉水面；不是实测池壁构造。
   const basinWall=palette('#ccd7d2',.74,.03)
   const basinInner=palette('#2b4149',.9,.03)
-  const basinWater=palette('#145e70',.26,.05)
-  basinWater.envMapIntensity=.25
-  basinWater.emissive=new T.Color('#08323f');basinWater.emissiveIntensity=.25
+  const basinWater=palette('#0b3d4a',.32,.04)
+  basinWater.envMapIntensity=.15
+  basinWater.emissive=new T.Color('#061f27');basinWater.emissiveIntensity=.15
   const walkway=palette('#c3cbc4',.93,0)
   const grating=palette('#8b9999',.52,.56)
   const glazing=palette('#5d90a7',.30,.20)
@@ -382,14 +382,12 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const pileKinds=['coal','brown','grey'] as const
   type PileKind=typeof pileKinds[number]
   const pileMaterials=Object.fromEntries(pileKinds.map(kind=>{
-    // 乘色区分煤/褐矿/灰矿：煤偏冷黑，褐矿偏暖，灰矿中性。
-    const tint={coal:'#aab1b8',brown:'#cba57c',grey:'#c3c8ca'}[kind]
+    // 煤/褐矿/灰矿：深色基色 + 顶点色明暗，完全不挂任何平铺贴图。
+    // 之前照片色图和法线在 150 单位外会重复成“鱼鳞/瓦楞”纹，是“一看就是贴图”的主因。
+    // 现在只靠 Blender 烘焙的顶点色（顶亮坡暗 + 颗粒）和几何本身表现体积。
+    const tint={coal:'#3c434a',brown:'#6f5940',grey:'#7c8285'}[kind]
     const m=new T.MeshStandardMaterial({color:tint,roughness:1,metalness:.02,vertexColors:true})
-    const folder='pbr/stockpile/'+kind+'/'
-    m.map=mineralMap(folder+'color.png?v=4',true)
-    m.normalMap=mineralMap(folder+'normal.png?v=4');m.normalScale.set(.45,.45)
-    m.roughnessMap=mineralMap(folder+'rough.png?v=4')
-    m.envMapIntensity=.75
+    m.envMapIntensity=.5
     materials.push(m)
     return [kind,m]
   })) as Record<PileKind,T.MeshStandardMaterial>
@@ -1044,7 +1042,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // `detail` marks trees near the working area that use the Blender tree models.
   // The dense perimeter belts keep the low-poly instanced crowns.
   const pushTree=(x:number,z:number,scale=1,detail=false)=>{
-    treeSites.push({x,z,r:(.40+.46*rng())*scale,h:(.66+1.25*rng())*scale,tone:Math.floor(rng()*6),detail})
+    treeSites.push({x,z,r:(.36+.54*rng())*scale,h:(.52+1.60*rng())*scale,tone:Math.floor(rng()*6),detail})
   }
   const blocks=(data.sourceDWGSHA256===landmarksSource?landmarks:[])
     .filter(f=>f.kind!=='lake')
@@ -1074,32 +1072,37 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   for(const [x0,x1,z0,z1] of belts){
     // Dark forest floor under the belts so the edge reads as woodland, not lawn.
     add(prism([[x0,z0],[x1,z0],[x1,z1],[x0,z1]],.045,.004),forestFloor)
-    for(let z=z0;z<z1;z+=1.30)for(let x=x0;x<x1;x+=1.30){
+    for(let z=z0;z<z1;z+=4.2)for(let x=x0;x<x1;x+=4.2){
       // 低频密度场 + 少量林间空地，避免等距网格感。
-      const density=.80+.20*Math.sin(x*.16+z*.11)
-      if(rng()>density||Math.sin(x*.11-z*.07+1.7)>.90)continue
+      const density=.20+.18*Math.sin(x*.16+z*.11)
+      if(rng()>density||Math.sin(x*.11-z*.07+1.7)>.84)continue
       const px=x+(rng()-.5)*1.45,pz=z+(rng()-.5)*1.45
       if(blocked(px,pz))continue
       pushTree(px,pz,.72+rng()*.52)
     }
   }
   // Taller back row so the far forest edge reads as a treeline, not a low hedge.
-  for(let x=xmin-10;x<xmax+10;x+=1.95)for(let z=zmax+4;z<zmax+13;z+=2.1){
-    if(rng()<.10)continue
-    pushTree(x+(rng()-.5)*1.6,z,1.05+rng()*.45)
+  // 间距放宽、疏密更随机、高矮跨度加大：树线出现参差缺口而不是连续绿墙。
+  for(let x=xmin-10;x<xmax+10;x+=3.8)for(let z=zmax+4;z<zmax+13;z+=3.9){
+    if(rng()<.26)continue
+    pushTree(x+(rng()-.5)*2.2,z+(rng()-.5)*1.8,.85+rng()*.78)
   }
   let internalTrees=0
   // Street trees along the open north band and the east/west service roads.
-  for(let x=-62;x<58;x+=3.9){
-    // 路树同样执行车道硬判定：路口处让位于可绘制道路。
-    const px=x+(rng()-.5)*.7,pz=46.6+(rng()-.5)*1.1
-    if(distanceToRoad(px,pz)<ROAD_HALF_WIDTH+.62)continue
-    pushTree(px,pz,.7+rng()*.25,true)
+  for(let x=-62;x<58;){
+    const step=3.6+rng()*5.4
+    if(rng()>.30){
+      const px=x+(rng()-.5)*.7,pz=46.6+(rng()-.5)*1.1
+      if(distanceToRoad(px,pz)>=ROAD_HALF_WIDTH+.62)pushTree(px,pz,.62+rng()*.42,true)
+    }
+    x+=step
   }
-  for(let z=-40;z<32;z+=4.1){
+  for(let z=-40;z<32;){
+    const step=4.0+rng()*6.0
     const ex=44.4+(rng()-.5)*.8,ez=z+(rng()-.5)*.8,wx=-49.6+(rng()-.5)*.8,wz=z+(rng()-.5)*.8
-    if(!blocked(ex,ez))pushTree(ex,ez,.68+rng()*.28,true)
-    if(!blocked(wx,wz))pushTree(wx,wz,.68+rng()*.28,true)
+    if(rng()>.32&&!blocked(ex,ez))pushTree(ex,ez,.55+rng()*.45,true)
+    if(rng()>.32&&!blocked(wx,wz))pushTree(wx,wz,.55+rng()*.45,true)
+    z+=step
   }
   // Grove on the west service lawn so the quay approach does not read as empty turf.
   for(let x=-64;x<-50;x+=3.2)for(let z=-58;z<-38;z+=3.2){
@@ -1156,9 +1159,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       const colors=new Float32Array(positions.count*3)
       for(let i=0;i<positions.count;i++){
         const x=positions.getX(i),y=positions.getY(i),z=positions.getZ(i)
-        const ripple=.09*Math.sin(4*x+3*y)*Math.cos(4*z-2*y)+.07*Math.sin(7*z+2*x)
-        const r=1+ripple,light=.74+.23*(y+1)/2+.10*ripple
-        positions.setXYZ(i,x*r,y*r*(.94-.10*Math.max(0,y)),z*r)
+        const ripple=.15*Math.sin(4*x+3*y)*Math.cos(4*z-2*y)+.11*Math.sin(7*z+2*x)
+        const r=1+ripple,light=.58+.30*(y+1)/2+.18*ripple
+        positions.setXYZ(i,x*r,y*r*(.85-.16*Math.max(0,y)),z*r)
         const len=Math.hypot(x,1.15*y,z)
         normals.setXYZ(i,x/len,1.15*y/len,z/len)
         colors.set([light*(1+.06*Math.max(0,y)),light,light*.86],i*3)
@@ -1174,7 +1177,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     const crown3=new T.InstancedMesh(lobeGeo,crownMat,simpleSites.length)
     const trunk=new T.InstancedMesh(trunkGeo,trunkMat,simpleSites.length)
     crown.name='林带树冠';crown2.name='林带树冠二层';crown3.name='林带树冠三层';trunk.name='林带树干'
-    const tones=['#4f5f3b','#50683e','#3e5337','#5b6d45','#394e34','#66754c'].map(c=>new T.Color(c))
+    const tones=['#3f5033','#45593a','#35462d','#4c5c3f','#2e3f29','#566644'].map(c=>new T.Color(c))
     const m=new T.Matrix4(),q=new T.Quaternion(),Y=new T.Vector3(0,1,0)
     simpleSites.forEach((t,i)=>{
       const trunkH=t.h*1.2
@@ -1182,17 +1185,21 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       q.setFromAxisAngle(Y,(t.tone*1.31+i*.53)%(Math.PI*2))
       m.compose(new T.Vector3(t.x,trunkH*.5,-t.z),q,new T.Vector3(1,trunkH,1))
       trunk.setMatrixAt(i,m)
-      m.compose(new T.Vector3(t.x,trunkH+t.r*.72,-t.z),q,new T.Vector3(t.r,t.r*.92,t.r))
+      // 树冠高矮/宽窄拉开跨度：从矮阔冠到高瘦冠都有，避免整齐的绿色球墙。
+      const shapeK=((i*13+t.tone)%9)/9
+      const sy=.56+.98*shapeK
+      const rx=t.r*(.78+.44*((i*11+t.tone*2)%7)/7)
+      m.compose(new T.Vector3(t.x,trunkH+t.r*.72*sy,-t.z),q,new T.Vector3(rx,t.r*.92*sy,rx))
       crown.setMatrixAt(i,m)
       crown.setColorAt(i,tones[t.tone%tones.length])
       // Second, smaller crown lobe fills the silhouette instead of a single spike.
       const j1=.18+.10*((i*7+t.tone)%8)/8, j2=.26+.12*((i*5+t.tone*3)%7)/7
-      m.compose(new T.Vector3(t.x+t.r*j1,trunkH+t.r*1.06,-t.z-t.r*j1*.82),q,
-        new T.Vector3(t.r*.66,t.r*.60,t.r*.66))
+      m.compose(new T.Vector3(t.x+t.r*j1,trunkH+t.r*1.06*sy,-t.z-t.r*j1*.82),q,
+        new T.Vector3(rx*.66,rx*.60*sy,rx*.66))
       crown2.setMatrixAt(i,m)
       crown2.setColorAt(i,tones[(t.tone+1)%tones.length])
-      m.compose(new T.Vector3(t.x-t.r*j2,trunkH+t.r*.86,-t.z+t.r*j2*.66),q,
-        new T.Vector3(t.r*.52,t.r*.48,t.r*.52))
+      m.compose(new T.Vector3(t.x-t.r*j2,trunkH+t.r*.86*sy,-t.z+t.r*j2*.66),q,
+        new T.Vector3(rx*.52,rx*.48*sy,rx*.52))
       crown3.setMatrixAt(i,m)
       crown3.setColorAt(i,tones[(t.tone+2)%tones.length])
     })
@@ -1207,8 +1214,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     crown.computeBoundingSphere();trunk.computeBoundingSphere();crown2.computeBoundingSphere()
     crown3.computeBoundingSphere()
     group.add(crown,trunk,crown2,crown3)
-    // 林下灌木层：遮住成排树干，避免远景林带露出“电线杆森林”。
-    const underSites=simpleSites
+    // 林下灌木层：只保留约 2/3，遮住树干但不在林带前缘堆成连续绿墙。
+    const underSites=simpleSites.filter((t,i)=>(i+t.tone)%3!==0)
     if(underSites.length){
       const under=new T.InstancedMesh(lobeGeo,crownMat,underSites.length)
       under.name='林下灌木'
@@ -1232,12 +1239,12 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     const blobMat=new T.MeshStandardMaterial({color:'#ffffff',roughness:.98,metalness:0})
     materials.push(blobMat)
     const blobSites:[number,number][]=[]
-    for(let x=xmin-16;x<xmax+16;x+=2.6)for(let z=zmax+3;z<zmax+13;z+=3.0)
-      if(rng()>.08)blobSites.push([x,z])
-    for(let z=zmin+4;z<zmax+8;z+=3.6)for(let x=xmax+3;x<xmax+14;x+=2.9)
-      if(rng()>.12)blobSites.push([x,z])
-    for(let z=zmin+4;z<zmax+8;z+=3.6)for(let x=xmin-14;x<xmin-3;x+=2.9)
-      if(rng()>.12)blobSites.push([x,z])
+    for(let x=xmin-16;x<xmax+16;x+=3.0)for(let z=zmax+3;z<zmax+13;z+=3.4)
+      if(rng()>.42)blobSites.push([x,z])
+    for(let z=zmin+4;z<zmax+8;z+=3.6)for(let x=xmax+3;x<xmax+14;x+=3.3)
+      if(rng()>.50)blobSites.push([x,z])
+    for(let z=zmin+4;z<zmax+8;z+=3.6)for(let x=xmin-14;x<xmin-3;x+=3.3)
+      if(rng()>.50)blobSites.push([x,z])
     const mass=new T.InstancedMesh(blobGeo,blobMat,blobSites.length)
     mass.name='远景林冠体块'
     const massTones=['#3c5a3c','#446345','#35503a','#4d7050','#2f4732','#537a55'].map(c=>new T.Color(c))
@@ -1412,23 +1419,47 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // in modeling/harbor/create_port_assets.py. Placement follows CAD berth anchors and
   // yard band centres; the asset form itself is presentation geometry.
   const stockpileResources=new Set<T.Material|T.BufferGeometry>()
+  const pileContact=new T.MeshBasicMaterial({color:'#0b0e11',transparent:true,opacity:.34,depthWrite:false})
+  materials.push(pileContact)
   // 16 堆精细资产：Blender 按 CAD 平面生成多峰堆体，几何与顶点色随 GLB 载入；
   // 材质仍复用前端三套 PBR，保证颜色与贴图统一。
   async function loadStockpiles(){
-    const gltf=await new GLTFLoader().loadAsync(import.meta.env.BASE_URL+'tanggang/models/harbor/stockpiles-16.glb?v=4')
+    const gltf=await new GLTFLoader().loadAsync(import.meta.env.BASE_URL+'tanggang/models/harbor/stockpiles-16.glb?v=15')
     if(disposed)return false
     const model=gltf.scene
+    const shadows:T.Mesh[]=[]
     model.traverse(part=>{
       if(!(part instanceof T.Mesh))return
       const kind=String(part.userData.kind||'coal') as PileKind
       const anchorId=String(part.userData.anchorId||'')
       const handle=String(part.userData.handle||'')
-      part.material=pileMaterials[kind]||pileMaterials.coal
+      const base=pileMaterials[kind]||pileMaterials.coal
+      // 每堆克隆材质并按锚点做确定性明度差，避免 16 堆像同一张贴图复制。
+      let h=0
+      for(const ch of anchorId)h=(h*31+ch.charCodeAt(0))>>>0
+      const tinted=base.clone()
+      tinted.color=base.color.clone().multiplyScalar(.72+.46*(h%100)/100)
+      materials.push(tinted)
+      part.material=tinted
+      // Blender 导出的法线在共享顶点上不连续，远景会读成迷宫状亮暗斑；
+      // 用索引几何重算平滑法线，保证坡面是一整块连续明暗。
+      part.geometry.computeVertexNormals()
       part.castShadow=part.receiveShadow=true
       part.userData={pick:'reliefPoint',pointId:anchorId,sourceHandle:handle}
       stockpileResources.add(part.geometry)
+      // 堆脚接触暗带：让堆体压住地面，而不是悬浮的黑条。
+      const box=new T.Box3().setFromObject(part)
+      const size=box.getSize(new T.Vector3()),center=box.getCenter(new T.Vector3())
+      const shadowGeo=new T.PlaneGeometry(size.x*1.18,size.z*1.03)
+        .rotateX(-Math.PI/2).translate(center.x,.035,center.z)
+      const shadowMesh=new T.Mesh(shadowGeo,pileContact)
+      shadowMesh.renderOrder=1
+      shadows.push(shadowMesh)
+      stockpileResources.add(shadowGeo)
       picks.push(part)
     })
+    // 放在 traverse 之后加入，避免接触暗带被当成堆体再次处理。
+    for(const shadowMesh of shadows)model.add(shadowMesh)
     group.add(model)
     // 隐藏程序化长条，避免与精细堆体叠在一起。
     for(const mesh of proceduralPiles){
