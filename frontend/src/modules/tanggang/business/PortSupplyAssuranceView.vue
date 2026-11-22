@@ -26,7 +26,7 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
       <div><div class="tg-page-eyebrow">水资源管理 / 生产供水保障</div><h1>大机供水保障</h1>
         <p class="tg-biz-sub">用水负荷 → 中压供水能力 → 优先级分配 → 供水缺口 → 水池安全储量</p></div>
       <div class="tg-biz-actions"><span class="tg-datamode" :class="{sim:store.running}">{{store.running?'SIM · 情景联动':'现场数据未接入'}}</span>
-        <el-button @click="router.push('/port/process/middle')">中压供水工艺</el-button></div>
+        <el-button @click="router.push('/port/process/middle?facility=EQ-P-MID')">中压供水工艺</el-button></div>
     </div>
     <div class="tg-biz-note"><b>数据说明：</b>{{store.running?'以下全部来自统一推演控制台，是演示假设而非实际用水量、管网输水能力。':'现场大机负荷与泵组能力尚未接入；本页没有模拟参数调整入口，只接收全局“情景推演”结果。'}}</div>
     <PublishedBoards target="/port/water/supply" />
