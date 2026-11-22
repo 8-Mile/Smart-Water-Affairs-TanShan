@@ -218,9 +218,14 @@ async function gotoKnownRoute(path:string){
   if(!knownRoutes.has(base))return
   const params=new URLSearchParams(query)
   // Only allow a board numeric selector; never execute a generated URL.
-  if(query && (base!=='/port/analysis/boards' ||
-      [...params.keys()].some(k=>k!=='board') ||
-      !/^[1-9][0-9]{0,8}$/.test(params.get('board')||'')))return
+  const lookupParam:Record<string,string>={
+    '/port/analysis/boards':'board',
+    '/port/analysis/reports':'report',
+    '/port/operations/decision':'decision',
+  }
+  if(query && (!lookupParam[base] ||
+      [...params.keys()].some(k=>k!==lookupParam[base]) ||
+      !/^[1-9][0-9]{0,8}$/.test(params.get(lookupParam[base])||'')))return
   await router.push(path)
   // The mature out-in page transition can occasionally leave an empty router
   // outlet after a chat confirmation (especially without a WebGL context).
@@ -481,9 +486,12 @@ async function onConfirm(pa: PendingUI) {
       } else pa.resultText = '执行成功'
       if (res.path && typeof res.path === 'string' &&
           ['/port/analysis/boards', '/port/analysis/equipment-drafts', '/port/analysis/reports'].includes(res.path)) {
-        pa.resultPath = isMock.value && res.path === '/port/analysis/boards' &&
-            Number.isSafeInteger(res.id) && Number(res.id)>0
-          ? '/port/analysis/boards?board='+res.id : res.path
+        pa.resultPath = isMock.value && Number.isSafeInteger(res.id) && Number(res.id)>0
+          ? res.path === '/port/analysis/boards'
+            ? '/port/analysis/boards?board='+res.id
+            : res.path === '/port/analysis/reports'
+              ? '/port/analysis/reports?report='+res.id : res.path
+          : res.path
       }
     } else {
       pa.resultText = isMock.value ? 'SIM演示操作已确认' : '执行成功'

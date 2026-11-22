@@ -264,6 +264,7 @@ def _plan_sim_report(db: Session, user: User, session_id: str, context: dict | N
         "production_case_created": False, "repair_order_created": False,
         "scenario_id": context["scenario_id"],
         "run_number": context["run_number"],
+        "run_uid": context.get("run_uid"),
         "scenario_started_at": context.get("scenario_started_at", ""),
         "demand_m3h": context["demand_m3h"],
         "delivered_m3h": context["delivered_m3h"],
@@ -294,9 +295,42 @@ def _plan_sim_report(db: Session, user: User, session_id: str, context: dict | N
         TanggangMockAiDecision.scenario_id == context["scenario_id"],
     ).order_by(TanggangMockAiDecision.id.desc()).limit(40).all()
     for choice in related:
+        baseline = json.loads(choice.snapshot_json)
         reviewed = json.loads(choice.review_json) if choice.review_json else None
-        if (choice.baseline_run == context["run_number"] or
-            (reviewed and reviewed["run_number"] == context["run_number"])):
+        uid = context.get("run_uid")
+        # New runs MUST be joined by their unique identity, not just an
+        # ordinal that can reset when the page is refreshed or reloaded.
+        if uid:
+            is_baseline = bool(
+                uid == baseline.get("run_uid")
+                and choice.baseline_run == context["run_number"]
+                and context.get("scenario_started_at") == baseline.get("scenario_started_at")
+                and abs(context["shortage_m3h"] - baseline["shortage_m3h"]) < .01
+            )
+            is_reviewed = bool(
+                reviewed and uid == reviewed.get("run_uid")
+                and reviewed["run_number"] == context["run_number"]
+                and context.get("scenario_started_at") == reviewed.get("scenario_started_at")
+                and abs(context["shortage_m3h"] - reviewed["after_shortage_m3h"]) < .01
+            )
+        else:
+            # Legacy M6 sessions lack unique identity. Never match an empty
+            # timestamp or mismatched data. Existing reports remain readable.
+            started = context.get("scenario_started_at") or ""
+            is_baseline = bool(
+                started and choice.baseline_run == context["run_number"]
+                and started == baseline.get("scenario_started_at")
+                and abs(context["shortage_m3h"] - baseline["shortage_m3h"]) < .01
+            )
+            is_reviewed = bool(
+                reviewed and started and reviewed["run_number"] == context["run_number"]
+                and reviewed.get("scenario_started_at") == started
+            )
+            # Old review snapshots did not capture their start time, so
+            # linking by ordinal alone would be unsafe.
+        if is_baseline or is_reviewed:
+            from app.services.tanggang_mock_evidence import report_snapshot
+            report["sim_evidence"] = report_snapshot(db, user, choice.id)
             report["sim_decision"] = {
                 "id": choice.id, "selected_plan_id": choice.selected_plan_id,
                 "rationale": choice.rationale, "status": choice.status,

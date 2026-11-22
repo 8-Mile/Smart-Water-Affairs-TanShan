@@ -15,7 +15,7 @@ from app.models.ai_audit import AiAuditLog
 from app.models.tanggang_mock_ai import TanggangMockAiReport
 from app.models.user import User
 from app.services.ai_client import ai_service_client
-from app.services import tanggang_mock_ai, tanggang_mock_decision
+from app.services import tanggang_mock_ai, tanggang_mock_decision, tanggang_mock_evidence
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -46,6 +46,12 @@ class DemoContext(BaseModel):
     field_verified: Literal[False] = False
     scenario_id: Literal["baseline", "peak", "storm", "pump-fault"]
     run_number: int = Field(ge=1, le=1000000)
+    # Optional only for legacy M6 saved mock records.
+    # All newly initiated browser SIM sessions send a random UUID run identity.
+    run_uid: str | None = Field(
+        default=None, max_length=36,
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    )
     demand_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
     delivered_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
     shortage_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
@@ -498,4 +504,33 @@ def mock_decision_review(
     return ok(tanggang_mock_decision.review(
         db, current_user, decision_id,
         body.demo_context.model_dump(), body.human_note,
+    ))
+
+
+
+class SimEvidenceNoteBody(BaseModel):
+    item_key: str = Field(min_length=16, max_length=20, pattern=r"^e-[0-9a-f]{14}$")
+    status: Literal["pending", "material-requested", "under-review"]
+    note: str = Field(min_length=8, max_length=1000)
+    source_reference: str = Field(default="", max_length=160)
+
+
+@router.get("/mock-decisions/{decision_id}/evidence")
+def mock_evidence_list(
+    decision_id: int, current_user: CurrentUser, db: DbSession,
+):
+    _require_mock_mode()
+    return ok(tanggang_mock_evidence.list_checkpoints(db, current_user, decision_id))
+
+
+@router.post("/mock-decisions/{decision_id}/evidence")
+def mock_evidence_note(
+    decision_id: int, body: SimEvidenceNoteBody,
+    current_user: CurrentUser, db: DbSession,
+):
+    _require_mock_mode()
+    return ok(tanggang_mock_evidence.record_note(
+        db, current_user, decision_id, item_key=body.item_key,
+        status=body.status, note=body.note,
+        source_reference=body.source_reference,
     ))

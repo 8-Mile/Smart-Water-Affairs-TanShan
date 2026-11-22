@@ -179,6 +179,10 @@ def review(db: Session, user: User, decision_id: int,
     if context["scenario_id"] != row.scenario_id or context["run_number"] <= row.baseline_run:
         raise HTTPException(status_code=422, detail="请运行同一情景的新SIM轮次后再复核")
     old = json.loads(row.snapshot_json)
+    original_uid = old.get("run_uid")
+    incoming_uid = context.get("run_uid")
+    if original_uid and (not incoming_uid or incoming_uid == original_uid):
+        raise HTTPException(status_code=422, detail="复核必须来自不同的SIM运行标识")
     if context.get("scenario_started_at", "") == old.get("scenario_started_at", ""):
         raise HTTPException(status_code=422, detail="复核不能重复使用原情景时间快照")
     before = old["shortage_m3h"]
@@ -189,6 +193,9 @@ def review(db: Session, user: User, decision_id: int,
     )
     details = {
         "run_number": context["run_number"],
+        "scenario_started_at": context.get("scenario_started_at", ""),
+        "run_uid": context.get("run_uid"),
+        "baseline_run_uid": old.get("run_uid"),
         "data_mode": "SIM", "field_verified": False,
         "before_shortage_m3h": before, "after_shortage_m3h": after,
         "shortage_delta_m3h": delta, "finding": finding,

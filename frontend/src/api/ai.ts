@@ -94,6 +94,7 @@ export interface AiDemoContext {
   field_verified: false
   scenario_id: 'baseline' | 'peak' | 'storm' | 'pump-fault'
   run_number: number
+  run_uid?: string | null
   demand_m3h: number
   delivered_m3h: number
   shortage_m3h: number
@@ -123,6 +124,7 @@ export interface AiSimReportContent extends Omit<AiDemoContext, 'plans'> {
   repair_order_created: false
   conclusion: string
   next_action: string
+  sim_evidence?: AiSimEvidenceSnapshot
   sim_decision?: {
     id: number
     selected_plan_id: SimPlanId
@@ -181,6 +183,49 @@ export interface AiSimDecisionReview {
   effect_attribution: 'NOT_DEMONSTRATED'
   warning: string
 }
+export type SimEvidenceStatus = 'pending' | 'material-requested' | 'under-review'
+export interface AiSimEvidenceItem {
+  key: string
+  label: string
+  kind: 'required' | 'sim-checkpoint' | 'plan-blocker'
+  source_verified: false
+  status: SimEvidenceStatus
+  note: string
+  source_reference: string
+  note_count: number
+  field_verified: false
+}
+export interface AiSimEvidenceSnapshot {
+  decision_id: number
+  total: number
+  pending: number
+  material_requested: number
+  under_review: number
+  verified: 0
+  field_verified: false
+  items: AiSimEvidenceItem[]
+}
+export interface AiSimEvidence extends AiSimEvidenceSnapshot {
+  data_mode: 'SIM'
+}
+export function fetchSimEvidence(decisionId: number) {
+  return http.get<ApiResponse<AiSimEvidence>>(
+    '/ai/mock-decisions/'+decisionId+'/evidence', { silent: true },
+  )
+}
+export function recordSimEvidence(
+  decisionId: number, data: {
+    item_key: string
+    status: SimEvidenceStatus
+    note: string
+    source_reference: string
+  },
+) {
+  return http.post<ApiResponse<AiSimEvidence>>(
+    '/ai/mock-decisions/'+decisionId+'/evidence', data, { silent: true },
+  )
+}
+
 export interface AiSimDecision {
   id: number
   status: 'selected' | 'reviewed'

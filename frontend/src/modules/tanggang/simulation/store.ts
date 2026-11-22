@@ -13,6 +13,8 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   const activeInputs=ref<ScenarioInputs|null>(null)
   const runNumber=ref(0)
   const startedAt=ref('')
+  // Unique to a single in-memory SIM run, even after refresh/relogin resets runNumber.
+  const runUid=ref('')
   const consoleOpen=ref(false)
   const activeScenario=computed(()=>activeId.value?SCENARIOS[activeId.value]:null)
   const effectiveScenario=computed(()=>activeScenario.value&&activeInputs.value
@@ -92,6 +94,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     activeId.value=id
     runNumber.value+=1
     monitorReview.value=null
+    runUid.value=crypto.randomUUID()
     startedAt.value=new Date().toISOString()
     // 只用于未来可选的三维展示订阅，不是工控事件、不包含真实测点。
     window.dispatchEvent(new CustomEvent('tanggang:scenario-visual', {
@@ -103,13 +106,14 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     activeInputs.value=null
     monitorReview.value=null
     startedAt.value=''
+    runUid.value=''
     window.dispatchEvent(new CustomEvent('tanggang:scenario-visual',{
       detail:{scenarioId:null,runNumber:runNumber.value,dataMode:'MEASURED_OR_UNAVAILABLE',simulationOnly:false},
     }))
   }
   function openConsole(){consoleOpen.value=true}
   function closeConsole(){consoleOpen.value=false}
-  return {activeId,activeInputs,runNumber,startedAt,consoleOpen,activeScenario,
+  return {activeId,activeInputs,runNumber,runUid,startedAt,consoleOpen,activeScenario,
     effectiveScenario,result,supplyPlans,impactAnalysis,monitorEvidence,monitorReview,
     beginMonitorReview,recordMonitorReview,
     running,start,stop,openConsole,closeConsole}

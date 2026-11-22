@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import {computed,onMounted,ref,watch} from 'vue'
-import {useRouter} from 'vue-router'
+import {useRoute,useRouter} from 'vue-router'
 import {ElMessage,ElMessageBox} from 'element-plus'
 import {useScenarioStore} from '../simulation/store'
 import {simContext} from '../simulation/mockContext'
 import {
   analyzeSimDecision,fetchSimDecisions,createSimDecision,reviewSimDecision,
+  fetchSimEvidence,recordSimEvidence,
   type AiSimDecisionAnalysis,type AiSimDecision,type SimPlanId,
+  type AiSimEvidence,type AiSimEvidenceItem,type SimEvidenceStatus,
 } from '@/api/ai'
 import './business.css'
 import './scenario-pages.css'
 
 const router=useRouter()
+const route=useRoute()
 const scenario=useScenarioStore()
 const context=computed(()=>simContext(scenario))
 const analysis=ref<AiSimDecisionAnalysis|null>(null)
@@ -24,6 +27,13 @@ const reviewNote=ref('')
 const loading=ref(false)
 const saving=ref(false)
 const error=ref('')
+const evidence=ref<AiSimEvidence|null>(null)
+const evidenceBusy=ref(false)
+const evidenceKey=ref<string|null>(null)
+const evidenceStatus=ref<SimEvidenceStatus>('pending')
+const evidenceNote=ref('')
+const sourceReference=ref('')
+const evidenceItem=computed(()=>evidence.value?.items.find(i=>i.key===evidenceKey.value)||null)
 const currentPlan=computed(()=>analysis.value?.plans.find(x=>x.id===planId.value)||null)
 const reviewAvailable=computed(()=>!!currentCase.value
   &&currentCase.value.status==='selected'&&!!context.value
@@ -39,10 +49,64 @@ async function refresh(){
   try{
     const {data}=await fetchSimDecisions()
     allCases.value=data.data||[]
-    if(!allCases.value.some(x=>x.id===caseId.value))
-      caseId.value=allCases.value[0]?.id||null
+    if(!allCases.value.some(x=>x.id===caseId.value)){
+      const requested=Number(route.query.decision)
+      caseId.value=Number.isSafeInteger(requested)&&requested>0&&
+        allCases.value.some(x=>x.id===requested)
+          ? requested : allCases.value[0]?.id||null
+    }
   }catch(e){error.value=errorText(e)}
 }
+async function refreshEvidence(){
+  const id=caseId.value
+  evidence.value=null
+  evidenceKey.value=null
+  if(!id)return
+  evidenceBusy.value=true
+  try{
+    const {data}=await fetchSimEvidence(id)
+    if(caseId.value===id)evidence.value=data.data
+  }catch(e){
+    if(caseId.value===id)error.value=errorText(e)
+  }finally{evidenceBusy.value=false}
+}
+function chooseEvidence(item:AiSimEvidenceItem){
+  evidenceKey.value=item.key
+  evidenceStatus.value=item.status
+  evidenceNote.value=item.note||''
+  sourceReference.value=item.source_reference||''
+}
+async function saveEvidence(){
+  const id=caseId.value
+  const item=evidenceItem.value
+  if(!id||!item||saving.value||evidenceNote.value.trim().length<8)return
+  try{
+    await ElMessageBox.confirm(
+      '本操作只保留资料核对线索，不把资料标记为已验证现场数据。确认记录？',
+      '保存SIM资料核查意见',{type:'warning',confirmButtonText:'确认保存'},
+    )
+  }catch{return}
+  saving.value=true
+  error.value=''
+  try{
+    const {data}=await recordSimEvidence(id,{
+      item_key:item.key,status:evidenceStatus.value,
+      note:evidenceNote.value.trim(),
+      source_reference:sourceReference.value.trim(),
+    })
+    if(caseId.value===id){
+      evidence.value=data.data
+      const changed=data.data.items.find(x=>x.key===item.key)
+      if(changed){
+        evidenceStatus.value=changed.status
+        evidenceNote.value=changed.note
+      }
+    }
+    ElMessage.success('核查意见已留痕；仍属于待核实资料')
+  }catch(e){error.value=errorText(e)}
+  finally{saving.value=false}
+}
+
 async function analyze(){
   analysis.value=null
   planId.value=null
@@ -108,6 +172,7 @@ async function review(){
   finally{saving.value=false}
 }
 watch(()=>[scenario.activeId,scenario.runNumber],()=>{void analyze()})
+watch(caseId,()=>{void refreshEvidence()})
 onMounted(async()=>{await Promise.all([refresh(),analyze()])})
 </script>
 
@@ -252,6 +317,48 @@ onMounted(async()=>{await Promise.all([refresh(),analyze()])})
               </template>
             </div>
           </template>
+          <section v-if="currentCase" class="tg-decision-evidence">
+            <div class="tg-biz-card-head">
+              <h2>待核实资料</h2>
+              <span v-if="evidence" class="tg-mini-note">
+                {{evidence.total}}项 · 已取得现场核验证据0项
+              </span>
+            </div>
+            <el-table v-loading="evidenceBusy" :data="evidence?.items||[]"
+              size="small" stripe highlight-current-row
+              @row-click="chooseEvidence">
+              <el-table-column label="事项" min-width="200">
+                <template #default="{row}">{{row.label}}</template>
+              </el-table-column>
+              <el-table-column label="核对进度" min-width="100">
+                <template #default="{row}">
+                  {{row.status==='material-requested'?'资料待提供':
+                    row.status==='under-review'?'资料核对中':'尚未核对'}}
+                </template>
+              </el-table-column>
+              <el-table-column label="记录" width="64" align="right">
+                <template #default="{row}">{{row.note_count}}</template>
+              </el-table-column>
+              <template #empty>当前没有可以记录的资料核查事项</template>
+            </el-table>
+            <div v-if="evidenceItem" class="tg-decision-evidence-form">
+              <strong>{{evidenceItem.label}}</strong>
+              <el-select v-model="evidenceStatus" style="width:100%">
+                <el-option label="尚未核对" value="pending"/>
+                <el-option label="资料待提供" value="material-requested"/>
+                <el-option label="资料核对中" value="under-review"/>
+              </el-select>
+              <el-input v-model="sourceReference" maxlength="160" show-word-limit
+                placeholder="资料线索或已上传文件的名称、页码（非已验证证据）"/>
+              <el-input v-model="evidenceNote" type="textarea" :rows="3"
+                maxlength="1000" show-word-limit
+                placeholder="记录需核实的字段、责任接口或下一步取证建议"/>
+              <el-button type="primary" plain :loading="saving"
+                :disabled="evidenceNote.trim().length<8" @click="saveEvidence">
+                保存核查意见
+              </el-button>
+            </div>
+          </section>
           <div class="tg-biz-actions tg-decision-bottom-links">
             <el-button plain @click="router.push('/port/water/supply')">供水方案比选</el-button>
             <el-button plain @click="router.push('/port/analysis/reports')">运行复盘</el-button>
@@ -272,6 +379,9 @@ onMounted(async()=>{await Promise.all([refresh(),analyze()])})
 .tg-decision-review{display:grid;gap:12px;margin-top:16px}
 .tg-decision-submit{margin-top:10px}
 .tg-decision-bottom-links{margin-top:15px;flex-wrap:wrap}
+.tg-decision-evidence{display:grid;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--el-border-color-light)}
+.tg-decision-evidence-form{display:grid;gap:9px}
+.tg-decision-evidence-form strong{font-size:12px;font-weight:600}
 @media(max-width:1000px){.tg-decision-roles{grid-template-columns:1fr}}
 @media(max-width:760px){.tg-decision-workflow{grid-template-columns:1fr}.tg-decision-workflow :deep(.el-table__body-wrapper){overflow-x:auto}}
 </style>

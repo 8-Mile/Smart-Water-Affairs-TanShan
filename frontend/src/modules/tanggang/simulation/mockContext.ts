@@ -12,7 +12,7 @@ export function simContext(store: ReturnType<typeof useScenarioStore>): AiDemoCo
   if(!store.running||!id||!result||!monitor)return undefined
   return {
     data_mode:'SIM',field_verified:false,
-    scenario_id:id,run_number:store.runNumber,
+    scenario_id:id,run_number:store.runNumber,run_uid:store.runUid,
     demand_m3h:result.demandedM3h,
     delivered_m3h:result.deliveredM3h,
     shortage_m3h:result.shortageM3h,

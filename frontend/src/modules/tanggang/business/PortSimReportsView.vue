@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import {computed,onMounted,ref} from 'vue'
-import {useRouter} from 'vue-router'
+import {useRoute,useRouter} from 'vue-router'
 import {ElMessage} from 'element-plus'
 import {fetchAiSimReports,type AiSimReport} from '@/api/ai'
 import './business.css'
 
 const router=useRouter()
+const route=useRoute()
 const reports=ref<AiSimReport[]>([])
 const selectedId=ref<number|null>(null)
 const busy=ref(false)
@@ -19,8 +20,12 @@ async function refresh(){
   try{
     const {data}=await fetchAiSimReports()
     reports.value=data.data||[]
-    if(!reports.value.some(x=>x.id===selectedId.value))
-      selectedId.value=reports.value[0]?.id||null
+    if(!reports.value.some(x=>x.id===selectedId.value)){
+      const requested=Number(route.query.report)
+      selectedId.value=Number.isSafeInteger(requested)&&requested>0&&
+        reports.value.some(x=>x.id===requested)
+          ? requested : reports.value[0]?.id||null
+    }
   }catch(e){
     error.value='无法读取SIM复盘记录，请检查Mock服务与登录状态'
     reports.value=[]
@@ -88,6 +93,9 @@ onMounted(refresh)
             <el-descriptions size="small" border :column="2">
               <el-descriptions-item label="运行属性">SIM合成推演</el-descriptions-item>
               <el-descriptions-item label="来源">浏览器情景快照</el-descriptions-item>
+              <el-descriptions-item v-if="report.run_uid" label="SIM轮次标识">
+                {{report.run_uid.slice(0,8)}}（本轮唯一）
+              </el-descriptions-item>
               <el-descriptions-item label="假设总需水">{{report.demand_m3h}} m³/h</el-descriptions-item>
               <el-descriptions-item label="模拟已分配">{{report.delivered_m3h}} m³/h</el-descriptions-item>
               <el-descriptions-item label="模拟供水缺口">{{report.shortage_m3h}} m³/h</el-descriptions-item>
@@ -146,6 +154,31 @@ onMounted(refresh)
               </el-descriptions-item>
               <el-descriptions-item label="生产处置">未执行</el-descriptions-item>
             </el-descriptions>
+            <div v-if="report.sim_evidence" class="tg-replay-evidence">
+              <div class="tg-biz-card-head">
+                <h2>资料核查状态（报告生成时）</h2>
+                <span class="tg-mini-note">
+                  {{report.sim_evidence.total}}项 · 已完成现场验证0项
+                </span>
+              </div>
+              <el-table :data="report.sim_evidence.items" size="small" stripe>
+                <el-table-column prop="label" label="待核实项" min-width="170"/>
+                <el-table-column label="核对进度" min-width="100">
+                  <template #default="{row}">
+                    {{row.status==='material-requested'?'资料待提供':
+                      row.status==='under-review'?'资料核对中':'尚未核对'}}
+                  </template>
+                </el-table-column>
+                <el-table-column label="备注" min-width="170">
+                  <template #default="{row}">{{row.note||'未记录'}}</template>
+                </el-table-column>
+              </el-table>
+              <el-button v-if="report.sim_decision" size="small" plain
+                @click="router.push({path:'/port/operations/decision',
+                  query:{decision:String(report.sim_decision.id)}})">
+                查看原研判及核查记录
+              </el-button>
+            </div>
             <p class="tg-biz-sub">{{report.next_action}}</p>
             <div class="tg-biz-actions">
               <el-button plain @click="router.push('/port/water/supply')">供水保障</el-button>
@@ -168,6 +201,7 @@ onMounted(refresh)
 .tg-sim-report-detail{display:grid;gap:14px;min-width:0}
 .tg-replay-conclusion{margin:14px 0 0}
 .tg-replay-list{margin:13px 0}
+.tg-replay-evidence{display:grid;gap:10px;padding-top:12px}
 .tg-replay-list :deep(.tg-biz-list-row){min-height:38px}
 @media(max-width:990px){.tg-sim-reports-grid{grid-template-columns:minmax(0,1fr)}}
 </style>

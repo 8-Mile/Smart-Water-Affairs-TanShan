@@ -67,3 +67,23 @@ class TanggangMockAiDecision(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now(),
     )
+
+
+
+class TanggangMockAiEvidenceNote(Base):
+    """Append-only research checklist notes. Never asserts field verification."""
+    __tablename__ = "tg_mock_ai_evidence_note"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    decision_id: Mapped[int] = mapped_column(
+        ForeignKey("tg_mock_ai_decision.id"), nullable=False, index=True,
+    )
+    owner_id: Mapped[int] = mapped_column(
+        ForeignKey("sys_user.id"), nullable=False, index=True,
+    )
+    item_key: Mapped[str] = mapped_column(String(20), nullable=False)
+    status: Mapped[str] = mapped_column(String(24), nullable=False)
+    note: Mapped[str] = mapped_column(String(1000), nullable=False)
+    source_reference: Mapped[str] = mapped_column(String(160), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(),
+    )
