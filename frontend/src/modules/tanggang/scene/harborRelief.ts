@@ -328,9 +328,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // L1 池体示意材质：浅色池沿、暗内壁、下沉水面；不是实测池壁构造。
   const basinWall=palette('#ccd7d2',.74,.03)
   const basinInner=palette('#2b4149',.9,.03)
-  const basinWater=palette('#2a93b0',.18,.05)
-  basinWater.envMapIntensity=.5
-  basinWater.emissive=new T.Color('#0e5d78');basinWater.emissiveIntensity=.85
+  const basinWater=palette('#1f7f94',.22,.05)
+  basinWater.envMapIntensity=.35
+  basinWater.emissive=new T.Color('#0b4557');basinWater.emissiveIntensity=.42
   const walkway=palette('#c3cbc4',.93,0)
   const grating=palette('#8b9999',.52,.56)
   const glazing=palette('#5d90a7',.30,.20)
@@ -382,10 +382,12 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const pileKinds=['coal','brown','grey'] as const
   type PileKind=typeof pileKinds[number]
   const pileMaterials=Object.fromEntries(pileKinds.map(kind=>{
-    const m=new T.MeshStandardMaterial({color:'#ffffff',roughness:1,metalness:.02,vertexColors:true})
+    // 乘色区分煤/褐矿/灰矿：煤偏冷黑，褐矿偏暖，灰矿中性。
+    const tint={coal:'#aab1b8',brown:'#cba57c',grey:'#c3c8ca'}[kind]
+    const m=new T.MeshStandardMaterial({color:tint,roughness:1,metalness:.02,vertexColors:true})
     const folder='pbr/stockpile/'+kind+'/'
     m.map=mineralMap(folder+'color.png?v=4',true)
-    m.normalMap=mineralMap(folder+'normal.png?v=4');m.normalScale.set(.7,.7)
+    m.normalMap=mineralMap(folder+'normal.png?v=4');m.normalScale.set(.45,.45)
     m.roughnessMap=mineralMap(folder+'rough.png?v=4')
     m.envMapIntensity=.75
     materials.push(m)
