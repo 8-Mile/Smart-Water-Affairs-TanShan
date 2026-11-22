@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import {computed,ref,watch} from 'vue'
+import {computed,reactive,ref,watch} from 'vue'
 import {useRouter} from 'vue-router'
 import {ElMessage,ElMessageBox} from 'element-plus'
-import {SCENARIOS,SCENARIO_IDS,type ScenarioId} from './engine'
+import {SCENARIOS,SCENARIO_IDS,type ScenarioId,type ScenarioInputs} from './engine'
 import {useScenarioStore} from './store'
 const router=useRouter()
 const store=useScenarioStore()
@@ -10,9 +10,44 @@ const selected=ref<ScenarioId>('peak')
 watch(()=>store.consoleOpen,(open)=>{if(open&&store.activeId)selected.value=store.activeId})
 const definition=computed(()=>SCENARIOS[selected.value])
 const result=computed(()=>store.result)
+type EditableKey='capacityM3h'|'reservedM3h'|'poolInitialM3'|'poolSafetyM3'|'poolInflowM3h'|'horizonHours'
+const editedFields:{key:EditableKey;label:string;unit:string;max:number}[]=[
+  {key:'capacityM3h',label:'假设供水能力',unit:'m³/h',max:100000},
+  {key:'reservedM3h',label:'预留不可分配流量',unit:'m³/h',max:100000},
+  {key:'poolInitialM3',label:'起始储量',unit:'m³',max:100000000},
+  {key:'poolInflowM3h',label:'持续入池流量',unit:'m³/h',max:100000},
+  {key:'poolSafetyM3',label:'安全储量线',unit:'m³',max:100000000},
+  {key:'horizonHours',label:'推演时长',unit:'小时',max:72},
+]
+const draft=reactive<Pick<ScenarioInputs,EditableKey>>({
+  capacityM3h:SCENARIOS.peak.inputs.capacityM3h,
+  reservedM3h:SCENARIOS.peak.inputs.reservedM3h,
+  poolInitialM3:SCENARIOS.peak.inputs.poolInitialM3,
+  poolInflowM3h:SCENARIOS.peak.inputs.poolInflowM3h,
+  poolSafetyM3:SCENARIOS.peak.inputs.poolSafetyM3,
+  horizonHours:SCENARIOS.peak.inputs.horizonHours,
+})
+const editorOpen=ref(false)
+const isEdited=computed(()=>editedFields.some(f=>draft[f.key]!==SCENARIOS[selected.value].inputs[f.key]))
+function loadDraft(){
+  const x=selected.value===store.activeId&&store.activeInputs
+    ?store.activeInputs:SCENARIOS[selected.value].inputs
+  for(const f of editedFields)draft[f.key]=x[f.key]
+}
+watch(selected,loadDraft)
+watch(()=>store.consoleOpen,(opened)=>{
+  if(opened){
+    if(store.activeId)selected.value=store.activeId
+    loadDraft()
+  }
+})
+function resetDraft(){
+  const x=SCENARIOS[selected.value].inputs
+  for(const f of editedFields)draft[f.key]=x[f.key]
+}
 async function run(){
   try{
-    store.start(selected.value)
+    store.start(selected.value,{...draft})
     ElMessage({type:'info',message:'已进入演示情景：所有业务视图按同一组SIM数据联动，真实数据未更改'})
   }catch(e){ElMessage.error(e instanceof Error?e.message:'启动失败')}
 }
@@ -60,6 +95,28 @@ const nav=[
           </button>
         </div>
         <p class="tg-sim-summary">{{definition.summary}}</p>
+        <div class="tg-assumption-toggle">
+          <button type="button" :aria-expanded="editorOpen" @click="editorOpen=!editorOpen">
+            本次假设参数 <span v-if="isEdited" class="tg-assumption-edited">已调整</span>
+            <span class="tg-assumption-chevron">{{editorOpen?'收起':'展开'}}</span>
+          </button>
+        </div>
+        <div v-if="editorOpen" class="tg-assumption-editor">
+          <div class="tg-assumption-fields">
+            <label v-for="field in editedFields" :key="field.key">
+              <span>{{field.label}} <small>{{field.unit}}</small></span>
+              <el-input-number v-model="draft[field.key]"
+                controls-position="right" :min="0" :max="field.max"
+                :step="field.key==='horizonHours'?1:5"
+                :precision="field.key==='horizonHours'?1:2"
+                size="default"/>
+            </label>
+          </div>
+          <div class="tg-assumption-buttons">
+            <span>所有数值均为SIM假设，不能作为现场调度参数。</span>
+            <el-button link @click="resetDraft">恢复预置假设</el-button>
+          </div>
+        </div>
         <div class="tg-sim-actions">
           <el-button type="primary" @click="run">{{store.running?'应用选定情景':'启动情景推演'}}</el-button>
           <el-button v-if="store.running" plain @click="reset">退出模拟</el-button>
@@ -155,4 +212,25 @@ const nav=[
  .tg-sim-links button{grid-template-columns:1fr 1fr}.tg-sim-links i{grid-column:2}
 }
 @media(prefers-reduced-motion:reduce){.tg-sim-launch{transition:none}.tg-sim-launch:hover{transform:none}}
+</style>
+<style>
+.tg-assumption-toggle{display:flex;margin:8px 0 4px}
+.tg-assumption-toggle button{display:flex;align-items:center;gap:7px;
+ background:transparent;border:0;padding:8px 0;cursor:pointer;
+ color:#3c6880;font-size:12px;font-weight:650;font-family:inherit}
+.tg-assumption-toggle button:hover{color:#217c9f}
+.tg-assumption-edited{font-size:10px;color:#a47636;font-weight:500}
+.tg-assumption-chevron{margin-left:5px;color:#91a6b3;font-size:10px;font-weight:400}
+.tg-assumption-editor{padding:14px;border:1px solid rgba(162,194,213,.33);
+ background:rgba(255,255,255,.56);border-radius:11px;margin:5px 0 12px}
+.tg-assumption-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tg-assumption-fields label{display:flex;flex-direction:column;gap:5px;min-width:0}
+.tg-assumption-fields label>span{color:#6e889a;font-size:11px}
+.tg-assumption-fields label>span small{color:#9aabb5;font-size:10px}
+.tg-assumption-fields :deep(.el-input-number){width:100%}
+.tg-assumption-editor .el-input-number{width:100%}
+.tg-assumption-buttons{display:flex;gap:10px;align-items:center;justify-content:space-between;
+ margin-top:12px;flex-wrap:wrap}
+.tg-assumption-buttons>span{font-size:10px;color:#91a3ae;line-height:1.4}
+@media(max-width:380px){.tg-assumption-fields{grid-template-columns:1fr}}
 </style>

@@ -1,20 +1,45 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { SCENARIOS, calculateScenario, type ScenarioId } from './engine'
+import { SCENARIOS, calculateScenario, type ScenarioId, type ScenarioInputs } from './engine'
+import { compareSupplyPlans } from './supplyPlans'
 /**
  * 情景推演与生产源数据严格隔离：仅当前浏览器内存有效，不写localStorage、后台API或PLC。
  * 路由切换不会重置；刷新、退出登录、关闭页面即消失。
  */
 export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   const activeId=ref<ScenarioId|null>(null)
+  const activeInputs=ref<ScenarioInputs|null>(null)
   const runNumber=ref(0)
   const startedAt=ref('')
   const consoleOpen=ref(false)
   const activeScenario=computed(()=>activeId.value?SCENARIOS[activeId.value]:null)
-  const result=computed(()=>activeScenario.value?calculateScenario(activeScenario.value):null)
+  const effectiveScenario=computed(()=>activeScenario.value&&activeInputs.value
+    ?{...activeScenario.value,inputs:activeInputs.value}:null)
+  const result=computed(()=>effectiveScenario.value?calculateScenario(effectiveScenario.value):null)
+  const supplyPlans=computed(()=>effectiveScenario.value?compareSupplyPlans(effectiveScenario.value):[])
   const running=computed(()=>activeId.value!==null)
-  function start(id:ScenarioId){
+
+  /** Only this global console may change a predefined *SIM* input snapshot. */
+  const EDITABLE_KEYS=['capacityM3h','reservedM3h','poolInitialM3',
+    'poolSafetyM3','poolInflowM3h','horizonHours'] as const
+  function start(id:ScenarioId, overrides:Partial<Pick<ScenarioInputs,typeof EDITABLE_KEYS[number]>>={}){
     if(!SCENARIOS[id])throw Error('未授权的演示情景')
+    for(const key of Object.keys(overrides)){
+      if(!EDITABLE_KEYS.includes(key as typeof EDITABLE_KEYS[number])){
+        throw Error('该参数不能在情景控制台修改')
+      }
+    }
+    const def=SCENARIOS[id]
+    const proposed:ScenarioInputs={
+      ...def.inputs,
+      terminals:def.inputs.terminals.map(t=>({...t})),
+      ...overrides,
+    }
+    // Validate BEFORE updating store, so an invalid run does not poison
+    // business pages or leave behind a partially updated scene state.
+    calculateScenario({...def,inputs:proposed})
+    compareSupplyPlans({...def,inputs:proposed})
+    activeInputs.value=proposed
     activeId.value=id
     runNumber.value+=1
     startedAt.value=new Date().toISOString()
@@ -25,6 +50,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   }
   function stop(){
     activeId.value=null
+    activeInputs.value=null
     startedAt.value=''
     window.dispatchEvent(new CustomEvent('tanggang:scenario-visual',{
       detail:{scenarioId:null,runNumber:runNumber.value,dataMode:'MEASURED_OR_UNAVAILABLE',simulationOnly:false},
@@ -32,6 +58,6 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   }
   function openConsole(){consoleOpen.value=true}
   function closeConsole(){consoleOpen.value=false}
-  return {activeId,runNumber,startedAt,consoleOpen,activeScenario,result,running,
-    start,stop,openConsole,closeConsole}
+  return {activeId,activeInputs,runNumber,startedAt,consoleOpen,activeScenario,
+    effectiveScenario,result,supplyPlans,running,start,stop,openConsole,closeConsole}
 })

@@ -2,6 +2,7 @@
 import {computed} from 'vue'
 import {useRouter} from 'vue-router'
 import {useScenarioStore} from '../simulation/store'
+import SupplyPlanComparison from './SupplyPlanComparison.vue'
 import './business.css'
 import './scenario-pages.css'
 const router=useRouter(),store=useScenarioStore()
@@ -60,6 +61,7 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
           <p class="tg-mini-note">{{r.hoursToSafety===null?'本窗口未预计触及安全线':'保持本次假设流量，约 '+r.hoursToSafety+'小时触及安全线。'}} V(t)=clamp(V0+(Q入−Q出)×t,0,C)。真实水位库容曲线未接入。</p>
         </section>
       </div>
+      <SupplyPlanComparison />
       <section class="tg-biz-card art-card tg-analysis-footer">
         <div><h2>跨业务联动</h2><p>同一供水缺口会出现在智能监护的模拟线索中；不会写入真实告警或工单。雨水收集不能自动视为生产供水来源。</p></div>
         <el-button type="primary" plain @click="router.push('/port/operations/monitor')">查看智能监护</el-button>
