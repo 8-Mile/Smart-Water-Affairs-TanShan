@@ -51,6 +51,11 @@ const router = createRouter({
         // 既有5175正式业务页继续遵守各自的 meta.perm 与后台API鉴权。
         {path:'port/monitor',redirect:'/port/process/fog'},
         {
+          path:'port/data/provenance',name:'tg-data-provenance',
+          component:()=>import('@/modules/tanggang/business/PortDataReviewView.vue'),
+          meta:{title:'资料与测点核对',perm:'scada:monitor'},
+        },
+        {
           path:'port/process/:systemId',name:'port-process',
           component:()=>import('@/modules/tanggang/business/PortProcessView.vue'),
           meta:{title:'唐港专业工艺详情'},

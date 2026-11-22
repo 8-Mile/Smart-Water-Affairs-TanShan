@@ -107,9 +107,9 @@ async function remove(){
       </div>
       <el-form-item label="三维对象ID" required>
         <el-input v-model="state.object_id" :disabled="!!existing" maxlength="128"
-          placeholder="填写已核实的场景objectId，不使用推测编号"/>
+          placeholder="填写已经存在的场景objectId，不使用推测编号"/>
       </el-form-item>
-      <el-form-item label="正式设备台账" required>
+      <el-form-item label="现有系统台账（待现场核实）" required>
         <el-select v-model="state.asset_ids" multiple filterable clearable collapse-tags
           collapse-tags-tooltip placeholder="选择真实设备" style="width:100%">
           <el-option v-for="e in equipmentOptions" :key="e.id"
@@ -132,9 +132,9 @@ async function remove(){
         </el-form-item>
       </div>
       <el-form-item>
-        <el-switch v-model="state.verified" active-text="关联关系已人工核验"/>
+        <el-switch v-model="state.verified" active-text="资料对象关系已核对（非现场核验）"/>
       </el-form-item>
-      <p class="tg-binding-boundary">关联审核仅确认对象身份，不代表管网水力连通或测点来源已经验证为实测。未核验的关联保持设计参考状态。</p>
+      <p class="tg-binding-boundary">关联记录仅表示依据上传资料建立的对应关系，不代表现场设备、管网或测点已核实。</p>
       <p v-if="error" class="tg-binding-error" role="alert">{{error}}</p>
     </el-form>
     <template #footer>

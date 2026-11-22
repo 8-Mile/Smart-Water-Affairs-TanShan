@@ -9,6 +9,7 @@ import {usePermissions} from '@/utils/permissions'
 import {fetchUnreadCount} from '@/api/notification'
 import logoImg from '@/assets/img/DALOGO.webp'
 import {tanggangGroupForPath} from '../../business/menu'
+import ProjectDataStage from '../../business/ProjectDataStage.vue'
 
 /** 首页使用与运管平台相同的用户身份和菜单权限，替换旧5188的演示身份、天气和空消息面板。 */
 const router=useRouter()
@@ -83,6 +84,7 @@ onBeforeUnmount(()=>{
     </nav>
 
     <div class="tg-system-tools">
+      <ProjectDataStage/>
       <time class="tg-system-clock" aria-label="北京时间">
         <strong>{{displayClock}}</strong>
         <small>{{displayDate}}</small>

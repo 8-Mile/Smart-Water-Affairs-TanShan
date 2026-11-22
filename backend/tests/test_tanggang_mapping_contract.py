@@ -18,6 +18,7 @@ from app.models.tanggang import (
     TanggangObjectLink, TanggangLinkAsset, TanggangLinkMetric, TanggangLinkRevision,
 )
 from app.models.archive import OperationLog
+from app.models.tanggang_provenance import TanggangPointReview, TanggangPointReviewRevision
 from app.models.user import User
 from app.services.tanggang_quality import point_envelope
 
@@ -35,7 +36,8 @@ def env(monkeypatch):
         RoleMenu.__table__,Equipment.__table__,ScadaPoint.__table__,
         ScadaPointLatest.__table__,TanggangObjectLink.__table__,
         TanggangLinkAsset.__table__,TanggangLinkMetric.__table__,
-        TanggangLinkRevision.__table__,OperationLog.__table__,
+        TanggangLinkRevision.__table__,TanggangPointReview.__table__,
+        TanggangPointReviewRevision.__table__,OperationLog.__table__,
     ])
     Session = sessionmaker(bind=engine, expire_on_commit=False)
     with Session() as db:
@@ -43,7 +45,9 @@ def env(monkeypatch):
         viewer_role = Role(name="只读测试角色",code="tanggang_viewer",status=1,deleted=0)
         menu = Menu(name="编辑设备",perms="eq:update",menu_type="button",
                     parent_id=0,sort=1,visible=1,status=1,deleted=0)
-        db.add_all([role,viewer_role,menu])
+        point_menu = Menu(name="编辑测点",perms="scada:point:update",menu_type="button",
+                          parent_id=0,sort=2,visible=1,status=1,deleted=0)
+        db.add_all([role,viewer_role,menu,point_menu])
         db.flush()
         writer = User(username="tg_editor",password_hash="x",role_code=role.code,
                       display_name="编辑者",status=1,deleted=0)
@@ -55,6 +59,7 @@ def env(monkeypatch):
             UserRole(user_id=writer.id,role_id=role.id),
             UserRole(user_id=reader.id,role_id=viewer_role.id),
             RoleMenu(role_id=role.id,menu_id=menu.id),
+            RoleMenu(role_id=role.id,menu_id=point_menu.id),
         ])
         a = Equipment(name="测试中压泵A",code=f"TG-{uuid.uuid4().hex[:8]}",
                       type_id=1,status=1,deleted=0)
@@ -244,3 +249,101 @@ def test_corrupted_scada_timestamp_cannot_be_shown_as_valid_data():
     r=point_envelope(point,latest,runtime_mode="mock",now_ms=1_000_000)
     assert r["quality"]=="BAD"
     assert r["observed_at"] is None
+
+
+def test_tanggang_project_stage_is_document_based_demo(env):
+    client, ids, _, _ = env
+    response=client.get("/api/v1/tanggang/data-context")
+    assert response.status_code == 200,response.text
+    data=response.json()["data"]
+    assert data["stage"] == "DOCUMENT_BASED_DEMO"
+    assert data["sources_scope"] == "USER_UPLOADED_MATERIALS"
+    assert data["eligible_measured_point_count"] == 0
+    assert data["field_data_confirmed"] is False
+    assert data["production_plc_connected"] is False
+
+
+def test_scada_points_are_not_automatically_tanggang_or_measured(env):
+    client, ids, _, Session = env
+    audit=client.get("/api/v1/tanggang/point-audit")
+    assert audit.status_code == 200,audit.text
+    result=audit.json()["data"]
+    assert result["total"] == 1
+    assert result["context"]["review_records"] == 0
+    assert result["context"]["field_verified_count"] == 0
+    point=result["items"][0]
+    assert point["point_id"] == ids["point"]
+    assert point["system_id"] is None
+    assert point["basis_type"] == "UNVERIFIED"
+    assert point["field_verified"] is False
+    assert point["data_mode"] in ("SIM","UNKNOWN")
+    assert client.get("/api/v1/tanggang/point-audit",params={"system_id":"middle"}).json()["data"]["total"]==0
+
+
+def test_point_document_review_no_live_data_mutation(env):
+    client,ids,_,Session=env
+    point_id=ids["point"]
+    before=client.get("/api/v1/tanggang/point-audit").json()["data"]["items"][0]
+    approved={
+        "system_id":"middle","basis_type":"DOCUMENT_REFERENCE",
+        "source_ref":"用户上传：第四分册（待核原始页码）",
+    }
+    saved=client.put(f"/api/v1/tanggang/point-reviews/{point_id}",json=approved)
+    assert saved.status_code==200,saved.text
+    out=saved.json()["data"]
+    assert out["basis_type"]=="DOCUMENT_REFERENCE"
+    assert out["field_verified"] is False
+    after=client.get("/api/v1/tanggang/point-audit",
+                     params={"system_id":"middle","basis_type":"DOCUMENT_REFERENCE"})
+    assert after.status_code==200,after.text
+    value=after.json()["data"]
+    assert value["total"]==1
+    assert value["items"][0]["source_ref"]==approved["source_ref"]
+    assert value["items"][0]["field_verified"] is False
+    assert value["items"][0]["data_mode"]==before["data_mode"]
+    newer=client.put(f"/api/v1/tanggang/point-reviews/{point_id}",json={
+        "system_id":"middle","basis_type":"ASSUMPTION",
+        "assumption_note":"仅据设计工艺推导候选测点，未进行现场核实",
+    })
+    assert newer.status_code==200,newer.text
+    history=client.get(f"/api/v1/tanggang/point-reviews/{point_id}/revisions")
+    assert history.status_code==200,history.text
+    assert len(history.json()["data"])==2
+    assert history.json()["data"][0]["before"]["basis_type"]=="DOCUMENT_REFERENCE"
+    with Session() as db:
+        assert db.query(ScadaPoint).filter(ScadaPoint.id==point_id).count()==1
+        assert db.query(ScadaPointLatest).count()==0
+        assert db.query(TanggangPointReviewRevision).count()==2
+
+
+def test_point_review_rejects_fake_measured_or_unattributed_assumptions(env):
+    client,ids,_,Session=env
+    point_id=ids["point"]
+    invalid=[
+        {"system_id":"middle","basis_type":"MEASURED","source_ref":"现场实测"},
+        {"system_id":"middle","basis_type":"FIELD_VERIFIED","source_ref":"已核"},
+        {"system_id":"middle","basis_type":"DOCUMENT_REFERENCE","source_ref":""},
+        {"system_id":"middle","basis_type":"ASSUMPTION"},
+        {"system_id":"fake","basis_type":"DEMO_VALUE","assumption_note":"demo"},
+    ]
+    for row in invalid:
+        result=client.put(f"/api/v1/tanggang/point-reviews/{point_id}",json=row)
+        assert result.status_code==422,result.text
+    assert client.put("/api/v1/tanggang/point-reviews/999999",json={
+        "system_id":"middle","basis_type":"UNVERIFIED"
+    }).status_code==404
+    with Session() as db:
+        assert db.query(TanggangPointReview).count()==0
+
+
+def test_point_review_requires_existing_scada_editor_permission(env):
+    client,ids,mode,Session=env
+    mode["value"]="reader"
+    point_id=ids["point"]
+    assert client.get("/api/v1/tanggang/point-audit").status_code==200
+    response=client.put(f"/api/v1/tanggang/point-reviews/{point_id}",json={
+        "system_id":"middle","basis_type":"UNVERIFIED"
+    })
+    assert response.status_code==403,response.text
+    with Session() as db:
+        assert db.query(TanggangPointReview).count()==0

@@ -95,11 +95,12 @@
           <span class="page-name">{{ pageTitle === '工作台' ? '唐港综合总览' : pageTitle }}</span>
         </div>
         <div class="h-spacer" />
+        <ProjectDataStage />
 
         <!-- 数据新鲜度：最近一次成功取数时间，点击重载当前页 -->
         <div class="head-freshness" title="点击刷新当前页面数据" @click="onRefreshPage">
           <ArtSvgIcon icon="ri:refresh-line" class="fresh-icon" :class="{ spinning: pageReloading }" />
-          <span>更新 {{ freshnessText }}</span>
+          <span>页面 {{ freshnessText }}</span>
         </div>
 
         <!-- 实时时钟 -->
@@ -229,6 +230,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Clock } from '@element-plus/icons-vue'
 import ArtSvgIcon from '@/components/ArtSvgIcon.vue'
 import AiFloatAssistant from '@/components/AiFloatAssistant.vue'
+import ProjectDataStage from '@/modules/tanggang/business/ProjectDataStage.vue'
 import logoImg from '@/assets/img/DALOGO.webp'
 import { useAppMenus } from '@/composables/useAppMenus'
 import { useAppChrome } from '@/composables/useAppChrome'

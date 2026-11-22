@@ -34,6 +34,7 @@ export const tanggangMenus: TanggangNavItem[] = [
     {id:'inspection',title:'设备巡检',icon:'ri:list-check-2',path:'/inspection/tasks',permission:'insp:task:list'},
     {id:'maintenance',title:'计划维保',icon:'ri:settings-5-line',path:'/maintenance/plans',permission:'maint:plan:list'},
     {id:'archive',title:'档案管理',icon:'ri:archive-line',path:'/archive',permission:'archive:list'},
+    {id:'data-review',title:'资料与测点核对',icon:'ri:file-search-line',path:'/port/data/provenance',permission:'scada:monitor'},
   ]},
   { id:'analysis',title:'分析中心',icon:'ri:brain-line',path:'/ai/chat',children:[
     {id:'analysis-ai',title:'AI智能助手',icon:'ri:robot-2-line',path:'/ai/chat'},

@@ -35,6 +35,7 @@ from app.models.scada import ScadaPoint, ScadaPointLatest, ScadaTagData
 from app.models.tanggang import (
     TanggangObjectLink, TanggangLinkAsset, TanggangLinkMetric, TanggangLinkRevision,
 )
+from app.models.tanggang_provenance import TanggangPointReview, TanggangPointReviewRevision
 from app.models.user import User
 
 __all__ = [
@@ -77,6 +78,8 @@ __all__ = [
     "Archive",
     "ArchiveCategory",
     "ArchiveFavorite",
+    "TanggangPointReview",
+    "TanggangPointReviewRevision",
     "TanggangObjectLink",
     "TanggangLinkAsset",
     "TanggangLinkMetric",

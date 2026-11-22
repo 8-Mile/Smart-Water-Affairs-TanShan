@@ -23,6 +23,7 @@ from app.api import (
     water_supply,
     ws,
     tanggang,
+    tanggang_provenance,
 )
 
 api_router = APIRouter()
@@ -49,3 +50,5 @@ api_router.include_router(notification.router)
 api_router.include_router(ws.router)
 
 api_router.include_router(tanggang.router)
+
+api_router.include_router(tanggang_provenance.router)
