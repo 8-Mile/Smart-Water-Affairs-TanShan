@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import {computed,onMounted,ref} from 'vue'
+import {computed,onMounted,ref,watch} from 'vue'
 import {useRoute,useRouter} from 'vue-router'
 import {ElButton} from 'element-plus'
 import {loadTanggangCatalog,summarizeSystem,type TanggangCatalog} from '../mapping/tanggangCatalog'
 import './business.css'
+import {usePermissions} from '@/utils/permissions'
+import {
+  fetchTanggangObjectLinks,type TanggangObjectLink,type TanggangSystemId,
+} from '@/api/tanggang'
+import PortObjectBindingDialog from './PortObjectBindingDialog.vue'
+import type {TanggangDevice} from '../mapping/tanggangCatalog'
 import {useScenarioStore} from '../simulation/store'
 const sim=useScenarioStore()
 const simMessage=computed(()=>{
@@ -23,6 +29,57 @@ const sysId=computed(()=>String(route.params.systemId||''))
 const system=computed(()=>catalog.value?.systemMap.get(sysId.value))
 const facilities=computed(()=>system.value?.areaEquipment.flatMap(e=>e.equipmentIds.map(id=>({device:catalog.value?.deviceMap.get(id),region:e.regionId}))).filter(r=>r.device)??[])
 const unique=computed(()=>Array.from(new Map(facilities.value.map(o=>[o.device!.id,o.device!])).values()))
+const {hasPerm}=usePermissions()
+const canBind=computed(()=>hasPerm('eq:update'))
+const objectLinks=ref<TanggangObjectLink[]>([])
+const linkError=ref('')
+const bindingOpen=ref(false)
+const bindingDevice=ref<TanggangDevice|null>(null)
+const bindingExisting=ref<TanggangObjectLink|null>(null)
+let querySerial=0
+
+async function loadObjectLinks(systemId:string){
+  const serial=++querySerial
+  objectLinks.value=[]
+  linkError.value=''
+  if(!systemId)return
+  try{
+    const all:TanggangObjectLink[]=[]
+    let page=1
+    let total=0
+    do{
+      const res=await fetchTanggangObjectLinks({
+        system_id:systemId as TanggangSystemId,page,page_size:200,
+      })
+      if(serial!==querySerial)return
+      all.push(...res.data.data.items)
+      total=res.data.data.total
+      page+=1
+      if(page>26)throw Error('工程对象数量超过单次查询限制')
+    }while(all.length<total)
+    objectLinks.value=all
+  }catch{
+    if(serial===querySerial)linkError.value='业务关联服务暂时不可用'
+  }
+}
+watch(sysId,id=>{void loadObjectLinks(id)},{immediate:true})
+const linksByFacility=computed(()=>{
+  const map=new Map<string,TanggangObjectLink[]>()
+  for(const link of objectLinks.value){
+    const list=map.get(link.facility_id)||[]
+    list.push(link)
+    map.set(link.facility_id,list)
+  }
+  return map
+})
+function linksFor(facilityId:string){return linksByFacility.value.get(facilityId)||[]}
+function openBinding(device:TanggangDevice,existing:TanggangObjectLink|null=null){
+  bindingDevice.value=device
+  bindingExisting.value=existing
+  bindingOpen.value=true
+}
+function savedBinding(){void loadObjectLinks(sysId.value)}
+
 </script>
 <template>
   <main class="tg-biz page-fill">
@@ -52,9 +109,26 @@ const unique=computed(()=>Array.from(new Map(facilities.value.map(o=>[o.device!.
         <section class="tg-biz-card art-card">
           <h2>设计设施与数据采集项</h2>
           <div v-if="!unique.length" class="tg-biz-empty">该专业系统尚未映射设计设备</div>
-          <div v-for="device in unique" :key="device.id" class="tg-biz-list-row">
-            <div style="min-width:0"><strong>{{device.name}}</strong><p>{{device.regionName}} · {{device.id}}</p><p v-if="device.dataFields?.length">建议采集：{{device.dataFields.join('、')}}</p></div>
-            <span class="tg-biz-chip" :class="{warn:device.currentStatus==='未接入'}">{{device.currentStatus||'需核验'}}</span>
+          <div v-if="linkError" class="tg-biz-label">{{linkError}}</div>
+          <div v-for="device in unique" :key="device.id" class="tg-biz-list-row tg-facility-row">
+            <div style="min-width:0;flex:1"><strong>{{device.name}}</strong>
+              <p>{{device.regionName}} · {{device.id}}</p>
+              <p v-if="device.dataFields?.length">建议采集：{{device.dataFields.join('、')}}</p>
+              <div v-for="link in linksFor(device.id)" :key="link.id" class="tg-object-associations">
+                <el-button v-for="asset in link.assets||[]" :key="asset.id" link type="primary"
+                  @click="router.push('/equipment/detail/'+asset.id)">{{asset.name}}</el-button>
+                <span v-if="link.metric_ids.length" class="tg-biz-label">{{link.metric_ids.length}}个测点</span>
+                <span v-if="!link.verified" class="tg-biz-label">待核验</span>
+                <el-button v-if="canBind" link @click="openBinding(device,link)">编辑</el-button>
+              </div>
+            </div>
+            <div class="tg-facility-side">
+              <el-button v-if="canBind" size="small" plain class="tg-object-bind-action"
+                @click="openBinding(device)">关联</el-button>
+              <span class="tg-biz-chip" :class="{warn:device.currentStatus==='未接入' && !linksFor(device.id).length}">
+                {{linksFor(device.id).length?'已登记关联':(device.currentStatus||'需核验')}}
+              </span>
+            </div>
           </div>
         </section>
         <section class="tg-biz-card art-card">
@@ -74,5 +148,17 @@ const unique=computed(()=>Array.from(new Map(facilities.value.map(o=>[o.device!.
         </section>
       </div>
     </template>
+    <PortObjectBindingDialog v-model:open="bindingOpen"
+      :device="bindingDevice" :existing="bindingExisting"
+      :system-id="sysId as TanggangSystemId"
+      @saved="savedBinding"/>
   </main>
 </template>
+<style scoped>
+.tg-object-associations{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:5px}
+.tg-object-associations .el-button{font-size:12px}
+.tg-facility-side{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tg-object-bind-action{opacity:.15;transition:opacity .16s}
+.tg-facility-row:hover .tg-object-bind-action,.tg-object-bind-action:focus-visible{opacity:1}
+@media(hover:none){.tg-object-bind-action{opacity:1}}
+</style>

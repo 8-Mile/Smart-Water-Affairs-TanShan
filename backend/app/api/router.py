@@ -22,6 +22,7 @@ from app.api import (
     scada_ingest,
     water_supply,
     ws,
+    tanggang,
 )
 
 api_router = APIRouter()
@@ -46,3 +47,5 @@ api_router.include_router(archive_internal.router)
 api_router.include_router(audit.router)
 api_router.include_router(notification.router)
 api_router.include_router(ws.router)
+
+api_router.include_router(tanggang.router)

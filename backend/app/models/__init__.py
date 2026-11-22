@@ -32,6 +32,9 @@ from app.models.org import Department, Location, Team, Unit
 from app.models.rbac import Menu, Role, RoleMenu, UserRole
 from app.models.repair import RepairActionLog, RepairOrder
 from app.models.scada import ScadaPoint, ScadaPointLatest, ScadaTagData
+from app.models.tanggang import (
+    TanggangObjectLink, TanggangLinkAsset, TanggangLinkMetric, TanggangLinkRevision,
+)
 from app.models.user import User
 
 __all__ = [
@@ -74,5 +77,9 @@ __all__ = [
     "Archive",
     "ArchiveCategory",
     "ArchiveFavorite",
+    "TanggangObjectLink",
+    "TanggangLinkAsset",
+    "TanggangLinkMetric",
+    "TanggangLinkRevision",
     "OperationLog",
 ]
