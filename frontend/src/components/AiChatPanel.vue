@@ -74,6 +74,10 @@
               </el-tag>
             </div>
             <div class="content">{{ m.content }}<span v-if="m.streaming" class="caret">▍</span></div>
+            <div v-if="m.links?.length" class="ai-route-links">
+              <el-button v-for="link in m.links" :key="link.path" type="primary" link size="small"
+                @click="gotoKnownRoute(link.path)">{{link.label}}</el-button>
+            </div>
 
             <div v-if="m.pending?.length" class="pending-list">
               <div
@@ -102,6 +106,16 @@
                   <el-descriptions-item v-if="pa.tool==='create_sim_board'" label="发布位置">
                     {{pa.payload.target_path}}
                   </el-descriptions-item>
+                  <template v-if="pa.tool==='edit_sim_board'">
+                    <el-descriptions-item label="看板">{{pa.payload.title}} · #{{pa.payload.board_id}}</el-descriptions-item>
+                    <el-descriptions-item label="版本">v{{pa.payload.expected_version}} → v{{Number(pa.payload.expected_version)+1}}</el-descriptions-item>
+                    <el-descriptions-item label="操作">{{pa.payload.operation==='add'?'添加组件':'移除组件'}} · {{pa.payload.component_metric||pa.payload.component_kind}}</el-descriptions-item>
+                  </template>
+                  <template v-if="pa.tool==='create_sim_report'">
+                    <el-descriptions-item label="情景">{{pa.payload.scenario_id}} · 第{{pa.payload.run_number}}轮</el-descriptions-item>
+                    <el-descriptions-item label="供水缺口">{{pa.payload.shortage_m3h}} m³/h（SIM）</el-descriptions-item>
+                    <el-descriptions-item label="核查状态">{{pa.payload.review_status}}</el-descriptions-item>
+                  </template>
                   <el-descriptions-item label="执行范围">仅独立SIM业务表</el-descriptions-item>
                 </el-descriptions>
                 <pre v-else-if="pa.payload" class="pending-payload">{{ formatPayload(pa.payload) }}</pre>
@@ -131,7 +145,7 @@
                 </div>
                 <div v-if="pa.resultText" class="pending-result">{{ pa.resultText }}</div>
                 <el-button v-if="pa.resultPath && pa.uiStatus==='confirmed'" type="primary"
-                  link size="small" @click="router.push(pa.resultPath)">查看结果</el-button>
+                  link size="small" @click="gotoKnownRoute(pa.resultPath)">查看结果</el-button>
               </div>
             </div>
           </div>
@@ -171,6 +185,7 @@ import {
   type AiSessionSummary,
   type AiToolTraceItem,
   type AiDemoContext,
+  type AiRouteLink,
 } from '@/api/ai'
 
 interface PendingUI extends AiPendingAction {
@@ -186,12 +201,36 @@ interface Msg {
   pending?: PendingUI[]
   statusText?: string
   streaming?: boolean
+  links?: AiRouteLink[]
 }
 
 const emit = defineEmits<{ (e: 'emotion', mood: 'happy' | 'sad'): void }>()
 const router = useRouter()
 const scenarioStore = useScenarioStore()
 const isMock = ref(false)
+const knownRoutes = new Set([
+  '/port/water/supply','/port/operations/monitor',
+  '/port/analysis/boards','/port/analysis/reports',
+  '/port/analysis/equipment-drafts',
+])
+async function gotoKnownRoute(path:string){
+  const [base,query=''] = path.split('?')
+  if(!knownRoutes.has(base))return
+  const params=new URLSearchParams(query)
+  // Only allow a board numeric selector; never execute a generated URL.
+  if(query && (base!=='/port/analysis/boards' ||
+      [...params.keys()].some(k=>k!=='board') ||
+      !/^[1-9][0-9]{0,8}$/.test(params.get('board')||'')))return
+  await router.push(path)
+  // The mature out-in page transition can occasionally leave an empty router
+  // outlet after a chat confirmation (especially without a WebGL context).
+  // Preserve SPA state if successful; only recover by refreshing a blank view.
+  window.setTimeout(()=>{
+    if(router.currentRoute.value.path!==base)return
+    const outlet=document.querySelector('.page-content')
+    if(outlet && !outlet.querySelector('main'))window.location.reload()
+  },950)
+}
 
 function currentDemoContext(): AiDemoContext | undefined {
   const result = scenarioStore.result
@@ -210,6 +249,16 @@ function currentDemoContext(): AiDemoContext | undefined {
     pool_forecast_m3: result.forecastPoolM3,
     monitor_risk: monitor.risk,
     triggered_rules: monitor.rules.filter(r => r.outcome === 'TRIGGERED').map(r => r.label),
+    insufficient_rules: monitor.rules.filter(r => r.outcome === 'INSUFFICIENT').map(r => r.label),
+    affected_terminals: (scenarioStore.impactAnalysis?.affectedTerminals || []).map(t => ({
+      label: t.label, demand_m3h: t.demandM3h,
+      allocated_m3h: t.allocatedM3h, shortage_m3h: t.shortageM3h,
+    })),
+    checkpoints: (scenarioStore.impactAnalysis?.checkpoints || []).map(x => x.label),
+    review_status: scenarioStore.monitorReview?.status || 'not_started',
+    review_outcome: scenarioStore.monitorReview?.outcome || null,
+    review_note: scenarioStore.monitorReview?.note || '',
+    scenario_started_at: scenarioStore.startedAt,
   }
 }
 
@@ -231,6 +280,7 @@ const examples = [
   '查询演示设备',
   '在除尘系统新增设备，设备名称：演示喷雾泵，设备编号：SIM-FOG-001，参数：待核实',
   '帮我生成供水分析看板',
+  '生成本轮SIM运行复盘报告',
 ]
 
 function fill(text: string) {
@@ -273,17 +323,29 @@ async function openSession(id: string) {
       .map((m) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
+        links: isMock.value ? (m.links || []).filter(link=>knownRoutes.has(link.path)) : [],
+        pending: isMock.value ? (m.pending_actions || []).map(p => ({
+          ...p,
+          uiStatus: p.status === 'confirmed' ? 'confirmed' as const
+            : p.status === 'cancelled' ? 'cancelled' as const
+            : 'pending' as const,
+          resultPath: p.status === 'confirmed' && p.result_path
+            ? (p.tool==='edit_sim_board'&&p.payload?.board_id
+              ? '/port/analysis/boards?board='+p.payload.board_id : p.result_path)
+            : undefined,
+          resultText: p.status === 'confirmed' ? 'SIM演示记录已保存' : undefined,
+        })) : [],
       }))
-    if (isMock.value && data.data?.pending_actions?.length) {
+    if (isMock.value && data.data?.pending_actions?.length &&
+        !messages.value.some(m => m.pending?.length)) {
+      // Compatibility with sessions created before actions were linked to turns.
       const lastAssistant = [...messages.value].reverse().find(m => m.role === 'assistant')
       if (lastAssistant) {
         lastAssistant.pending = data.data.pending_actions.map(p => ({
           ...p,
-          uiStatus: p.status === 'confirmed' ? 'confirmed'
-            : p.status === 'cancelled' ? 'cancelled'
-            : 'pending',
+          uiStatus: p.status === 'confirmed' ? 'confirmed' as const
+            : p.status === 'cancelled' ? 'cancelled' as const : 'pending' as const,
           resultPath: p.status === 'confirmed' && p.result_path ? p.result_path : undefined,
-          resultText: p.status === 'confirmed' ? 'SIM演示记录已保存' : undefined,
         }))
       }
     }
@@ -384,6 +446,9 @@ async function send() {
             assistant.content = (ev.content || ev.reply || assistant.content).trim()
           }
           if (ev.tool_trace?.length) assistant.tools = ev.tool_trace
+          if (isMock.value && ev.links?.length) {
+            assistant.links = ev.links.filter(link=>knownRoutes.has(link.path))
+          }
           if (ev.pending_actions?.length) {
             assistant.pending = ev.pending_actions.map((p) => ({
               ...p,
@@ -436,13 +501,17 @@ async function onConfirm(pa: PendingUI) {
       const orderNo = (res as { order_no?: string }).order_no
       if (orderNo) pa.resultText = `工单已创建：${orderNo}`
       else if (isMock.value) {
-        pa.resultText = res.status === 'draft'
-          ? 'SIM看板草稿已保存，请前往“我的看板”预览或发布'
-          : 'SIM演示设备已登记，未写入正式设备台账'
+        pa.resultText = pa.tool === 'create_sim_report'
+          ? 'SIM复盘已保存，可以查看本轮运行记录'
+          : res.status === 'draft'
+            ? 'SIM看板草稿已保存，请前往“我的看板”预览或发布'
+            : 'SIM演示设备已登记，未写入正式设备台账'
       } else pa.resultText = '执行成功'
       if (res.path && typeof res.path === 'string' &&
-          ['/port/analysis/boards', '/port/analysis/equipment-drafts'].includes(res.path)) {
-        pa.resultPath = res.path
+          ['/port/analysis/boards', '/port/analysis/equipment-drafts', '/port/analysis/reports'].includes(res.path)) {
+        pa.resultPath = isMock.value && res.path === '/port/analysis/boards' &&
+            Number.isSafeInteger(res.id) && Number(res.id)>0
+          ? '/port/analysis/boards?board='+res.id : res.path
       }
     } else {
       pa.resultText = isMock.value ? 'SIM演示操作已确认' : '执行成功'
@@ -728,6 +797,7 @@ onMounted(async () => {
 .composer .el-textarea {
   flex: 1;
 }
+.ai-route-links{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:8px}
 
 /* ===== 窄屏（≤768px）：会话列表收起，聊天区占满整行 ===== */
 @media only screen and (max-width: 768px) {

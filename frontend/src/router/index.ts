@@ -95,6 +95,12 @@ const router = createRouter({
           meta: { title: '演示设备录入' },
         },
         {
+          path: 'port/analysis/reports',
+          name: 'tg-sim-reports',
+          component: () => import('@/modules/tanggang/business/PortSimReportsView.vue'),
+          meta: { title: '运行复盘' },
+        },
+        {
           path: 'port/analysis/boards',
           name: 'tg-a2ui-boards',
           component: () => import('@/modules/tanggang/business/PortBoardsView.vue'),

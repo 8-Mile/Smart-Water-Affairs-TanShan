@@ -12,11 +12,19 @@ from app.core.config import get_settings
 from app.core.deps import CurrentUser, DbSession
 from app.core.response import ok
 from app.models.ai_audit import AiAuditLog
+from app.models.tanggang_mock_ai import TanggangMockAiReport
 from app.models.user import User
 from app.services.ai_client import ai_service_client
 from app.services import tanggang_mock_ai
 
 router = APIRouter(prefix="/ai", tags=["ai"])
+
+
+class SimTerminalSnapshot(BaseModel):
+    label: str = Field(min_length=1, max_length=80)
+    demand_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
+    allocated_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
+    shortage_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
 
 
 class DemoContext(BaseModel):
@@ -33,6 +41,13 @@ class DemoContext(BaseModel):
     pool_forecast_m3: float = Field(ge=0, le=100000000, allow_inf_nan=False)
     monitor_risk: Literal["normal", "attention", "critical", "insufficient"]
     triggered_rules: list[str] = Field(default_factory=list, max_length=8)
+    insufficient_rules: list[str] = Field(default_factory=list, max_length=8)
+    affected_terminals: list[SimTerminalSnapshot] = Field(default_factory=list, max_length=16)
+    checkpoints: list[str] = Field(default_factory=list, max_length=12)
+    review_status: Literal["not_started", "investigating", "recorded"] = "not_started"
+    review_outcome: Literal["requires-field-check", "sim-recovery-conditions"] | None = None
+    review_note: str = Field(default="", max_length=1000)
+    scenario_started_at: str = Field(default="", max_length=48)
 
 
 class ChatBody(BaseModel):
@@ -373,3 +388,36 @@ def ai_audit_logs(
         for r in rows
     ]
     return ok({"items": items, "total": total, "page": page, "page_size": page_size})
+
+
+
+@router.get("/mock-reports")
+def mock_reports(current_user: CurrentUser, db: DbSession):
+    """Only the owner can retrieve their stored SIM replay reports."""
+    if not _mock_mode():
+        raise HTTPException(status_code=404, detail="此环境未启用SIM复盘")
+    rows = db.query(TanggangMockAiReport).filter(
+        TanggangMockAiReport.owner_id == current_user.id,
+    ).order_by(TanggangMockAiReport.id.desc()).limit(100).all()
+    return ok([{
+        "id": r.id, "scenario_id": r.scenario_id,
+        "run_number": r.run_number, "created_at": r.created_at,
+        "report": json.loads(r.report_json),
+    } for r in rows])
+
+
+@router.get("/mock-reports/{report_id}")
+def mock_report_detail(report_id: int, current_user: CurrentUser, db: DbSession):
+    if not _mock_mode():
+        raise HTTPException(status_code=404, detail="此环境未启用SIM复盘")
+    row = db.query(TanggangMockAiReport).filter(
+        TanggangMockAiReport.id == report_id,
+        TanggangMockAiReport.owner_id == current_user.id,
+    ).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="复盘记录不存在或无权访问")
+    return ok({
+        "id": row.id, "scenario_id": row.scenario_id,
+        "run_number": row.run_number, "created_at": row.created_at,
+        "report": json.loads(row.report_json),
+    })

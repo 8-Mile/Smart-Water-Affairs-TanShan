@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed,onMounted,reactive,ref} from 'vue'
-import {useRouter} from 'vue-router'
+import {useRoute,useRouter} from 'vue-router'
 import {ElMessage,ElMessageBox} from 'element-plus'
 import {usePermissions} from '@/utils/permissions'
 import {
@@ -14,6 +14,7 @@ import {useScenarioStore} from '../simulation/store'
 import './business.css'
 
 const router=useRouter()
+const route=useRoute()
 const {hasPerm}=usePermissions()
 const canPublish=computed(()=>hasPerm('sys:menu:manage'))
 const store=useScenarioStore()
@@ -195,6 +196,11 @@ onMounted(async()=>{
     catalog.value=data.data
   }catch(e){error.value=errorText(e)}
   await refresh()
+  const requested=Number(route.query.board)
+  if(Number.isSafeInteger(requested)&&requested>0){
+    const existing=boards.value.find(x=>x.id===requested)
+    if(existing)open(existing)
+  }
 })
 </script>
 

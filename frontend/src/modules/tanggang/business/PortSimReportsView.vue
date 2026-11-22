@@ -1,0 +1,162 @@
+<script setup lang="ts">
+import {computed,onMounted,ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {ElMessage} from 'element-plus'
+import {fetchAiSimReports,type AiSimReport} from '@/api/ai'
+import './business.css'
+
+const router=useRouter()
+const reports=ref<AiSimReport[]>([])
+const selectedId=ref<number|null>(null)
+const busy=ref(false)
+const error=ref('')
+const current=computed(()=>reports.value.find(r=>r.id===selectedId.value)||null)
+const report=computed(()=>current.value?.report||null)
+
+async function refresh(){
+  busy.value=true
+  error.value=''
+  try{
+    const {data}=await fetchAiSimReports()
+    reports.value=data.data||[]
+    if(!reports.value.some(x=>x.id===selectedId.value))
+      selectedId.value=reports.value[0]?.id||null
+  }catch(e){
+    error.value='无法读取SIM复盘记录，请检查Mock服务与登录状态'
+    reports.value=[]
+  }finally{busy.value=false}
+}
+const riskText=(v:string)=>({
+  normal:'未触发',attention:'模拟关注',critical:'模拟异常',insufficient:'依据不足',
+} as Record<string,string>)[v]||v
+const reviewText=(v:string)=>({
+  not_started:'尚未核查',investigating:'模拟核查中',recorded:'模拟意见已记录',
+} as Record<string,string>)[v]||v
+function exportReport(){
+  if(!current.value)return
+  const blob=new Blob([JSON.stringify({
+    report_type:'TG-MOCK-SIM-REPLAY',
+    ...current.value,
+    verified:false,source_type:'BROWSER_SIM_SNAPSHOT',
+    warning:'仅用于研发演示，非现场实际运行、正式告警、维修验收或调度依据',
+  },null,2)],{type:'application/json;charset=utf-8'})
+  const url=URL.createObjectURL(blob)
+  const a=document.createElement('a')
+  a.href=url
+  a.download='唐港-SIM运行复盘-'+current.value.id+'.json'
+  document.body.append(a);a.click();a.remove()
+  window.setTimeout(()=>URL.revokeObjectURL(url),1500)
+  ElMessage.success('已导出SIM复盘记录')
+}
+onMounted(refresh)
+</script>
+
+<template>
+  <main class="tg-biz page-fill tg-sim-reports">
+    <div class="tg-biz-head">
+      <div><h1>运行复盘</h1></div>
+      <div class="tg-biz-actions">
+        <el-tag size="small" effect="plain" type="info">SIM · 演示</el-tag>
+        <el-button @click="router.push('/ai/chat')">智能助手</el-button>
+        <el-button @click="refresh">刷新</el-button>
+      </div>
+    </div>
+    <p v-if="error" class="tg-biz-sub" role="alert">{{error}}</p>
+    <div class="tg-sim-reports-grid">
+      <section class="tg-biz-card art-card">
+        <div class="tg-biz-card-head"><h2>复盘记录</h2></div>
+        <el-table v-loading="busy" :data="reports" size="small" stripe
+          highlight-current-row row-key="id"
+          @row-click="(row:AiSimReport)=>{selectedId=row.id}">
+          <el-table-column prop="id" label="记录" width="72"/>
+          <el-table-column label="情景" min-width="115">
+            <template #default="{row}">{{row.scenario_id}} / 第{{row.run_number}}轮</template>
+          </el-table-column>
+          <el-table-column label="供水缺口" min-width="95">
+            <template #default="{row}">{{row.report.shortage_m3h}} m³/h</template>
+          </el-table-column>
+          <template #empty>暂无SIM复盘记录。可从智能助手执行“生成本轮SIM运行复盘报告”。</template>
+        </el-table>
+      </section>
+      <div class="tg-sim-report-detail">
+        <template v-if="report">
+          <section class="tg-biz-card art-card">
+            <div class="tg-biz-card-head">
+              <h2>第{{report.run_number}}轮 · {{report.scenario_id}}</h2>
+              <el-button plain size="small" @click="exportReport">导出JSON</el-button>
+            </div>
+            <el-descriptions size="small" border :column="2">
+              <el-descriptions-item label="运行属性">SIM合成推演</el-descriptions-item>
+              <el-descriptions-item label="来源">浏览器情景快照</el-descriptions-item>
+              <el-descriptions-item label="假设总需水">{{report.demand_m3h}} m³/h</el-descriptions-item>
+              <el-descriptions-item label="模拟已分配">{{report.delivered_m3h}} m³/h</el-descriptions-item>
+              <el-descriptions-item label="模拟供水缺口">{{report.shortage_m3h}} m³/h</el-descriptions-item>
+              <el-descriptions-item label="需求覆盖率">{{report.coverage_percent}}%</el-descriptions-item>
+              <el-descriptions-item label="假设期末储量">{{report.pool_forecast_m3}} m³</el-descriptions-item>
+              <el-descriptions-item label="监护状态">{{riskText(report.monitor_risk)}}</el-descriptions-item>
+              <el-descriptions-item label="核查进度">{{reviewText(report.review_status)}}</el-descriptions-item>
+              <el-descriptions-item label="现场核实">尚未完成</el-descriptions-item>
+            </el-descriptions>
+            <p class="tg-biz-sub tg-replay-conclusion">{{report.conclusion}}</p>
+          </section>
+          <section class="tg-biz-card art-card">
+            <div class="tg-biz-card-head"><h2>影响终端与监护依据</h2></div>
+            <el-table :data="report.affected_terminals" size="small" stripe>
+              <el-table-column prop="label" label="演示用水点" min-width="145"/>
+              <el-table-column prop="demand_m3h" label="需求 m³/h" min-width="100"/>
+              <el-table-column prop="allocated_m3h" label="分配 m³/h" min-width="100"/>
+              <el-table-column prop="shortage_m3h" label="缺口 m³/h" min-width="100"/>
+              <template #empty>本轮模拟无分配不足的演示用水点</template>
+            </el-table>
+            <div class="tg-biz-list tg-replay-list">
+              <div class="tg-biz-list-row">
+                <span>模拟命中规则</span>
+                <span>{{report.triggered_rules.join('、')||'无'}}</span>
+              </div>
+              <div class="tg-biz-list-row">
+                <span>依据不足的规则</span>
+                <span>{{report.insufficient_rules.join('、')||'无'}}</span>
+              </div>
+            </div>
+            <el-button plain size="small" @click="router.push('/port/operations/monitor')">
+              查看监护证据
+            </el-button>
+          </section>
+          <section class="tg-biz-card art-card">
+            <div class="tg-biz-card-head"><h2>人工核查与待确认事项</h2></div>
+            <el-descriptions :column="1" border size="small">
+              <el-descriptions-item label="核查状态">{{reviewText(report.review_status)}}</el-descriptions-item>
+              <el-descriptions-item label="核查结论">
+                {{report.review_outcome==='sim-recovery-conditions'?'模拟恢复条件满足':report.review_outcome==='requires-field-check'?'待现场核对':'尚无结论'}}
+              </el-descriptions-item>
+              <el-descriptions-item label="核查意见">{{report.review_note||'未记录人工核查意见'}}</el-descriptions-item>
+            </el-descriptions>
+            <div class="tg-biz-list tg-replay-list">
+              <div v-for="(item,i) in report.checkpoints" :key="i" class="tg-biz-list-row">
+                <span>{{item}}</span><span class="tg-biz-label">待核实</span>
+              </div>
+            </div>
+            <p class="tg-biz-sub">{{report.next_action}}</p>
+            <div class="tg-biz-actions">
+              <el-button plain @click="router.push('/port/water/supply')">供水保障</el-button>
+              <el-button plain @click="router.push('/port/operations/monitor')">主动监护</el-button>
+            </div>
+          </section>
+        </template>
+        <section v-else class="tg-biz-card art-card">
+          <p class="tg-biz-sub">选择一条复盘记录查看模拟计算依据；本页面不会读取生产运行日志。</p>
+          <el-button type="primary" plain @click="router.push('/ai/chat')">去智能助手生成SIM复盘</el-button>
+        </section>
+      </div>
+    </div>
+  </main>
+</template>
+
+<style scoped>
+.tg-sim-reports-grid{display:grid;grid-template-columns:minmax(310px,.85fr) minmax(0,1.5fr);gap:14px;align-items:start}
+.tg-sim-report-detail{display:grid;gap:14px;min-width:0}
+.tg-replay-conclusion{margin:14px 0 0}
+.tg-replay-list{margin:13px 0}
+.tg-replay-list :deep(.tg-biz-list-row){min-height:38px}
+@media(max-width:990px){.tg-sim-reports-grid{grid-template-columns:minmax(0,1fr)}}
+</style>

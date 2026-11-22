@@ -21,16 +21,16 @@ from app.models.equipment import Equipment
 from app.models.tanggang_board import TanggangBoard
 from app.models.tanggang_equipment_draft import TanggangDemoEquipment
 from app.models.tanggang_mock_ai import (
-    TanggangMockAiAction, TanggangMockAiMessage, TanggangMockAiSession,
+    TanggangMockAiAction, TanggangMockAiMessage, TanggangMockAiSession, TanggangMockAiReport,
 )
 from app.models.user import User
-from app.api.tanggang_board import BoardBody, _rev
+from app.api.tanggang_board import BoardBody, _rev, _snapshot
 from app.api.tanggang_equipment_draft import DemoEquipmentBody, ParseBody, parse_demo
 from app.services.tanggang_catalog import SYSTEMS
 
 MODEL_NAME = "MOCK / 业务规则引擎"
 ACTION_TTL_MINUTES = 30
-ALLOWED_TOOLS = {"create_demo_equipment", "create_sim_board"}
+ALLOWED_TOOLS = {"create_demo_equipment", "create_sim_board", "edit_sim_board", "create_sim_report"}
 DEFAULT_SOURCE = "SIM软件演示假设；未经过唐港现场核实"
 BOARD_METRICS = {
     "supply": [
@@ -129,6 +129,209 @@ def _suggest_board(message: str) -> dict:
     )
 
 
+# A2UI widget edits are declarative. No arbitrary CSS/JS/templates or unknown fields.
+WIDGET_ALIASES: tuple[tuple[str, str, str | None], ...] = (
+    ("监护规则", "monitor-rules", None),
+    ("规则证据", "monitor-rules", None),
+    ("方案比选", "plan-comparison", None),
+    ("方案对比", "plan-comparison", None),
+    ("受影响用水点", "terminal-table", None),
+    ("用水点表", "terminal-table", None),
+    ("供水缺口", "metric", "supply-shortage"),
+    ("缺口指标", "metric", "supply-shortage"),
+    ("需水量", "metric", "supply-demand"),
+    ("供水需求", "metric", "supply-demand"),
+    ("供水能力", "metric", "supply-capacity"),
+    ("可分配能力", "metric", "supply-capacity"),
+    ("池容", "metric", "pool-forecast"),
+    ("期末储量", "metric", "pool-forecast"),
+    ("监护状态", "metric", "monitor-risk"),
+    ("风险状态", "metric", "monitor-risk"),
+    ("规则命中", "metric", "monitor-rule-count"),
+    ("覆盖率", "metric", "supply-coverage"),
+)
+BOARD_NUMBER = re.compile(
+    r"(?:(\d{1,9})号看板|看板\s*(?:ID[:：#]?\s*)?(\d{1,9}))",
+    flags=re.I,
+)
+
+
+def _plan_board_edit(db: Session, user: User, session_id: str, query: str):
+    is_delete = bool(re.search(r"移除|删除|去掉|去除", query))
+    is_add = bool(re.search(r"新增|增加|添加|加上|加入", query))
+    if is_delete == is_add:
+        return "请明确是向看板添加组件，还是从看板移除组件。", [], []
+    widget_key = next(
+        ((kind, metric) for alias, kind, metric in WIDGET_ALIASES if alias in query),
+        None,
+    )
+    if widget_key is None:
+        return (
+            "仅能操作已有白名单组件，例如：供水缺口、期末储量、需求覆盖率、"
+            "监护规则证据、受影响用水点或方案比选；不支持任意JS和未授权指标。",
+            [], [],
+        )
+    own = db.query(TanggangBoard).filter(
+        TanggangBoard.owner_id == user.id,
+    ).order_by(TanggangBoard.id.asc()).limit(40).all()
+    match = BOARD_NUMBER.search(query)
+    if match:
+        board_id = int(match.group(1) or match.group(2))
+        board = db.get(TanggangBoard, board_id)
+        if board is None or (board.owner_id != user.id and
+                            "sys:menu:manage" not in collect_user_perms(db, user)):
+            return "未找到你有权编辑的指定看板。请在“我的看板”核对编号。", [], []
+    elif len(own) == 1:
+        board = own[0]
+    else:
+        candidates = "；".join(f"#{b.id} {b.title}" for b in own[:12])
+        return (
+            "请明确要修改的看板编号，避免误操作。"
+            + (f"你的看板：{candidates}" if candidates else "你还没有看板，请先生成一张。")
+            + "\n示例：给1号看板添加供水缺口指标。",
+            [], [],
+        )
+    if board.status != "draft":
+        return "该看板已发布，必须先由有权限的管理员撤回，再进行组件编辑。", [], []
+    existing = json.loads(board.widgets_json)
+    if not isinstance(existing, list):
+        return "当前看板布局无效，请在“我的看板”修复。", [], []
+    kind, metric = widget_key
+    idx = next((i for i, w in enumerate(existing)
+                if w.get("kind") == kind and w.get("metric") == metric), None)
+    if is_add:
+        if idx is not None:
+            return "该受控组件已在看板中，无须重复添加。", [], []
+        if len(existing) >= 8:
+            return "单张看板最多8个组件，请先移除一个组件。", [], []
+        used_ids = {w.get("id") for w in existing}
+        n = 1
+        while "w" + str(n) in used_ids:
+            n += 1
+        changed = [*existing, {"id": "w" + str(n), "kind": kind, "metric": metric}]
+    else:
+        if idx is None:
+            return "该看板尚未包含指定组件，未执行移除。", [], []
+        if len(existing) <= 1:
+            return "看板至少保留一个组件，不能移除最后一个。", [], []
+        changed = [w for i, w in enumerate(existing) if i != idx]
+    validated = BoardBody.model_validate({
+        "title": board.title,
+        "target_path": board.target_path,
+        "widgets": changed, "version": board.version,
+    })
+    operation = "remove" if is_delete else "add"
+    payload = {
+        "board_id": board.id, "expected_version": board.version,
+        "operation": operation, "component_kind": kind,
+        "component_metric": metric, "title": board.title,
+        "target_path": board.target_path,
+        "widgets": [w.model_dump() for w in validated.widgets],
+    }
+    title = "移除SIM看板组件" if is_delete else "添加SIM看板组件"
+    action = _make_action(
+        db, user, session_id, "edit_sim_board", title,
+        f"看板 #{board.id} {board.title} / v{board.version} → v{board.version+1}；"
+        f"{'移除' if is_delete else '增加'} {kind} {metric or ''}，"
+        f"组件数 {len(existing)} → {len(changed)}",
+        payload,
+    )
+    return (
+        f"已经生成看板 #{board.id} 的受控布局修改预览。确认后仅更新你的草稿看板，"
+        "并记录版本历史；不会自动发布。",
+        [{"name": "mock_edit_sim_board", "ok": True, "pending": True}],
+        [action],
+    )
+
+
+def _plan_sim_report(db: Session, user: User, session_id: str, context: dict | None):
+    if context is None:
+        return (
+            "运行复盘必须绑定当前浏览器的一轮SIM推演。请先前往“大机供水保障”"
+            "启动情景，再通过“生成本轮运行复盘”创建报告。"
+            "\n入口：/port/water/supply", [], [],
+        )
+    # All context here is client-supplied simulated data; it is NOT a
+    # verified history, sensor observation or production incident.
+    affected = context.get("affected_terminals", [])
+    checkpoints = context.get("checkpoints", [])
+    note = context.get("review_note", "")
+    report = {
+        "report_version": "tg-sim-replay-v1",
+        "data_mode": "SIM", "field_verified": False,
+        "data_origin": "BROWSER_SIM_SNAPSHOT",
+        "production_case_created": False, "repair_order_created": False,
+        "scenario_id": context["scenario_id"],
+        "run_number": context["run_number"],
+        "scenario_started_at": context.get("scenario_started_at", ""),
+        "demand_m3h": context["demand_m3h"],
+        "delivered_m3h": context["delivered_m3h"],
+        "shortage_m3h": context["shortage_m3h"],
+        "coverage_percent": context["coverage_percent"],
+        "pool_forecast_m3": context["pool_forecast_m3"],
+        "monitor_risk": context["monitor_risk"],
+        "triggered_rules": context["triggered_rules"],
+        "insufficient_rules": context.get("insufficient_rules", []),
+        "affected_terminals": affected, "checkpoints": checkpoints,
+        "review_status": context.get("review_status", "not_started"),
+        "review_outcome": context.get("review_outcome"),
+        "review_note": note,
+        "conclusion": (
+            "模拟分配存在缺口，需要核实终端负荷和设备能力"
+            if context["shortage_m3h"] > 0 else
+            "本轮假设未产生供水缺口，仍需核实储量和监护规则"
+        ),
+        "next_action": (
+            "仅建议人工核对演示点表、实际需水量、泵组铭牌、池容曲线、"
+            "管网连接与真实工单状态；不得据此直接下发泵阀控制。"
+        ),
+    }
+    summary = (
+        f"第{context['run_number']}轮 {context['scenario_id']}："
+        f"模拟需水{context['demand_m3h']:g}、分配{context['delivered_m3h']:g}、"
+        f"缺口{context['shortage_m3h']:g} m³/h；"
+        f"受影响的演示用水点{len(affected)}个；"
+        f"监护命中规则{len(context['triggered_rules'])}条；"
+        f"核查状态{report['review_status']}。"
+    )
+    action = _make_action(
+        db, user, session_id, "create_sim_report", "保存SIM运行复盘",
+        summary + " 仅保存演示快照，不生成告警/正式工单",
+        report,
+    )
+    return (
+        "已经按同一轮SIM供水、监护与核查数据形成复盘草稿。"
+        "请检查场景编号、影响范围和未核实事项后确认保存。"
+        "此报告只反映浏览器演示快照，不代表现场运行日志。",
+        [{"name": "mock_sim_replay", "ok": True, "pending": True}],
+        [action],
+    )
+
+
+NAV_TARGETS = (
+    ("运行复盘", "/port/analysis/reports", "打开运行复盘"),
+    ("复盘记录", "/port/analysis/reports", "打开运行复盘"),
+    ("我的看板", "/port/analysis/boards", "打开我的看板"),
+    ("看板管理", "/port/analysis/boards", "打开我的看板"),
+    ("演示设备", "/port/analysis/equipment-drafts", "打开演示设备清单"),
+    ("设备录入", "/port/analysis/equipment-drafts", "打开演示设备清单"),
+    ("主动监护", "/port/operations/monitor", "打开主动智能监护"),
+    ("智能监护", "/port/operations/monitor", "打开主动智能监护"),
+    ("大机供水", "/port/water/supply", "打开大机供水保障"),
+    ("供水保障", "/port/water/supply", "打开大机供水保障"),
+)
+NAV_PREFIX = re.compile(r"^(?:请|帮我|给我|直接|现在|我要|我想)?\s*(?:打开|前往|进入|跳转|查看|带我去)")
+
+
+def _navigation(message: str) -> list[dict]:
+    if not NAV_PREFIX.search(message.strip()):
+        return []
+    for phrase, path, label in NAV_TARGETS:
+        if phrase in message:
+            return [{"path": path, "label": label}]
+    return []
+
+
 def _route_intent(db: Session, user: User, session_id: str, message: str,
                   context: dict | None) -> tuple[str, list[dict], list[dict]]:
     query = message.strip()
@@ -138,6 +341,18 @@ def _route_intent(db: Session, user: User, session_id: str, message: str,
             "如需演示告警核查，请进入主动智能监护页面的SIM流程。",
             [], [],
         )
+    navigation = _navigation(query)
+    if navigation:
+        return (
+            f"已找到系统内业务页面：{navigation[0]['label']}。"
+            "点击下方入口即可前往，不执行任何业务写入。",
+            [{"name": "mock_business_navigation", "ok": True}], [],
+        )
+    if (bool(re.search(r"看板", query)) and
+        bool(re.search(r"添加|增加|加上|加入|移除|删除|去掉|去除", query))):
+        return _plan_board_edit(db, user, session_id, query)
+    if re.search(r"复盘|运行报告|演示报告", query):
+        return _plan_sim_report(db, user, session_id, context)
     wants_board = bool(re.search(r"看板|图表|可视化布局", query))
     if wants_board and re.search(r"生成|新建|创建|做|设计|帮我", query):
         payload = _suggest_board(query)
@@ -230,6 +445,11 @@ def chat(db: Session, user: User, message: str, session_id: str | None,
         db.add(TanggangMockAiMessage(
             session_id=sess.id, owner_id=user.id, role=role, content=content,
         ))
+    for action in actions:
+        db.add(TanggangMockAiMessage(
+            session_id=sess.id, owner_id=user.id, role="action",
+            content=action["action_id"],
+        ))
     sess.message_count += 2
     sess.updated_at = now
     db.commit()
@@ -237,6 +457,7 @@ def chat(db: Session, user: User, message: str, session_id: str | None,
         "session_id": sess.id,
         "reply": reply, "model": MODEL_NAME, "mock": True, "data_mode": "SIM",
         "tool_trace": trace, "pending_actions": actions,
+        "links": _navigation(message) if not SENSITIVE_REQUEST.search(message) else [],
     }
 
 
@@ -261,24 +482,48 @@ def get_session(db: Session, user: User, session_id: str) -> dict:
         TanggangMockAiAction.owner_id == user.id,
         TanggangMockAiAction.session_id == session_id,
     ).order_by(TanggangMockAiAction.created_at.asc()).all()
-    # Actions belong to their session and remain visible after re-opening.
+    def public_action(a):
+        return {
+            "action_id": a.id, "tool": a.tool, "title": a.title,
+            "summary": a.summary, "payload": json.loads(a.payload_json),
+            "status": a.status, "risk": "medium",
+            "result_path": (
+                "/port/analysis/boards" if a.tool in
+                ("create_sim_board", "edit_sim_board")
+                else "/port/analysis/reports" if a.tool == "create_sim_report"
+                else "/port/analysis/equipment-drafts"
+            ) if a.status == "confirmed" else None,
+        }
+    mapped = {a.id: public_action(a) for a in actions}
+    output = []
+    associated = set()
+    last_user_text = ""
+    for m in messages:
+        if m.role in ("user", "assistant"):
+            if m.role == "user":
+                last_user_text = m.content
+            output.append({
+                "role": m.role, "content": m.content,
+                "ts": m.created_at.timestamp(), "pending_actions": [],
+                "links": _navigation(last_user_text)
+                    if m.role == "assistant" and not SENSITIVE_REQUEST.search(last_user_text)
+                    else [],
+            })
+        elif m.role == "action" and m.content in mapped:
+            if output and output[-1]["role"] == "assistant":
+                output[-1]["pending_actions"].append(mapped[m.content])
+                associated.add(m.content)
+    # Legacy sessions created before per-turn action association are restored
+    # on the final assistant only to preserve backwards compatibility.
+    missing = [value for key, value in mapped.items() if key not in associated]
+    if missing:
+        last = next((m for m in reversed(output) if m["role"] == "assistant"), None)
+        if last is not None:
+            last["pending_actions"].extend(missing)
     return {
         "id": s.id, "user_id": str(user.id), "mock": True,
-        "messages": [
-            {"role": m.role, "content": m.content, "ts": m.created_at.timestamp()}
-            for m in messages
-        ],
-        "pending_actions": [
-            {
-                "action_id": a.id, "tool": a.tool, "title": a.title,
-                "summary": a.summary, "payload": json.loads(a.payload_json),
-                "status": a.status, "risk": "medium",
-                "result_path": (
-                    "/port/analysis/boards" if a.tool == "create_sim_board"
-                    else "/port/analysis/equipment-drafts"
-                ) if a.status == "confirmed" else None,
-            } for a in actions
-        ],
+        "messages": output,
+        "pending_actions": list(mapped.values()),
     }
 
 
@@ -366,6 +611,95 @@ def resolve(db: Session, user: User, action_id: str, *, confirm: bool) -> dict:
             result = {
                 "id": b.id, "title": b.title, "path": "/port/analysis/boards",
                 "status": "draft", "data_mode": "SIM",
+            }
+        elif a.tool == "edit_sim_board":
+            board_id = payload.get("board_id")
+            expected_version = payload.get("expected_version")
+            b = db.get(TanggangBoard, board_id)
+            if (b is None or not isinstance(expected_version, int)
+                or (b.owner_id != user.id and
+                    "sys:menu:manage" not in collect_user_perms(db, user))):
+                db.rollback()
+                raise HTTPException(status_code=403, detail="看板已不存在或无权修改")
+            if b.status != "draft" or b.version != expected_version:
+                db.rollback()
+                raise HTTPException(status_code=409, detail="看板状态或版本已变化，请重新生成修改预览")
+            try:
+                verified = BoardBody.model_validate({
+                    "title": b.title, "target_path": b.target_path,
+                    "widgets": payload.get("widgets", []), "version": expected_version,
+                })
+            except ValidationError:
+                db.rollback()
+                raise HTTPException(status_code=422, detail="待确认看板布局已失效") from None
+            before = json.loads(b.widgets_json)
+            new = [w.model_dump() for w in verified.widgets]
+            original_keys = [(w.get("kind"), w.get("metric"), w.get("id")) for w in before]
+            new_keys = [(w.get("kind"), w.get("metric"), w.get("id")) for w in new]
+            added = [x for x in new_keys if x not in original_keys]
+            removed = [x for x in original_keys if x not in new_keys]
+            kind, metric = payload.get("component_kind"), payload.get("component_metric")
+            if payload.get("operation") == "add":
+                valid_change = len(added) == 1 and not removed and added[0][:2] == (kind, metric)
+            elif payload.get("operation") == "remove":
+                valid_change = len(removed) == 1 and not added and removed[0][:2] == (kind, metric)
+            else:
+                valid_change = False
+            if not valid_change or len(new) == 0:
+                db.rollback()
+                raise HTTPException(status_code=422, detail="布局变更与待确认操作不一致")
+            changed = db.execute(
+                update(TanggangBoard).where(
+                    TanggangBoard.id == b.id, TanggangBoard.version == expected_version,
+                    TanggangBoard.status == "draft",
+                ).values(
+                    widgets_json=json.dumps(new, ensure_ascii=False),
+                    version=expected_version + 1, updated_by=user.id,
+                    updated_at=datetime.now(UTC).replace(tzinfo=None),
+                ),
+            ).rowcount
+            if changed != 1:
+                db.rollback()
+                raise HTTPException(status_code=409, detail="看板版本冲突，请重新生成修改预览")
+            db.flush()
+            db.refresh(b)
+            _rev(db, b, "update", user.id)
+            result = {
+                "id": b.id, "title": b.title, "version": b.version,
+                "path": "/port/analysis/boards", "status": "draft",
+                "data_mode": "SIM",
+            }
+        elif a.tool == "create_sim_report":
+            if (payload.get("data_mode") != "SIM" or
+                payload.get("field_verified") is not False or
+                payload.get("data_origin") != "BROWSER_SIM_SNAPSHOT" or
+                payload.get("production_case_created") is not False or
+                payload.get("repair_order_created") is not False):
+                db.rollback()
+                raise HTTPException(status_code=422, detail="不是有效的SIM复盘草稿")
+            from app.api.ai import DemoContext
+            try:
+                # Revalidate every user-sourced value at confirm time.
+                DemoContext.model_validate({
+                    **payload, "data_mode": payload["data_mode"],
+                    "field_verified": payload["field_verified"],
+                })
+            except (ValidationError, KeyError):
+                db.rollback()
+                raise HTTPException(status_code=422, detail="SIM复盘数据校验失败") from None
+            row = TanggangMockAiReport(
+                owner_id=user.id, session_id=a.session_id,
+                scenario_id=payload["scenario_id"],
+                run_number=payload["run_number"],
+                report_json=json.dumps(payload, ensure_ascii=False),
+            )
+            db.add(row)
+            db.flush()
+            result = {
+                "id": row.id, "path": "/port/analysis/reports",
+                "scenario_id": row.scenario_id,
+                "run_number": row.run_number,
+                "data_mode": "SIM", "field_verified": False,
             }
         else:
             db.rollback()

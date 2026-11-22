@@ -57,10 +57,19 @@ export interface AiSessionSummary {
   created_at?: number
 }
 
+export interface AiRouteLink {
+  path: '/port/water/supply' | '/port/operations/monitor' |
+    '/port/analysis/boards' | '/port/analysis/reports' |
+    '/port/analysis/equipment-drafts'
+  label: string
+}
+
 export interface AiSessionMessage {
   role: string
   content: string
   ts?: number
+  pending_actions?: AiPendingAction[]
+  links?: AiRouteLink[]
 }
 export interface AiSessionDetail {
   id: string
@@ -80,6 +89,41 @@ export interface AiDemoContext {
   pool_forecast_m3: number
   monitor_risk: 'normal' | 'attention' | 'critical' | 'insufficient'
   triggered_rules: string[]
+  insufficient_rules: string[]
+  affected_terminals: Array<{
+    label: string
+    demand_m3h: number
+    allocated_m3h: number
+    shortage_m3h: number
+  }>
+  checkpoints: string[]
+  review_status: 'not_started' | 'investigating' | 'recorded'
+  review_outcome: 'requires-field-check' | 'sim-recovery-conditions' | null
+  review_note: string
+  scenario_started_at: string
+}
+export interface AiSimReportContent extends AiDemoContext {
+  report_version: string
+  data_origin: 'BROWSER_SIM_SNAPSHOT'
+  production_case_created: false
+  repair_order_created: false
+  conclusion: string
+  next_action: string
+}
+export interface AiSimReport {
+  id: number
+  scenario_id: string
+  run_number: number
+  created_at: string
+  report: AiSimReportContent
+}
+
+export function fetchAiSimReports() {
+  return http.get<ApiResponse<AiSimReport[]>>('/ai/mock-reports', { silent: true })
+}
+
+export function fetchAiSimReport(id: number) {
+  return http.get<ApiResponse<AiSimReport>>('/ai/mock-reports/' + id, { silent: true })
 }
 
 export type AiStreamEvent =
@@ -95,6 +139,7 @@ export type AiStreamEvent =
       reply?: string
       tool_trace?: AiToolTraceItem[]
       pending_actions?: AiPendingAction[]
+      links?: AiRouteLink[]
       model?: string
       rounds?: number
     }
