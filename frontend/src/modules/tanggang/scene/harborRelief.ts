@@ -1067,8 +1067,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // Woodland belt now starts right behind the north facility row and along the east
   // boundary, as in the reference composition. Tree spacing is presentation only.
   // 树带收窄 5–6 单位，把画面留给场地；林带靠疏密噪声与空地制造自然缺口。
-  const belts:number[][]=[[xmin-12,xmin-1.4,zmin+2,zmax+13],[50.5,xmax+13,zmin+2,zmax+13],
-    [xmin-12,xmax+13,47.2,zmax+13]]
+  // 只保留北侧远景林带；东西两侧按设计图改为厂区道路与稀疏行道树，避免整圈密林。
+  const belts:number[][]=[[xmin-12,xmax+13,47.2,zmax+13]]
   for(const [x0,x1,z0,z1] of belts){
     // Dark forest floor under the belts so the edge reads as woodland, not lawn.
     add(prism([[x0,z0],[x1,z0],[x1,z1],[x0,z1]],.045,.004),forestFloor)
