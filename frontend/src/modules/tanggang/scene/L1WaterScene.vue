@@ -3,9 +3,16 @@ import { defineAsyncComponent, computed, onBeforeUnmount, onMounted, ref, watch 
 import RegionEquipmentOverlay from './RegionEquipmentOverlay.vue'
 import type { SiteRegion, RegionPayload } from './types/regions'
 import * as THREE from 'three'
-import { landmarks, landmarksSource } from './harborLandmarks'
+import { landmarks, landmarksSource, lakeDisplayOffset } from './harborLandmarks'
 import { buildHarborRelief } from './harborRelief'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js'
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
 
 /**
  * 与 5175 唐港首页集成用的受控接口：
@@ -59,7 +66,14 @@ const failure = ref('')
 const activeSystem = ref('全部')
 const businessSystems = ref<BusinessSystem[]>([])
 const systemModeId = ref('all')
-const showFireOverlay = ref(true)
+const firePreferenceKey = 'tanggang.dashboard.fire-overlay'
+function readFirePreference() {
+  try { return localStorage.getItem(firePreferenceKey) === 'on' }
+  catch { return false }
+}
+const showFireOverlay = ref(readFirePreference())
+const fireAccessories = new THREE.Group()
+fireAccessories.name = '消防管线附件与底图'
 const sourceMode = computed(() => businessSystems.value.find(s=>s.id===systemModeId.value) || null)
 const focusedPipeLayerSet = computed(() => new Set(sourceMode.value?.focusPipeLayers || []))
 const referencePipeLayerSet = computed(() => new Set(sourceMode.value?.referencePipeLayers || []))
@@ -242,20 +256,48 @@ const tmp = new THREE.Object3D()
 const up = new THREE.Vector3(0,1,0)
 const pipeGeometry = new THREE.CylinderGeometry(1,1,1,9,1)
 const environmentTextures: THREE.Texture[] = []
-type FlowDot = { a: THREE.Vector3; b: THREE.Vector3; phase: number; speed: number; y: number }
-let flowPoints: THREE.Points | null = null
-let flowPositions: Float32Array | null = null
-let flowDots: FlowDot[] = []
-function updateFlow(time: number) {
-  if (!flowPoints || !flowPositions) return
-  for (let i = 0; i < flowDots.length; i++) {
-    const d = flowDots[i], f = (d.phase + time * d.speed) % 1, o = i * 3
-    flowPositions[o] = d.a.x + (d.b.x - d.a.x) * f
-    flowPositions[o + 1] = d.y
-    flowPositions[o + 2] = d.a.z + (d.b.z - d.a.z) * f
-  }
-  (flowPoints.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true
+// 真实 HDR 天空加载成功后，Canvas 天空退为回退方案。
+let hdrSky: THREE.Texture | null = null
+// 水面平面反射：半分辨率 RTT + 镜像相机；相机静止时复用上一帧结果。
+let reflectionRT: THREE.WebGLRenderTarget | null = null
+let reflectionCamera: THREE.PerspectiveCamera | null = null
+let reflectionSignature = ''
+let reflectionFrames = 0
+let composer: EffectComposer | null = null
+let renderPass: RenderPass | null = null
+const _reflOrigin = new THREE.Vector3()
+const _reflCamPos = new THREE.Vector3()
+const _reflView = new THREE.Vector3()
+const _reflNormal = new THREE.Vector3(0,1,0)
+const _reflRotation = new THREE.Matrix4()
+const _reflLookAt = new THREE.Vector3()
+const _reflTarget = new THREE.Vector3()
+const _reflPlane = new THREE.Plane()
+const _reflClip = new THREE.Vector4()
+const _reflQ = new THREE.Vector4()
+// 流带共享时钟：所有管段材质引用同一 uniform，停流时冻结相位、管身保持可见。
+const flowClock = { value: 0 }
+// 演示主管：$管综-中压除尘 源Handle 139320，6 点折线、约 98.9 单位、含三处转弯。
+// 仅作可读性演示，不声明水力方向或已核实连接。
+const DEMO_PIPE_HANDLE = '139320'
+const flowToggle = ref(true)
+// 演示管段所在的源图层；切换系统时仅当该图层在关注范围内才继续流动。
+const DEMO_PIPE_LAYER = '$管综-中压除尘'
+// 洗车台开敞棚平面范围（CAD 文字 TG-CAD-13 / FAE1D）。只做展示裁剪，不改源折线：
+// 起点落在棚下时从北侧棚边开始表现，避免管线穿过棚架；其余走向保持 CAD 原线。
+const WASH_FOOTPRINT = { x0: -49.8, x1: -41.2, z0: -12.5, z1: -0.1 }
+function pipeDisplayPoints(pipe: CadLine): [number, number][] {
+  const points = pipe.displayPoints
+  if (pipe.handle !== DEMO_PIPE_HANDLE || points.length < 2) return points
+  const [[ax, az], [bx, bz]] = points
+  const { x0, x1, z0, z1 } = WASH_FOOTPRINT
+  if (ax <= x0 || ax >= x1 || az <= z0 || az >= z1 || bz <= z1) return points
+  const exitX = ax + (bx - ax) * (z1 - az) / (bz - az)
+  if (exitX < x0 || exitX > x1) return points
+  return [[exitX, z1 + .05], ...points.slice(1)]
 }
+const demoLayerFocused = computed(()=>!sourceMode.value||focusedPipeLayerSet.value.has(DEMO_PIPE_LAYER))
+const flowStatusText = computed(()=>!flowToggle.value?'已停流':demoLayerFocused.value?'运行中':'不在当前系统')
 const batches: PipeBatch[] = []
 const pickObjects: THREE.Object3D[] = []
 const outlineMeshes: THREE.Object3D[] = []
@@ -274,6 +316,44 @@ const geometriesToDispose: THREE.BufferGeometry[] = []
 const materialsToDispose: THREE.Material[] = []
 
 function at(x: number,z: number,y=0) { return new THREE.Vector3(x,y,-z) }
+/**
+ * 工业管身材质 + 沿路径累计弧长的窄水纹流带。
+ * - 顶点属性 aFlow = (本段起点里程, 本段带符号长度)，连续折线共享里程，转弯自然通过；
+ * - aFlowOn 按实例切换是否显示流带，停流时只冻结时钟，管身质感保留；
+ * - 所有管段共用一个时钟 uniform，不逐帧重建几何、不新增全场透明叠层。
+ */
+function pipeTint(layer:string){
+  return new THREE.Color(systemColors[layer]||'#4ca5c5').lerp(new THREE.Color('#c6d3d6'),.06)
+}
+function createFlowPipeMaterial(){
+  const uniforms={
+    uFlowTime:flowClock,
+    uFlowSpeed:{value:5.6},
+    uFlowPeriod:{value:16},
+    uFlowWidth:{value:5.4},
+    uFlowColor:{value:new THREE.Color('#22d9ff')},
+  }
+  const mat=new THREE.MeshStandardMaterial({
+    color:'#ffffff',roughness:.50,metalness:.10,emissive:'#0d2430',emissiveIntensity:.05,
+  })
+  mat.envMapIntensity=.5
+  mat.userData.flowUniforms=uniforms
+  mat.onBeforeCompile=(shader)=>{
+    shader.uniforms.uFlowTime=uniforms.uFlowTime
+    shader.uniforms.uFlowSpeed=uniforms.uFlowSpeed
+    shader.uniforms.uFlowPeriod=uniforms.uFlowPeriod
+    shader.uniforms.uFlowWidth=uniforms.uFlowWidth
+    shader.uniforms.uFlowColor=uniforms.uFlowColor
+    shader.vertexShader=shader.vertexShader
+      .replace('#include <common>','#include <common>\nattribute float aFlow;\nattribute float aFlowOn;\nvarying vec2 vFlow;')
+      .replace('#include <begin_vertex>','#include <begin_vertex>\nvFlow=vec2(aFlow,aFlowOn);')
+    shader.fragmentShader=shader.fragmentShader
+      .replace('#include <common>','#include <common>\nuniform float uFlowTime;\nuniform float uFlowSpeed;\nuniform float uFlowPeriod;\nuniform float uFlowWidth;\nuniform vec3 uFlowColor;\nvarying vec2 vFlow;')
+      .replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\nif(vFlow.y>0.5){\n  float phase=mod(vFlow.x-uFlowTime*uFlowSpeed,uFlowPeriod);\n  float u=phase/uFlowPeriod;\n  float core=smoothstep(0.02,0.05,u)*(1.0-smoothstep(0.30,0.36,u));\n  float trail=(1.0-smoothstep(0.36,0.55,u))*0.5;\n  totalEmissiveRadiance+=uFlowColor*(core*1.9+trail);\n}')
+  }
+  mat.customProgramCacheKey=()=> 'tanggang-flow-pipe-v1'
+  return mat
+}
 function closeContinuity(){
   continuityOpen.value=false
   continuityDebugGroup.visible=false
@@ -347,25 +427,28 @@ function selectContinuityIssue(item:ContinuityIssue){
 function buildContinuityDebug(data:ContinuityAuditData){
   if(!scene)return
   for(const kind of ['visible_gap_candidate','filtered_continuation_candidate','short_orphan_candidate'] as ContinuityKind[]){
-    const points=data.issues.filter(i=>i.kind===kind)
-    if(!points.length)continue
-    const geo=new THREE.SphereGeometry(.28,10,8)
-    const mat=new THREE.MeshBasicMaterial({color:continuityColors[kind],transparent:true,
-      opacity:.87,depthTest:false})
-    const cloud=new THREE.InstancedMesh(geo,mat,points.length)
-    cloud.name='CAD待核断点 '+continuityLabels[kind]
-    const obj=new THREE.Object3D()
-    points.forEach((q,idx)=>{
-      obj.position.copy(at(q.pointXZ[0],q.pointXZ[1],displayLevel(q.layer)+.22))
-      obj.updateMatrix()
-      cloud.setMatrixAt(idx,obj.matrix)
-    })
-    cloud.instanceMatrix.needsUpdate=true
-    cloud.computeBoundingSphere()
-    cloud.renderOrder=38
-    continuityDebugGroup.add(cloud)
-    geometriesToDispose.push(geo)
-    materialsToDispose.push(mat)
+    for (const fireLayer of [false,true]) {
+      const points=data.issues.filter(i=>i.kind===kind && firePipeLayers.includes(i.layer)===fireLayer)
+      if(!points.length)continue
+      const geo=new THREE.SphereGeometry(.28,10,8)
+      const mat=new THREE.MeshBasicMaterial({color:continuityColors[kind],transparent:true,
+        opacity:.87,depthTest:false})
+      const cloud=new THREE.InstancedMesh(geo,mat,points.length)
+      cloud.userData.fireLayer = fireLayer
+      cloud.name='CAD待核断点 '+continuityLabels[kind]
+      const obj=new THREE.Object3D()
+      points.forEach((q,idx)=>{
+        obj.position.copy(at(q.pointXZ[0],q.pointXZ[1],displayLevel(q.layer)+.22))
+        obj.updateMatrix()
+        cloud.setMatrixAt(idx,obj.matrix)
+      })
+      cloud.instanceMatrix.needsUpdate=true
+      cloud.computeBoundingSphere()
+      cloud.renderOrder=38
+      continuityDebugGroup.add(cloud)
+      geometriesToDispose.push(geo)
+      materialsToDispose.push(mat)
+    }
   }
   scene.add(continuityDebugGroup)
   scene.add(continuitySelectionGroup)
@@ -390,6 +473,12 @@ function disposeHighlights() {
   }
 }
 function refresh() {
+  fireAccessories.visible = showFireOverlay.value
+  for (const cloud of continuityDebugGroup.children) {
+    cloud.visible = !cloud.userData.fireLayer || showFireOverlay.value
+  }
+  const issue = selectedContinuity.value
+  continuitySelectionGroup.visible = continuityOpen.value && (!issue || !firePipeLayers.includes(issue.layer) || showFireOverlay.value)
   const model=!!relief && solidMode.value && areasVisible.value
   if(relief){relief.group.visible=model;relief.setGray(grayMode.value)}
   if(groundGrid)groundGrid.visible=!model
@@ -421,25 +510,35 @@ function refresh() {
       ?(selectedContinuity.value?(selectedContinuity.value.layer===batch.layer?1:0.26):0.85)
       :mode?((focus||fire)?1:(reference?0.28:0.09))
        :1
-    batch.mesh.visible=!firePipeLayers.includes(batch.layer)||fire||continuityOpen.value||auditOpen.value||reference||focus
-    batch.mesh.userData.selectable=(!mode&&batch.mesh.visible)||focus||fire
+    batch.mesh.visible = !firePipeLayers.includes(batch.layer) || showFireOverlay.value
+    batch.mesh.userData.selectable = batch.mesh.visible && (!mode || focus || fire)
     const material=batch.mesh.material as THREE.MeshStandardMaterial
     material.transparent=opacity<1
     material.opacity=opacity
     material.depthWrite=opacity>.5
-    material.emissiveIntensity=(focus||fire)?0.42:0.06
+    material.emissiveIntensity=(focus||fire)?0.55:0.22
     material.needsUpdate=true
-    // Instance selection selects one original CAD handle. Never joins geometry into a verified hydraulic route.
-    for(let i=0;i<batch.edges.length;i++) {
-      const isSelected=detail.value?.type==='pipe' && detail.value.data.handle===batch.edges[i].handle
-      batch.mesh.setColorAt(i,new THREE.Color(isSelected?'#00ecf5':systemColors[batch.layer]||'#3e99b9'))
+    // 流带只跟随演示主管 139320 的顶点：默认批次里其余管段保持静态，
+    // 选中系统时仅在演示层被关注时继续流动。
+    const layerFocused=!sourceMode.value||focusedPipeLayerSet.value.has(batch.layer)
+    const flowActive=flowToggle.value&&!grayMode.value&&!!batch.demo&&layerFocused
+    if(batch.onAttr&&batch.flowBase){
+      const values=batch.onAttr.array as Float32Array
+      let changed=false
+      for(let i=0;i<values.length;i++){
+        const next=flowActive?batch.flowBase[i]:0
+        if(values[i]!==next){values[i]=next;changed=true}
+      }
+      if(changed)batch.onAttr.needsUpdate=true
     }
-    if(batch.mesh.instanceColor)batch.mesh.instanceColor.needsUpdate=true
+    // 单段选中由下方仅覆盖该折线的亮色叠层表达；不整批改材质颜色，
+    // 否则同一批次里的其他管段会一起变色。
+    material.color.copy(batch.mesh.userData.baseColor as THREE.Color)
   }
   disposeHighlights()
-  if(detail.value?.type==='pipe') {
+  if(detail.value?.type==='pipe' && (!firePipeLayers.includes(detail.value.data.layer) || showFireOverlay.value)) {
     const selected=detail.value.data
-    const points=selected.displayPoints
+    const points=pipeDisplayPoints(selected)
     const mat=new THREE.MeshStandardMaterial({color:'#b4ffff',emissive:'#05d9f5',
       emissiveIntensity:1.6,roughness:.21,metalness:.33})
     const y=displayLevel(selected.layer)+.08
@@ -488,6 +587,10 @@ function toggleAreas() {
   areasVisible.value=!areasVisible.value
   refresh()
 }
+function toggleFlow(){
+  flowToggle.value=!flowToggle.value
+  refresh()
+}
 function chooseSystem(next: string) {
   if(next!=='all' && !businessSystems.value.some(s=>s.id===next))return
   sampleMode.value=false
@@ -498,13 +601,17 @@ function chooseSystem(next: string) {
   showRegionPanel.value=false
   floatingDetail.value=null
   detail.value=null
-  showFireOverlay.value=next==='all'
   refresh()
-  if(mode)focusByAnchorIds(mode.focusAnchorIds, next==='middle'||next==='rain'?80:63)
-  else resetCameraPosition()
+  // 系统切换只改变管网高亮与标注，不改动已对齐的默认机位；避免近距重构图导致主体偏离。
+  if(!mode)resetCameraPosition()
 }
 function toggleFireLayer(){
-  showFireOverlay.value=!showFireOverlay.value
+  showFireOverlay.value = !showFireOverlay.value
+  try { localStorage.setItem(firePreferenceKey, showFireOverlay.value ? 'on' : 'off') }
+  catch { /* The current tab still retains the selection. */ }
+  if (!showFireOverlay.value && detail.value?.type === 'pipe' && firePipeLayers.includes(detail.value.data.layer)) {
+    detail.value = null
+  }
   refresh()
 }
 function focusByAnchorIds(ids:string[],distance=62){
@@ -514,9 +621,11 @@ function focusByAnchorIds(ids:string[],distance=62){
   const x=anchors.reduce((v,a)=>v+a.x,0)/anchors.length
   const z=anchors.reduce((v,a)=>v+a.z,0)/anchors.length
   const target=at(x,z,0)
-  const dir=camera.position.clone().sub(orbit.target).normalize()
+  // 系统聚焦保持俯视航拍：沿用默认偏航，抬高俯角，避免近距时地平线占满画面。
+  const pitch=THREE.MathUtils.degToRad(34)
+  const dir=new THREE.Vector3(0,Math.sin(pitch),Math.cos(pitch))
   orbit.target.copy(target)
-  setFieldOfView(34)
+  setFieldOfView(30)
   camera.position.copy(target).add(dir.multiplyScalar(distance))
   orbit.update()
 }
@@ -538,17 +647,29 @@ function resetCameraPosition(){
     orbit.update();return
   }
   if(!sampleMode.value && aspect>=1.08){
-    // Fixed desktop composition. Camera fitted to the 1672×941 design's trapezoidal
-    // stockyard apron (perspective, front edge wider than rear). CAD X/Z never changes.
-    // Outer ring corners A(295,305) B(1157,305) C(1303,664) D(210,664):
-    //   rear 862px / front 1093px (≈+27%), quay waterline ≈y819, mid facility ≈y540.
-    // 迁移适配：5188 首页布局与源工程一致，保持原始 FOV 以确保 1:1 取景。
     camera.up.set(0,1,0)
-    setFieldOfView(8.53)
-    const yaw=THREE.MathUtils.degToRad(0),pitch=THREE.MathUtils.degToRad(16.51)
-    const dir=new THREE.Vector3(Math.cos(pitch)*Math.sin(yaw),Math.sin(pitch),Math.cos(pitch)*Math.cos(yaw))
-    const centre=new THREE.Vector3(-20.34,0,60.26)
-    const distance=323.6
+    // 内部核查机位：?focus=north|west|south|east|center 平移取景但不改变默认视角参数；
+    // ?zoom=0.35 仅用于近距核对模型，不写入正式界面。
+    const focusParam=new URLSearchParams(location.search).get('focus')
+    const focusPresets:Record<string,[number,number]>={north:[0,41],south:[-6,-45],west:[-45,-4],east:[34,-20],center:[-12,4],nw:[-33,37],ne:[28,26],lake:[34,-41]}
+    if(focusParam&&focusPresets[focusParam]){
+      setFieldOfView(26)
+      const pitch=THREE.MathUtils.degToRad(52)
+      const dir=new THREE.Vector3(0,Math.sin(pitch),Math.cos(pitch))
+      const zoom=Number(new URLSearchParams(location.search).get('zoom'))||1
+      const [fx,fz]=focusPresets[focusParam]
+      const centre=new THREE.Vector3(fx,0,-fz)
+      orbit.target.copy(centre)
+      camera.position.copy(centre).addScaledVector(dir,180*zoom)
+      orbit.update();return
+    }
+    // 1672×941 的水务首页由堆场四角、洗车台、人工湖和岸线共同标定。
+    // 取景仅改变相机。较窄桌面退后，为东西两侧设施和船体保留空间。
+    const pitch=THREE.MathUtils.degToRad(20.78)
+    const dir=new THREE.Vector3(0,Math.sin(pitch),Math.cos(pitch))
+    const centre=new THREE.Vector3(-5.79,0,14.76)
+    setFieldOfView(9.86)
+    const distance=310.27*Math.max(1,(1670/877)/aspect)
     orbit.target.copy(centre);camera.position.copy(centre).addScaledVector(dir,distance)
     orbit.update();return
   }
@@ -608,6 +729,25 @@ function toggleRegionPanel() {
   floatingDetail.value=null
   if(showRegionPanel.value)regionNavOpen.value=false
 }
+// 东侧两处水务设施在总览低俯角被前景建筑/设备遮挡，从厂区内侧查看实体。
+function inspectEastFacility(mark:FloatingMark){
+  if(!camera||!orbit||!relief)return
+  const box=new THREE.Box3()
+  for(const part of relief.picks){
+    if(part.userData.pointId===mark.id)box.expandByObject(part)
+  }
+  if(box.isEmpty())return
+  const target=box.getCenter(new THREE.Vector3())
+  const span=box.getSize(new THREE.Vector3()).length()
+  const distance=Math.max(orbit.minDistance+2,span*3)
+  const dir=new THREE.Vector3(.3,1,-.65).normalize()
+  floatingDetail.value=null
+  setFieldOfView(31)
+  orbit.target.copy(target)
+  camera.position.copy(target).addScaledVector(dir,distance)
+  orbit.update()
+  refresh()
+}
 function openFloatingMark(id:string) {
   const mark=floatingMarks.value.find(q=>q.id===id)
   if(!mark)return
@@ -617,7 +757,7 @@ function openFloatingMark(id:string) {
   auditOpen.value=false
   // Selecting an off-screen point from the 40-item index must actually locate it.
   if(!labelItems.value.some(l=>l.id===id)&&camera&&orbit){
-    const target=at(mark.x,mark.z,0)
+    const target=at(mark.labelX??mark.x,mark.labelZ??mark.z,0)
     const view=camera.position.clone().sub(orbit.target).normalize()
     orbit.target.copy(target)
     setFieldOfView(34)
@@ -636,6 +776,8 @@ function createFloatingMarks(data:CadScene,spatial:SpatialCandidateData) {
     marks.push({id:y.id,name:y.label.replace('A侧 ','')+'堆场',kind:'yardCandidate',x:y.sceneXZ[0],z:y.sceneXZ[1],
       regionId:'REG-YARD',sourceHandle:y.sourceTextHandle,note:y.description,status:'两侧列位推算 · 待核'})
   }
+  // 南池分组标牌：池体表现位置贴靠堆场南缘，引线落在池组中线上；CAD 文字点保留追溯。
+  const southPoolLabel={x:-13.27,z:-42.6}
   // One floating label per CAD-extracted CLOSED polygon (not per physical pool).
   for(const pool of spatial.poolContourCandidates){
     marks.push({id:pool.id,name:(pool.groupId==='REG-NPOOL'?'北池':'南池')+' 候选'+pool.id.slice(-2),
@@ -649,6 +791,8 @@ function createFloatingMarks(data:CadScene,spatial:SpatialCandidateData) {
     marks.push({id:a.id,name:a.id==='TG-CAD-09'?'北侧集水池 · 设计2座':
       a.id==='TG-CAD-10'?'南侧集水池 · 设计5座':a.name.split('（')[0],
       kind:a.name.includes('集水池')?'poolGroup':'facility',x:a.x,z:a.z,
+      labelX:a.id==='TG-CAD-10'?southPoolLabel.x:undefined,
+      labelZ:a.id==='TG-CAD-10'?southPoolLabel.z:undefined,
       regionId:r?.id||'',sourceHandle:a.sourceHandle||'未取得',
       note:(a.note||'源CAD文字插入点，不是设备安装坐标')+
         (a.id==='TG-CAD-09'||a.id==='TG-CAD-10'?'；源图设计池体数量与候选闭合轮廓数量不能混同。':''),
@@ -662,11 +806,22 @@ function createFloatingMarks(data:CadScene,spatial:SpatialCandidateData) {
   const existing=new Set([...extra,...marks].map(m=>m.sourceHandle))
   const additions=(data.sourceDWGSHA256===landmarksSource?landmarks:[]).filter(f=>!existing.has(f.handle)).map(f=>({
     id:'HOME-'+f.handle,name:f.name+(f.handle==='8D367'?'（首钢底图）':''),kind:'facility',x:f.x,z:f.z,
+    // 人工湖：表现湖体在文字点东侧；引线落到可见湖岸，源文字点仍用于追溯。
+    labelX:f.kind==='lake'?f.x+lakeDisplayOffset.x:undefined,
+    labelZ:f.kind==='lake'?f.z+lakeDisplayOffset.z:undefined,
     regionId:'',sourceHandle:f.handle,
     note:f.evidence||('原图层 '+f.layer+'。坐标取文字插入点，三维外观与高度为示意。'),
-    status:f.evidenceLevel==='anchor_only'?'CAD文字已定位 · 轮廓待核':'CAD文字已定位 · 轮廓已匹配'
+    status:f.evidenceLevel==='contour_matched'&&f.footprintHandle?'CAD文字已定位 · 轮廓已匹配':'CAD文字已定位 · 轮廓待核'
   }))
-  floatingMarks.value=[...extra,...marks,...additions]
+  // 同名“生态蓄水池”两处文字点：首页只保留一条标牌，来源记录并列，避免重复标牌。
+  const eco=[...extra,...marks,...additions].filter(m=>m.name==='生态蓄水池')
+  const ecoKeep=eco.find(m=>m.id==='TG-CAD-14')||eco[0]
+  if(ecoKeep){
+    ecoKeep.sourceHandle=[...new Set(eco.map(m=>m.sourceHandle))].join(' / ')
+    ecoKeep.note=eco.map(m=>m.note).filter(Boolean).join(' ')
+    ecoKeep.status='两处CAD文字同名 · 池体轮廓待核'
+  }
+  floatingMarks.value=[...extra,...marks,...additions].filter(m=>m.name!=='生态蓄水池'||m===ecoKeep)
 }
 function buildPoolCandidateSurfaces(data:SpatialCandidateData){
   if(!scene)return
@@ -706,13 +861,15 @@ function createScreenLabels() {
   const w=root.value.clientWidth,h=Math.min(root.value.clientHeight,root.value.getBoundingClientRect().height)
   if(w<1||h<1)return
   const marks=floatingMarks.value.filter(m=>{
+    // 单座集水池保留模型与详情来源，首页由“北池设计2座/南池设计5座”分组标牌统一表达。
+    if(m.name==='集水池'&&m.id.startsWith('HOME-'))return false
     const mode=sourceMode.value
     if(solidMode.value && !allLabels.value && !mode && camera && orbit &&
        camera.position.distanceTo(orbit.target)>105){
       if(m.kind==='poolContour')return false
       if(m.kind==='yardCandidate')return w>=1200
-      const key=['TG-CHAIN-1058D8','TG-CAD-09','TG-CAD-10','TG-CAD-11','TG-CAD-12','TG-CAD-14','TG-CAD-19','TG-CAD-20']
-      return key.includes(m.id)||['HOME-1028AB','HOME-F9BEE','HOME-8D367','HOME-F9BFB','HOME-103415','TG-CAD-15','TG-CAD-16'].includes(m.id)
+      const key=['TG-CHAIN-1058D8','TG-CAD-09','TG-CAD-10','TG-CAD-11','TG-CAD-12','TG-CAD-13','TG-CAD-14','TG-CAD-19','TG-CAD-20']
+      return key.includes(m.id)||['HOME-1028AB','HOME-F9BEE','HOME-8D367','HOME-F9BFB','TG-CAD-15','TG-CAD-16'].includes(m.id)
     }
     if(!mode)return !(sampleMode.value && !allLabels.value && (m.kind==='yardCandidate'||m.kind==='poolContour'))
     if(m.kind==='chainBucketWash')return mode.id==='middle'
@@ -730,12 +887,15 @@ function createScreenLabels() {
   const legend=root.value.parentElement?.querySelector('.l1-site-legend')
   const clearance=large&&legend
     ?Math.max(157,legend.getBoundingClientRect().bottom-root.value.getBoundingClientRect().top+14*labelScale)
-    :157
+    :w>=1000&&!toolsOpen.value?112:157
   for(const mark of [...marks].sort((a,b)=>priority(a)-priority(b))){
+    // 手机窄屏只保留能读懂场地的少数标牌，避免标牌互相压盖。
+    if(w<560&&!(mark.kind==='yardCandidate'&&/^(8#|1#)/.test(mark.name))
+      &&!/人工湖|集水池|洗车台|链斗冲洗池|智慧中心|维修车间|办公楼/.test(mark.name))continue
     // Yard labels sit on the visual middle of the stockpile (reference y≈444), not on the
     // northern A-side text anchor. The CAD anchor itself is unchanged.
-    const labelZ=mark.kind==='yardCandidate'?mark.z-27:mark.z
-    const clip=at(mark.x,labelZ,solidMode.value && mark.kind==='yardCandidate'?3.3:mark.kind==='poolContour'?1.2:1).project(camera)
+    const labelZ=mark.kind==='yardCandidate'?mark.z-27:(mark.labelZ??mark.z)
+    const clip=at(mark.labelX??mark.x,labelZ,solidMode.value && mark.kind==='yardCandidate'?3.3:mark.kind==='poolContour'?1.2:1).project(camera)
     if(clip.z>1||clip.z< -1)continue
     const px=(clip.x+1)*w*.5,py=(1-clip.y)*h*.5
     // Facility anchors in the northern row can sit behind the toolbar chips. Keep the
@@ -748,7 +908,11 @@ function createScreenLabels() {
     const ht=(compact?20:25)*labelScale+(large?8:0)
     let best:{x:number;y:number}|null=null
     const berthBelow=mark.id==='TG-CAD-19'||mark.id==='TG-CAD-20'
-    const baseOffsets:number[][]=berthBelow
+    // 人工湖水面小：标牌上移，避免小尺寸湖面被标牌完全盖住。
+    const lakeChip=mark.id==='HOME-1028AB'
+    const baseOffsets:number[][]=lakeChip
+      ? [[0,-46],[0,-68],[-56,-46],[56,-46],[-96,-40],[96,-40],[0,-90]]
+      : berthBelow
       ? [[0,120],[-70,110],[70,110],[0,98]]
       : [[0,0],[0,-24],[-31,-12],[31,-12],[-58,0],[58,0],[-31,-35],[31,-35],
         [-74,-19],[74,-19],[-86,-44],[86,-44],[0,-54],[-110,-30],[110,-30],
@@ -874,7 +1038,7 @@ function resetCamera() {
   else resetCameraPosition()
   refresh()
 }
-function drawLinework(items: CadLine[], color:string, h:number,opacity:number) {
+function drawLinework(items: CadLine[], color:string, h:number,opacity:number, parent: THREE.Object3D | null = scene) {
   const points:number[]=[]
   for(const item of items) {
     for(let j=1;j<item.displayPoints.length;j++) {
@@ -889,7 +1053,7 @@ function drawLinework(items: CadLine[], color:string, h:number,opacity:number) {
   const obj=new THREE.LineSegments(geometry,material)
   geometriesToDispose.push(geometry);materialsToDispose.push(material)
   obj.userData.opacity=opacity
-  scene.add(obj);outlineMeshes.push(obj)
+  parent?.add(obj);outlineMeshes.push(obj)
 }
 function build(data: CadScene) {
   if(!scene)return
@@ -946,55 +1110,148 @@ function build(data: CadScene) {
   const auxiliaries=data.lines.filter(a=>a.role==='support')
   drawLinework(base,'#a9becb',.035,.64)
   drawLinework(facilities,'#6eacbd',.075,.92)
-  drawLinework(auxiliaries,'#b6cdd6',.105,.5)
+  scene.add(fireAccessories)
+  drawLinework(auxiliaries.filter(line=>line.layer!=='消防给水管道'),'#b6cdd6',.105,.5)
+  drawLinework(auxiliaries.filter(line=>line.layer==='消防给水管道'),'#b6cdd6',.105,.5,fireAccessories)
   // Pipe candidate geometry: no automatic joining of intersections or assigning engineering elevations.
-  const grouped=new Map<string,{system:string,layer:string,edges:CadLine[],ends:Array<{a:THREE.Vector3,b:THREE.Vector3,ref:CadLine}>}>()
+  type PipeEnd={a:THREE.Vector3,b:THREE.Vector3,ref:CadLine,start:number,len:number}
+  const grouped=new Map<string,{system:string,layer:string,edges:CadLine[],ends:PipeEnd[]}>()
   for(const item of data.lines.filter(a=>a.role==='pipe')) {
     let batch=grouped.get(item.layer)
     if(!batch){batch={system:item.system,layer:item.layer,edges:[],ends:[]};grouped.set(item.layer,batch)}
     const y=displayLevel(item.layer)
-    for(let i=1;i<item.displayPoints.length;i++){
-      const a=at(...item.displayPoints[i-1],y),b=at(...item.displayPoints[i],y)
-      if(a.distanceTo(b)<.02 || a.distanceTo(b)>180)continue
-      batch.ends.push({a,b,ref:item})
+    const pts=pipeDisplayPoints(item).map(([x,z])=>at(x,z,y))
+    // 同一条源折线共享累计弧长，直段、短节与转弯逐一衔接，不跨独立支路拼接。
+    let arc=0
+    for(let i=1;i<pts.length;i++){
+      const a=pts[i-1],b=pts[i],len=a.distanceTo(b)
+      if(len<.02 || len>180)continue
+      batch.ends.push({a,b,ref:item,start:arc,len})
       batch.edges.push(item)
+      arc+=len
     }
   }
+  const jointGeo=new THREE.SphereGeometry(1,8,6)
+  const flangeGeo=new THREE.TorusGeometry(1,.26,5,10)
+  const jointMat=new THREE.MeshStandardMaterial({color:'#ffffff',roughness:.44,metalness:.48})
+  const flangeMat=new THREE.MeshStandardMaterial({color:'#ffffff',roughness:.50,metalness:.42})
+  materialsToDispose.push(jointMat,flangeMat)
+  geometriesToDispose.push(jointGeo,flangeGeo)
+  const jointQ=new THREE.Quaternion()
+  // 一条源折线合并为一份带 aFlow 顶点属性的几何：直段共享累计里程、转弯自然通过。
+  // 每层仍只有一个管身 draw call，不逐段建材质，也不逐帧重建。
+  const tubeTemplate=new THREE.CylinderGeometry(1,1,1,8,1,true)
+  const tPos=tubeTemplate.attributes.position, tNor=tubeTemplate.attributes.normal
+  const tUv=tubeTemplate.attributes.uv, tIdx=tubeTemplate.index!
+  const mtx=new THREE.Matrix4(), nmat=new THREE.Matrix3()
+  const v3=new THREE.Vector3(), n3=new THREE.Vector3()
   for(const batch of grouped.values()) {
     if(!batch.ends.length)continue
-    const mat=new THREE.MeshStandardMaterial({
-      color:'#ffffff',roughness:.30,metalness:.12,emissive:'#113449',emissiveIntensity:0
-    })
-    const mesh=new THREE.InstancedMesh(pipeGeometry,mat,batch.ends.length)
-    const tint=new THREE.Color(systemColors[batch.layer]||'#4ca5c5')
+    // 业务配色压暗并去饱和，管身读作工业涂装，不再像高饱和折线。
+    const tint=pipeTint(batch.layer)
+    const mat=createFlowPipeMaterial()
+    mat.color.copy(tint)
+    // 自发光跟随本层业务色：阴天 IBL 下管身不再被环境光洗成浅灰蓝。
+    mat.emissive.copy(tint)
+    // P4：管径整体加粗，默认机位下橙/绿/蓝/红管线成为与道路同级的视觉线索。
+    const radius=batch.layer.includes('中压')?.36:batch.layer.includes('消防')?.24:.28
+    const positions:number[]=[],normals:number[]=[],uvs:number[]=[],flowValues:number[]=[],onValues:number[]=[],pickValues:number[]=[],indices:number[]=[]
+    let vertexBase=0
+    const joints:THREE.Vector3[]=[]
+    const flanges:{p:THREE.Vector3,q:THREE.Quaternion}[]=[]
+    for(let i=0;i<batch.ends.length;i++){
+      const edge=batch.ends[i],v=edge.b.clone().sub(edge.a)
+      const len=v.length()
+      tmp.position.copy(edge.a).add(edge.b).multiplyScalar(.5)
+      tmp.quaternion.setFromUnitVectors(up,v.clone().normalize())
+      tmp.scale.set(radius,len,radius)
+      tmp.updateMatrix()
+      mtx.copy(tmp.matrix);nmat.getNormalMatrix(mtx)
+      const signed=edge.ref.handle===DEMO_PIPE_HANDLE?1:-1
+      for(let k=0;k<tPos.count;k++){
+        v3.fromBufferAttribute(tPos,k).applyMatrix4(mtx)
+        positions.push(v3.x,v3.y,v3.z)
+        n3.fromBufferAttribute(tNor,k).applyMatrix3(nmat).normalize()
+        normals.push(n3.x,n3.y,n3.z)
+        uvs.push(tUv.getX(k),tUv.getY(k))
+        // 沿轴局部坐标生成相位；同折线各段共享起点里程，接口处连续。
+        flowValues.push(edge.start+signed*edge.len*(tPos.getY(k)+.5))
+        onValues.push(edge.ref.handle===DEMO_PIPE_HANDLE?1:0)
+        pickValues.push(i)
+      }
+      for(let k=0;k<tIdx.count;k++)indices.push(vertexBase+tIdx.getX(k))
+      vertexBase+=tPos.count
+      // 接口/弯头：每条折线的端部与内部顶点各加一个可见接头球。
+      if(i===0||batch.ends[i-1].ref!==edge.ref)joints.push(edge.a.clone())
+      if(i===batch.ends.length-1||batch.ends[i+1].ref!==edge.ref)joints.push(edge.b.clone())
+      // 法兰：长段两端与沿线等距布置，默认机位能读出管段而不是一根光管。
+      if(len>2.2){
+        const dir=v.clone().normalize()
+        const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),dir)
+        flanges.push({p:edge.a.clone().addScaledVector(dir,.22),q})
+        flanges.push({p:edge.b.clone().addScaledVector(dir,-.22),q})
+        for(let d=11.5;d<len-4.2;d+=11.5)flanges.push({p:edge.a.clone().addScaledVector(dir,d),q})
+      }
+    }
+    const geo=new THREE.BufferGeometry()
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3))
+    geo.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3))
+    geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2))
+    geo.setAttribute('aFlow',new THREE.Float32BufferAttribute(flowValues,1))
+    geo.setAttribute('aFlowOn',new THREE.Float32BufferAttribute(onValues,1))
+    // 拾取反查：面顶点上的 aPick 指向原折线段序号，保持单段 CAD 源Handle 可选。
+    geo.setAttribute('aPick',new THREE.Float32BufferAttribute(pickValues,1))
+    geo.setIndex(indices)
+    geo.computeBoundingSphere()
+    geometriesToDispose.push(geo)
+    const mesh=new THREE.Mesh(geo,mat)
     mesh.name=batch.layer
     mesh.castShadow=true
     mesh.receiveShadow=true
-    for(let i=0;i<batch.ends.length;i++){
-      const edge=batch.ends[i],v=edge.b.clone().sub(edge.a)
-      tmp.position.copy(edge.a).add(edge.b).multiplyScalar(.5)
-      tmp.quaternion.setFromUnitVectors(up,v.clone().normalize())
-      // Tube radius tuned so the CAD pipe network reads clearly without dominating.
-      const radius=batch.layer.includes('中压')?.24:batch.layer.includes('消防')?.17:.20
-      tmp.scale.set(radius,v.length(),radius)
-      tmp.updateMatrix()
-      mesh.setMatrixAt(i,tmp.matrix)
-      mesh.setColorAt(i,tint)
-    }
-    mesh.instanceMatrix.needsUpdate=true
-    if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true
-    mesh.computeBoundingSphere()
     mesh.userData.pick='pipe'
     mesh.userData.batchIndex=batches.length
+    mesh.userData.baseColor=tint.clone()
     scene.add(mesh);pickObjects.push(mesh)
-    batches.push({mesh,edges:batch.edges,layer:batch.layer,system:batch.system})
+    const fittingParent = firePipeLayers.includes(batch.layer) ? fireAccessories : scene
+    const jointMesh=joints.length?new THREE.InstancedMesh(jointGeo,jointMat,joints.length):null
+    if(jointMesh){
+      joints.forEach((p,i)=>{
+        jointQ.identity()
+        tmp.position.copy(p);tmp.quaternion.copy(jointQ);tmp.scale.setScalar(radius*1.06);tmp.updateMatrix()
+        jointMesh.setMatrixAt(i,tmp.matrix);jointMesh.setColorAt(i,tint)
+      })
+      jointMesh.instanceMatrix.needsUpdate=true
+      if(jointMesh.instanceColor)jointMesh.instanceColor.needsUpdate=true
+      jointMesh.computeBoundingSphere();jointMesh.castShadow=true;jointMesh.receiveShadow=true
+      fittingParent.add(jointMesh)
+    }
+    const flangeMesh=flanges.length?new THREE.InstancedMesh(flangeGeo,flangeMat,flanges.length):null
+    if(flangeMesh){
+      const flangeTint=tint.clone().lerp(new THREE.Color('#d7dedb'),.20)
+      flanges.forEach((f,i)=>{
+        tmp.position.copy(f.p);tmp.quaternion.copy(f.q);tmp.scale.setScalar(radius*1.22);tmp.updateMatrix()
+        flangeMesh.setMatrixAt(i,tmp.matrix);flangeMesh.setColorAt(i,flangeTint)
+      })
+      flangeMesh.instanceMatrix.needsUpdate=true
+      if(flangeMesh.instanceColor)flangeMesh.instanceColor.needsUpdate=true
+      flangeMesh.computeBoundingSphere();flangeMesh.castShadow=false
+      fittingParent.add(flangeMesh)
+    }
+    batches.push({mesh,edges:batch.edges,layer:batch.layer,system:batch.system,
+      flowAttr:geo.getAttribute('aFlow') as THREE.BufferAttribute,
+      onAttr:geo.getAttribute('aFlowOn') as THREE.BufferAttribute,
+      flowBase:new Float32Array(onValues),
+      demo:batch.edges.some(e=>e.handle===DEMO_PIPE_HANDLE)})
     materialsToDispose.push(mat)
   }
   // Pipe supports under the elevated CAD traces. Presentation furniture only: they
   // express that the drawn pipes are physical, not that any segment is hydraulically verified.
   {
-    const supportMap=new Map<string,{x:number;z:number;y:number}>()
+    type Support = {x:number;z:number;y:number}
+    const waterSupports=new Map<string,Support>()
+    const fireSupports=new Map<string,Support>()
     for(const batch of grouped.values()){
+      const supportMap = firePipeLayers.includes(batch.layer) ? fireSupports : waterSupports
       for(const e of batch.ends){
         const len=e.a.distanceTo(e.b)
         if(len<4.6)continue
@@ -1008,7 +1265,10 @@ function build(data: CadScene) {
         }
       }
     }
-    if(supportMap.size){
+    // A support shared with another service stays visible when fire pipes are hidden.
+    for (const key of waterSupports.keys()) fireSupports.delete(key)
+    for (const [supportMap, parent] of [[waterSupports, scene], [fireSupports, fireAccessories]] as const) {
+      if (!supportMap.size) continue
       const geo=new THREE.BoxGeometry(1,1,1)
       const mat=new THREE.MeshStandardMaterial({color:'#b3bcb9',roughness:.9,metalness:.04})
       const mesh=new THREE.InstancedMesh(geo,mat,supportMap.size)
@@ -1026,46 +1286,11 @@ function build(data: CadScene) {
       mesh.computeBoundingSphere()
       mesh.castShadow=true
       mesh.receiveShadow=true
-      scene.add(mesh)
+      parent.add(mesh)
       geometriesToDispose.push(geo);materialsToDispose.push(mat)
     }
   }
-  // Animated flow pulses along approved pipe segments. This is a direction-neutral
-  // "signal" motif for readability; it does NOT assert hydraulic direction or connectivity.
-  const seeds: { a: THREE.Vector3; b: THREE.Vector3; color: THREE.Color }[] = []
-  for(const batch of grouped.values()){
-    const color=new THREE.Color(systemColors[batch.layer]||'#4ca5c5').lerp(new THREE.Color('#ffffff'),.55)
-    for(const e of batch.ends){
-      if(e.a.distanceTo(e.b)<2.6)continue
-      seeds.push({a:e.a.clone(),b:e.b.clone(),color})
-    }
-  }
-  const stride=Math.max(1,Math.ceil(seeds.length/240))
-  const picked=seeds.filter((_,i)=>i%stride===0)
-  if(picked.length){
-    const count=picked.length*2
-    const pos=new Float32Array(count*3),col=new Float32Array(count*3)
-    const geo=new THREE.BufferGeometry()
-    geo.setAttribute('position',new THREE.BufferAttribute(pos,3))
-    geo.setAttribute('color',new THREE.BufferAttribute(col,3))
-    const mat=new THREE.PointsMaterial({size:.5,vertexColors:true,transparent:true,
-      opacity:.95,depthWrite:false,sizeAttenuation:true})
-    flowPoints=new THREE.Points(geo,mat)
-    flowPoints.name='管线流动示意 · 非水力方向'
-    flowPoints.frustumCulled=false;flowPoints.renderOrder=4
-    scene.add(flowPoints)
-    materialsToDispose.push(mat);geometriesToDispose.push(geo)
-    flowPositions=pos;flowDots=[]
-    picked.forEach((s,idx)=>{
-      for(let k=0;k<2;k++){
-        flowDots.push({a:s.a,b:s.b,phase:(idx*.317+k*.5)%1,speed:.055+(idx%7)*.004,
-          y:Math.max(s.a.y,s.b.y)+.13})
-        const o=(idx*2+k)*3
-        col[o]=s.color.r;col[o+1]=s.color.g;col[o+2]=s.color.b
-      }
-    })
-    geo.attributes.color.needsUpdate=true
-  }
+  // 流带已在管身材质内按实例弧长绘制；不再生成独立流动点或全场透明叠层。
   // Low-detail solids are extruded ONLY from genuinely closed original CAD geometry.
   // They are intentionally NOT classified as verified buildings or pool identities.
   const cadVolumeMaterials: Record<string,THREE.MeshStandardMaterial> = {
@@ -1125,8 +1350,14 @@ function selectByCanvas(e:PointerEvent) {
   const activePicks=relief?.group.visible?[...relief.picks,...pickObjects]:pickObjects
   const hits=ray.intersectObjects(activePicks.filter(obj=>obj.visible && (
     obj.userData.pick!=='pipe'||obj.userData.selectable)),false)
-  const first=hits[0]
+  let first=hits[0]
   if(!first)return
+  // 细管贴着设施表面掠过时，射线后方 2.5 显示单位内的实体优先，避免
+  // “点设施却选中穿行管线”的错配；明显在前方的管线仍按管线选中。
+  if(first.object.userData.pick==='pipe'){
+    const solid=hits.find(h=>h.object.userData.pick!=='pipe'&&h.distance-first.distance<2.5)
+    if(solid)first=solid
+  }
   if(first.object.userData.pick==='reliefPoint'){
     openFloatingMark(first.object.userData.pointId)
     return
@@ -1141,19 +1372,98 @@ function selectByCanvas(e:PointerEvent) {
     if(c)chooseEntry({type:'matchedContour',data:c})
     return
   }
-  if(first.instanceId===undefined)return
   if(first.object===markerMesh){
+    if(first.instanceId===undefined)return
     const a=current.anchors[first.instanceId]
     if(a)openAreaForAnchor(a.id)
     return
   }
-  const mesh=first.object as THREE.InstancedMesh
-  const batch=batches[Number(mesh.userData.batchIndex)]
-  const line=batch?.edges[first.instanceId]
-  if(line)chooseEntry({type:'pipe',data:line})
+  if(first.object.userData.pick==='pipe'&&first.face){
+    const batch=batches[Number(first.object.userData.batchIndex)]
+    const pickAttr=(first.object as THREE.Mesh).geometry.getAttribute('aPick')
+    const segment=pickAttr?Math.round(pickAttr.getX(first.face.a)):0
+    const line=batch?.edges[segment]
+    if(line)chooseEntry({type:'pipe',data:line})
+  }
 }
 function onDown(e:PointerEvent){lastPointer=[e.clientX,e.clientY]}
 function onUp(e:PointerEvent){selectByCanvas(e);lastPointer=null}
+// —— 水面平面反射 ——
+// 半分辨率 RTT + 以海平面镜像的相机；相机静止时直接复用上一帧结果。
+function initWaterReflection(){
+  if(!renderer||!relief)return
+  const size=new THREE.Vector2()
+  renderer.getDrawingBufferSize(size)
+  const scale=window.innerWidth<900?.35:.5
+  const w=Math.max(256,Math.floor(size.x*scale)),h=Math.max(256,Math.floor(size.y*scale))
+  reflectionRT=new THREE.WebGLRenderTarget(w,h,{type:THREE.HalfFloatType,depthBuffer:true})
+  reflectionRT.texture.minFilter=THREE.LinearFilter
+  reflectionRT.texture.magFilter=THREE.LinearFilter
+  reflectionRT.texture.generateMipmaps=false
+  reflectionCamera=new THREE.PerspectiveCamera(camera?.fov??34,camera?.aspect??1,camera?.near??.1,camera?.far??1500)
+  relief.seaMaterial.uniforms.uReflection.value=reflectionRT.texture
+  relief.seaMaterial.uniforms.uHasReflection.value=0
+  // 后处理管线在渲染目标里是线性空间；雾色需与陆域材质一致，避免海面过白。
+  if(composer)(relief.seaMaterial.uniforms.uFogColor.value as THREE.Color).set('#d5e5e5')
+  reflectionSignature='';reflectionFrames=0
+}
+function resizeWaterReflection(){
+  if(!reflectionRT||!renderer)return
+  const size=new THREE.Vector2();renderer.getDrawingBufferSize(size)
+  const scale=window.innerWidth<900?.35:.5
+  reflectionRT.setSize(Math.max(256,Math.floor(size.x*scale)),Math.max(256,Math.floor(size.y*scale)))
+  reflectionFrames=0
+}
+function updateWaterReflection(cam:THREE.PerspectiveCamera){
+  if(!reflectionRT||!reflectionCamera||!renderer||!scene||!relief)return
+  const rc=reflectionCamera,level=relief.waterLevel
+  _reflOrigin.set(0,level,0)
+  cam.getWorldPosition(_reflCamPos)
+  _reflView.subVectors(_reflOrigin,_reflCamPos)
+  if(_reflView.dot(_reflNormal)>0)return
+  _reflView.reflect(_reflNormal).negate().add(_reflOrigin)
+  _reflRotation.extractRotation(cam.matrixWorld)
+  _reflLookAt.set(0,0,-1).applyMatrix4(_reflRotation).add(_reflCamPos)
+  _reflTarget.subVectors(_reflOrigin,_reflLookAt).reflect(_reflNormal).negate().add(_reflOrigin)
+  rc.position.copy(_reflView)
+  rc.up.set(0,1,0).applyMatrix4(_reflRotation).reflect(_reflNormal)
+  rc.lookAt(_reflTarget)
+  rc.near=cam.near;rc.far=cam.far;rc.fov=cam.fov;rc.aspect=cam.aspect
+  rc.updateMatrixWorld()
+  rc.projectionMatrix.copy(cam.projectionMatrix)
+  const texMat=relief.seaMaterial.uniforms.uReflectMatrix.value as THREE.Matrix4
+  texMat.set(.5,0,0,.5,0,.5,0,.5,0,0,.5,.5,0,0,0,1)
+  texMat.multiply(rc.projectionMatrix).multiply(rc.matrixWorldInverse)
+  // 斜裁剪：把水面以下的几何排除在反射之外。
+  _reflPlane.setFromNormalAndCoplanarPoint(_reflNormal,_reflOrigin)
+  _reflPlane.applyMatrix4(rc.matrixWorldInverse)
+  _reflClip.set(_reflPlane.normal.x,_reflPlane.normal.y,_reflPlane.normal.z,_reflPlane.constant)
+  const p=rc.projectionMatrix
+  _reflQ.x=(Math.sign(_reflClip.x)+p.elements[8])/p.elements[0]
+  _reflQ.y=(Math.sign(_reflClip.y)+p.elements[9])/p.elements[5]
+  _reflQ.z=-1
+  _reflQ.w=(1+p.elements[10])/p.elements[14]
+  _reflClip.multiplyScalar(2/_reflClip.dot(_reflQ))
+  p.elements[2]=_reflClip.x;p.elements[6]=_reflClip.y
+  p.elements[10]=_reflClip.z+1;p.elements[14]=_reflClip.w
+  for(const mesh of relief.waterMeshes)mesh.visible=false
+  const prev=renderer.getRenderTarget()
+  renderer.setRenderTarget(reflectionRT)
+  renderer.clear()
+  renderer.render(scene,rc)
+  renderer.setRenderTarget(prev)
+  for(const mesh of relief.waterMeshes)mesh.visible=true
+  relief.seaMaterial.uniforms.uHasReflection.value=1
+  reflectionFrames++
+}
+function maybeUpdateWaterReflection(cam:THREE.PerspectiveCamera){
+  if(!reflectionRT)return
+  const sig=cam.position.toArray().map(v=>v.toFixed(3)).join(',')
+    +cam.quaternion.toArray().map(v=>v.toFixed(4)).join(',')
+  if(sig===reflectionSignature&&reflectionFrames>8)return
+  reflectionSignature=sig
+  updateWaterReflection(cam)
+}
 function setup() {
   if(!root.value)return
   const el=root.value
@@ -1169,27 +1479,90 @@ function setup() {
   renderer.setSize(initialW,initialH,false)
   renderer.outputColorSpace=THREE.SRGBColorSpace
   renderer.toneMapping=THREE.NeutralToneMapping
-  renderer.toneMappingExposure=1.15
+  renderer.toneMappingExposure=1.10
   renderer.shadowMap.enabled=true
   renderer.shadowMap.type=THREE.PCFSoftShadowMap
+  // 后处理每 pass 都会重置 renderer.info；改为手动按帧重置，才能统计整帧批次。
+  renderer.info.autoReset=false
+  // 桌面端后处理：Bloom 收住高光、SMAA 补回抗锯齿、OutputPass 统一色调映射与 sRGB。
+  if(initialW>=900&&initialW/initialH>=1.08){
+    composer=new EffectComposer(renderer)
+    renderPass=new RenderPass(scene,camera)
+    composer.addPass(renderPass)
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(initialW,initialH),.10,.5,.95))
+    composer.addPass(new OutputPass())
+    // 调色：轻微降饱和与暗角，保留设计图的青蓝水色与管线饱和度。
+    composer.addPass(new ShaderPass({
+      uniforms:{tDiffuse:{value:null},uSat:{value:.97},uContrast:{value:1.0},
+        uTint:{value:new THREE.Vector3(.99,1.0,1.012)},uVignette:{value:.30}},
+      vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+      fragmentShader:`uniform sampler2D tDiffuse;uniform float uSat,uContrast,uVignette;uniform vec3 uTint;varying vec2 vUv;
+        void main(){vec3 c=texture2D(tDiffuse,vUv).rgb;float l=dot(c,vec3(.2126,.7152,.0722));
+        c=mix(vec3(l),c,uSat);c=(c-.5)*uContrast+.5;c*=uTint;
+        float v=smoothstep(.95,.32,length(vUv-.5));c=mix(c,c*(.88+.12*v),uVignette);
+        gl_FragColor=vec4(clamp(c,0.,1.),1.);}`
+    }))
+    // 类型声明仍按旧签名要求宽高，运行时已是无参构造。
+    composer.addPass(new (SMAAPass as unknown as { new(): SMAAPass })())
+    composer.setPixelRatio(renderer.getPixelRatio())
+    composer.setSize(initialW,initialH)
+  }
   // Daylight sky: equirectangular canvas used as both background and IBL source.
   // It describes atmosphere only; it is not survey or meteorological data.
   const sky=document.createElement('canvas')
-  sky.width=1024;sky.height=512
+  sky.width=2048;sky.height=1024
   const ctx=sky.getContext('2d')
   if(ctx){
-    const grad=ctx.createLinearGradient(0,0,0,300)
-    grad.addColorStop(0,'#3f89c4');grad.addColorStop(.55,'#8fc0dd');grad.addColorStop(1,'#e7f0ef')
-    ctx.fillStyle=grad;ctx.fillRect(0,0,1024,300)
-    ctx.fillStyle='#c7d4cd';ctx.fillRect(0,300,1024,212)
-    for(let i=0;i<26;i++){
-      const cx=(i*173+61)%1024, cy=40+(i*97)%170, rx=70+(i*53)%110, ry=16+(i*29)%22
+    const H=sky.height,W=sky.width,hz=H/2
+    // 上半球：天顶深蓝 → 中层天蓝 → 地平线暖白薄雾；地平线严格落在等距柱状图的 H/2。
+    const grad=ctx.createLinearGradient(0,0,0,hz)
+    grad.addColorStop(0,'#1e5f9e');grad.addColorStop(.45,'#4e93c8')
+    grad.addColorStop(.80,'#9cc4da');grad.addColorStop(.90,'#a8c9dc')
+    grad.addColorStop(.985,'#cbdde3');grad.addColorStop(1,'#dde9e9')
+    ctx.fillStyle=grad;ctx.fillRect(0,0,W,hz)
+    // 下半球：海雾与海面反照，参与 IBL，避免天空球下半部纯白。
+    const seaGrad=ctx.createLinearGradient(0,hz,0,H)
+    seaGrad.addColorStop(0,'#cbdcd8');seaGrad.addColorStop(.35,'#8fa9a8');seaGrad.addColorStop(1,'#557580')
+    ctx.fillStyle=seaGrad;ctx.fillRect(0,hz,W,H-hz)
+    // 太阳与大气光晕：方向与主光 (64,104,44) 对齐。
+    const sunX=.596*W,sunY=(1-.793)*H
+    const halo=ctx.createRadialGradient(sunX,sunY,0,sunX,sunY,300)
+    halo.addColorStop(0,'rgba(255,252,238,.98)');halo.addColorStop(.10,'rgba(255,247,220,.80)')
+    halo.addColorStop(.32,'rgba(255,240,206,.30)');halo.addColorStop(1,'rgba(255,236,206,0)')
+    ctx.fillStyle=halo;ctx.beginPath();ctx.arc(sunX,sunY,300,0,Math.PI*2);ctx.fill()
+    ctx.fillStyle='rgba(255,254,246,.97)';ctx.beginPath();ctx.arc(sunX,sunY,34,0,Math.PI*2);ctx.fill()
+    // 层积云：上密下疏、横向拉长，避免上一版等距圆斑。
+    for(let i=0;i<34;i++){
+      const cx=((i*263+97)%W), cy=90+((i*127)%(hz-190))
+      const rx=150+(i*71)%320, ry=20+(i*37)%26
+      const alpha=.10+.16*((i*17)%5)/4
       const cloud=ctx.createRadialGradient(cx,cy,0,cx,cy,rx)
-      cloud.addColorStop(0,'rgba(255,255,255,.86)');cloud.addColorStop(.55,'rgba(255,255,255,.42)')
+      cloud.addColorStop(0,`rgba(255,255,255,${alpha})`)
+      cloud.addColorStop(.45,`rgba(250,252,255,${alpha*.55})`)
       cloud.addColorStop(1,'rgba(255,255,255,0)')
       ctx.save();ctx.translate(cx,cy);ctx.scale(1,ry/rx);ctx.translate(-cx,-cy)
       ctx.fillStyle=cloud;ctx.beginPath();ctx.arc(cx,cy,rx,0,Math.PI*2);ctx.fill();ctx.restore()
     }
+    // 地平线附近的远云带：默认机位只看到 0–4° 仰角，需要低空云才有层次。
+    for(let i=0;i<12;i++){
+      const cx=(i*181+40)%W, cy=hz-38-((i*29)%44), rx=210+(i*53)%300, ry=10+(i*7)%8
+      const cloud=ctx.createRadialGradient(cx,cy,0,cx,cy,rx)
+      cloud.addColorStop(0,'rgba(250,252,252,.50)');cloud.addColorStop(.45,'rgba(226,235,239,.26)')
+      cloud.addColorStop(1,'rgba(255,255,255,0)')
+      ctx.save();ctx.translate(cx,cy);ctx.scale(1,ry/rx);ctx.translate(-cx,-cy)
+      ctx.fillStyle=cloud;ctx.beginPath();ctx.arc(cx,cy,rx,0,Math.PI*2);ctx.fill();ctx.restore()
+    }
+    // 太阳方位的地平线暖雾，给近地平线一点方向感。
+    const glow=ctx.createRadialGradient(sunX,hz,0,sunX,hz,720)
+    glow.addColorStop(0,'rgba(255,238,212,.30)');glow.addColorStop(.45,'rgba(255,243,226,.12)')
+    glow.addColorStop(1,'rgba(255,245,232,0)')
+    ctx.save();ctx.translate(sunX,hz);ctx.scale(1,.10);ctx.translate(-sunX,-hz)
+    ctx.fillStyle=glow;ctx.beginPath();ctx.arc(sunX,hz,720,0,Math.PI*2);ctx.fill();ctx.restore()
+    // 地平线薄雾带：压住天空与海面的硬接缝。
+    const haze=ctx.createLinearGradient(0,hz-46,0,hz+16)
+    haze.addColorStop(0,'rgba(236,243,240,0)');haze.addColorStop(.72,'rgba(236,243,240,.40)')
+    haze.addColorStop(1,'rgba(214,229,227,0)')
+    ctx.fillStyle=haze;ctx.fillRect(0,hz-46,W,62)
   }
   const skyTexture=new THREE.CanvasTexture(sky)
   skyTexture.mapping=THREE.EquirectangularReflectionMapping
@@ -1197,7 +1570,7 @@ function setup() {
   skyTexture.colorSpace=THREE.SRGBColorSpace
   environmentTextures.push(skyTexture)
   scene.background=skyTexture
-  scene.fog=new THREE.Fog('#cfe2e7',330,1000)
+  scene.fog=new THREE.Fog('#d5e5e5',330,1000)
   try{
     const pmrem=new THREE.PMREMGenerator(renderer)
     const env=pmrem.fromEquirectangular(skyTexture)
@@ -1205,6 +1578,24 @@ function setup() {
     environmentTextures.push(env.texture)
     pmrem.dispose()
   }catch{/* environment map is optional */}
+  // 阴天/薄云 HDR：柔化直射光，以 IBL 为主；作为背景与 PMREM 环境。
+  // 加载成功后接管背景与 IBL；失败则继续使用 Canvas 天空。
+  new RGBELoader().load(import.meta.env.BASE_URL+'tanggang/environment/kloofendal_partly_cloudy_2k.hdr',(hdr)=>{
+    if(!active||!scene||!renderer)return
+    hdr.mapping=THREE.EquirectangularReflectionMapping
+    const pmrem=new THREE.PMREMGenerator(renderer)
+    const env=pmrem.fromEquirectangular(hdr)
+    scene.background=hdr
+    scene.environment=env.texture
+    scene.backgroundRotation.set(0,THREE.MathUtils.degToRad(0),0)
+    scene.environmentRotation.copy(scene.backgroundRotation)
+    scene.backgroundIntensity=1.0
+    scene.environmentIntensity=.75
+    environmentTextures.push(hdr,env.texture)
+    hdrSky=hdr
+    reflectionFrames=0;reflectionSignature=''
+    pmrem.dispose()
+  },undefined,()=>{/* 保留 Canvas 天空回退 */})
   canvas=renderer.domElement
   canvas.className='l1-webgl'
   // CSS owns visual dimensions even during a fast 4K→2K viewport shrink.
@@ -1221,17 +1612,18 @@ function setup() {
   orbit.enableDamping=true
   orbit.dampingFactor=.085
   orbit.minDistance=25;orbit.maxDistance=640
+  orbit.zoomToCursor=true
   orbit.maxPolarAngle=Math.PI*.485
   resetCameraPosition()
-  scene.add(new THREE.HemisphereLight(0xdfeef8,0x6d855a,.42))
-  const sun=new THREE.DirectionalLight(0xfff0d8,3.7)
+  scene.add(new THREE.HemisphereLight(0xdfeef8,0x6d855a,.60))
+  const sun=new THREE.DirectionalLight(0xfff0d8,1.7)
   sun.position.set(64,104,44);sun.castShadow=true;shadowSun=sun
   Object.assign(sun.shadow.camera,{left:-92,right:92,top:96,bottom:-96,near:1,far:285})
   sun.shadow.camera.updateProjectionMatrix()
-  sun.shadow.mapSize.set(4096,4096);sun.shadow.normalBias=.03;sun.shadow.bias=-.0002
+  sun.shadow.mapSize.set(2048,2048);sun.shadow.normalBias=.03;sun.shadow.bias=-.0002;sun.shadow.radius=3.5
   sun.shadow.autoUpdate=false;sun.shadow.needsUpdate=true
   scene.add(sun)
-  const edge=new THREE.DirectionalLight(0xc4ebf5,.45);edge.position.set(-66,48,-42);scene.add(edge)
+  const edge=new THREE.DirectionalLight(0xc4ebf5,.20);edge.position.set(-66,48,-42);scene.add(edge)
   const planeGeo=new THREE.PlaneGeometry(840,840)
   const planeMat=new THREE.MeshStandardMaterial({color:'#6d8a5e',roughness:1,metalness:0})
   geometriesToDispose.push(planeGeo);materialsToDispose.push(planeMat)
@@ -1246,15 +1638,15 @@ function setup() {
     const w=Math.max(1,root.value.clientWidth),h=Math.max(1,root.value.clientHeight)
     const reframe=Math.abs(w/h-camera.aspect)>.08 && !sourceMode.value && !floatingDetail.value && !detail.value
     camera.aspect=w/h
-    // View offsets place the trapezoidal stockyard apron onto the 1672×941 design grid
-    // (rear y≈305, front y≈664). Plan coordinates are unchanged. Offsets scale with the
-    // canvas so the same 1672×941 fit holds at 2K/4K.
-    const ox=w/h<1.08?0:Math.round(w*.13403)
-    const oy=w/h<1.08?-Math.min(h*.065,55):-Math.round(h*.24059)
+    // 新机位改为透视构图，桌面端不再用 viewOffset 裁切；移动端仅保留底部留白补偿。
+    const ox=0
+    const oy=w/h<1.08?-Math.min(h*.065,55):0
     camera.setViewOffset(w,h,ox,oy,w,h)
     camera.updateProjectionMatrix()
     renderer.setPixelRatio(displayPixelRatio(w,h))
     renderer.setSize(w,h,false)
+    if(composer){composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(w,h)}
+    resizeWaterReflection()
     if(reframe)resetCameraPosition()
   }
   // ResizeObserver handles parent layout changes; the window listener also
@@ -1265,22 +1657,40 @@ function setup() {
   canvas.addEventListener('pointerdown',onDown)
   canvas.addEventListener('pointerup',onUp)
   let n=0
+  let flowPrev=0
+  let labelSig=''
   const tick=()=>{
     if(!active)return
     frameId=requestAnimationFrame(tick)
     if(studyOpen.value&&!busy.value)return
     orbit?.update()
-    // Scene motion: water drift, vessel swell, cloud drift and pipe-flow pulses.
+    // Scene motion: water drift, cloud drift and pipe-flow phase.
     const now=performance.now()/1000
     relief?.update(now)
-    updateFlow(now)
-    skyTexture.offset.x=(now*.0035)%1
-    if(flowPoints)flowPoints.visible=solidMode.value&&!grayMode.value
+    // 共享时钟只在运行状态累加；停流后相位冻结，不会跳变。
+    if(flowPrev===0)flowPrev=now
+    if(flowToggle.value&&!grayMode.value)flowClock.value+=Math.min(.06,Math.max(0,now-flowPrev))
+    flowPrev=now
+    if(!hdrSky)skyTexture.offset.x=(now*.0035)%1
     if(groundGrid)groundGrid.visible=!solidMode.value
-    // Capped frame rate reduces GPU load on the development MacBook.
-    if(++n%2!==0)return
-    if(n%6===0){updateCompass();createScreenLabels()}
-    renderer?.render(scene!,camera!)
+    // 逐显示帧绘制：跳过帧会让转动时物体与标牌抖动。标签只在相机变化时重排，
+    // 静止时每 30 帧兜底一次（数据更新走 refresh，不依赖逐帧重算）。
+    const cam=camera!
+    // Give the distant yard enough depth precision while keeping nearby views accessible.
+    const range = orbit ? cam.position.distanceTo(orbit.target) : 0
+    const elevationWeight = THREE.MathUtils.smoothstep(cam.position.y, 18, 54)
+    const overviewWeight = THREE.MathUtils.smoothstep(range, 95, 235)
+    const nextNear = 0.1 + 7.9 * elevationWeight * overviewWeight
+    if (Math.abs(cam.near - nextNear) > 0.001) {
+      cam.near = nextNear
+      cam.updateProjectionMatrix()
+    }
+    const sig=`${cam.position.x.toFixed(2)},${cam.position.y.toFixed(2)},${cam.position.z.toFixed(2)},${cam.quaternion.x.toFixed(3)},${cam.quaternion.y.toFixed(3)},${cam.quaternion.z.toFixed(3)},${cam.quaternion.w.toFixed(3)}`
+    if(sig!==labelSig||++n%30===0){labelSig=sig;updateCompass();createScreenLabels()}
+    maybeUpdateWaterReflection(cam)
+    renderer?.info.reset()
+    if(composer)composer.render()
+    else renderer?.render(scene!,cam)
   }
   tick()
 }
@@ -1298,11 +1708,37 @@ function installDebugProbe(){
       C:proj(18.655589,-50.633321),D:proj(-43.044446,-50.633223),
     }
     return {
-      camera:{pos:at(0,0,0).copy(camera!.position).toArray(),target:orbit!.target.toArray(),fov:camera!.fov,aspect:camera!.aspect,viewOffset:{ox:camera!.view?.offsetX??0,oy:camera!.view?.offsetY??0}},
+      camera:{pos:at(0,0,0).copy(camera!.position).toArray(),target:orbit!.target.toArray(),fov:camera!.fov,aspect:camera!.aspect,near:camera!.near,far:camera!.far,viewOffset:{ox:camera!.view?.offsetX??0,oy:camera!.view?.offsetY??0}},
       rect:rect(),corners,
       project:(x:number,z:number)=>proj(x,z),
     }
   }
+  // 旋转稳定性复核：仅调试页可用，按角度绕当前目标水平转动相机。
+  ;(window as any).__spin=(deg:number)=>{
+    if(!camera||!orbit)return null
+    const a=deg*Math.PI/180,off=camera.position.clone().sub(orbit.target)
+    camera.position.set(orbit.target.x+off.x*Math.cos(a)-off.z*Math.sin(a),
+      camera.position.y,orbit.target.z+off.x*Math.sin(a)+off.z*Math.cos(a))
+    orbit.update()
+    return camera.position.toArray()
+  }
+  // 俯仰复核：仅调试页可用，保持水平朝向，把相机抬到指定俯角。
+  ;(window as any).__pitch=(deg:number)=>{
+    if(!camera||!orbit)return null
+    const off=camera.position.clone().sub(orbit.target)
+    const flat=Math.hypot(off.x,off.z)
+    camera.position.y=orbit.target.y+flat*Math.tan(deg*Math.PI/180)
+    orbit.update()
+    return camera.position.toArray()
+  }
+  // 真实渲染统计：renderer.info 只统计已提交的 draw，用于验收记录帧耗与批次。
+  ;(window as any).__stats=()=>({
+    frame:renderer?.info.render.frame??-1,
+    calls:renderer?.info.render.calls??-1,
+    triangles:renderer?.info.render.triangles??-1,
+    geometries:renderer?.info.memory.geometries??-1,
+    textures:renderer?.info.memory.textures??-1,
+  })
 }
 onMounted(async()=>{
   try {
@@ -1323,22 +1759,29 @@ onMounted(async()=>{
       buildPoolCandidateSurfaces(spatial)
       relief=buildHarborRelief(data,spatial)
       scene?.add(relief.group)
+      initWaterReflection()
       const built=relief
       built.loadGallery().then(loaded=>{
         if(active&&relief===built){galleryReady.value=loaded;if(shadowSun)shadowSun.shadow.needsUpdate=true}
       }).catch(()=>{if(active)regionLoadError.value='廊架样板模型加载失败'})
       built.loadPortAssets().then(loaded=>{
-        if(active&&relief===built&&loaded&&shadowSun)shadowSun.shadow.needsUpdate=true
+        if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
       }).catch(()=>{if(active)regionLoadError.value='港口设备表现模型加载失败'})
       built.loadBuildings().then(loaded=>{
-        if(active&&relief===built&&loaded&&shadowSun)shadowSun.shadow.needsUpdate=true
+        if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
       }).catch(()=>{if(active)regionLoadError.value='精细建筑模型加载失败'})
       built.loadTrees().then(loaded=>{
-        if(active&&relief===built&&loaded&&shadowSun)shadowSun.shadow.needsUpdate=true
+        if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
       }).catch(()=>{if(active)regionLoadError.value='精细树木模型加载失败'})
       built.loadProcessBuildings().then(loaded=>{
-        if(active&&relief===built&&loaded&&shadowSun)shadowSun.shadow.needsUpdate=true
+        if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
       }).catch(()=>{if(active)regionLoadError.value='工艺建筑模型加载失败'})
+      built.loadWashStation().then(loaded=>{
+        if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
+      }).catch(()=>{if(active)regionLoadError.value='洗车台样件加载失败'})
+      built.loadTrucks().then(loaded=>{
+        if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
+      }).catch(()=>{if(active)regionLoadError.value='出场车辆模型加载失败'})
       refresh()
     }
     if(datasets.regions){
@@ -1366,17 +1809,18 @@ onBeforeUnmount(()=>{
   if(canvas){canvas.removeEventListener('pointerdown',onDown);canvas.removeEventListener('pointerup',onUp)}
   orbit?.dispose()
   relief?.dispose()
+  reflectionRT?.dispose();reflectionRT=null;reflectionCamera=null
+  composer?.dispose();composer=null;renderPass=null
   shadowSun?.shadow.map?.dispose()
   disposeHighlights()
   disposeContinuitySelection()
   continuityDebugGroup.clear()
-  for(const batch of batches) batch.mesh.dispose()
+  for(const batch of batches) batch.mesh.removeFromParent()
   markerMesh?.dispose()
   pipeGeometry.dispose()
   geometriesToDispose.forEach(g=>g.dispose())
   environmentTextures.forEach(t=>t.dispose())
-  flowPoints?.geometry.dispose();(flowPoints?.material as THREE.Material|undefined)?.dispose();flowPoints?.removeFromParent()
-  flowPoints=null;flowPositions=null;flowDots=[]
+  // 流带由管身材质内置，随几何/材质统一释放。
   materialsToDispose.forEach(m=>m.dispose())
   scene?.traverse(obj=>{if(obj instanceof THREE.Mesh&&obj.geometry.type==='GridHelper')obj.geometry.dispose()})
   renderer?.dispose()
@@ -1415,6 +1859,10 @@ defineExpose({
           <p>{{systemDescription}}</p>
         </div>
         <div class="l1-actions">
+          <button v-if="!busy && !failure" type="button" class="l1-fire-switch" data-overlay="fire"
+            role="switch" :aria-checked="showFireOverlay" @click="toggleFireLayer">
+            消防管网<i aria-hidden="true"></i>
+          </button>
           <button class="l1-tool-toggle" :class="{active:toolsOpen}" @click="toolsOpen=!toolsOpen"
             :aria-expanded="toolsOpen" aria-controls="l1-tool-stack">
             {{toolsOpen?'收起工具':'工具 / 系统核查'}}
@@ -1444,13 +1892,15 @@ defineExpose({
             <i :style="{background:mode.accent}"></i>{{String(index+1).padStart(2,'0')}} {{mode.name}}
           </button>
         </template>
-        <button class="l1-filter l1-fire-toggle" data-overlay="fire" :class="{chosen:showFireOverlay}"
-          :aria-pressed="showFireOverlay" title="消防为独立专业图层，不属于六个业务子系统"
-          @click="toggleFireLayer">消防专业叠加</button>
       </div>
       <div v-if="!busy&&!failure" class="l1-site-legend">
         <span>A侧8位 · B侧8位 <b>边线推算</b></span>
         <span>北池设计2座 / 南池设计5座 <b>轮廓待核</b></span>
+        <button class="l1-flow-chip" data-flow-demo :class="{live:flowToggle&&demoLayerFocused}" :aria-pressed="flowToggle"
+          title="中压供水源Handle 139320 折线流带演示；非实时数据，不表示水力方向"
+          @click="toggleFlow">
+          <i></i>{{sourceMode?sourceMode.name+' · 中压演示段':'流动演示 · 中压供水'}} <b>{{flowStatusText}}</b>
+        </button>
         <button v-if="chainMarkerData?.markers.length" class="l1-chain-shortcut"
           data-cad-shortcut="chain-bucket" @click="openFloatingMark('TG-CHAIN-1058D8')">
           链斗冲洗池 <b>CAD文字已定位</b>
@@ -1570,6 +2020,8 @@ defineExpose({
         <small>{{floatingDetail.status}}</small>
         <p>{{floatingDetail.note}}</p>
         <p class="l1-point-source">源CAD：{{floatingDetail.sourceHandle}}</p>
+        <button v-if="floatingDetail.id==='TG-CAD-16'||floatingDetail.id==='HOME-1028AB'"
+          type="button" class="l1-point-open" data-inspect-east @click="inspectEastFacility(floatingDetail)">从厂区侧查看</button>
         <button v-if="floatingDetail.regionId&&availableRegions.some(r=>r.id===floatingDetail!.regionId)"
           class="l1-point-open" @click="showRegion(floatingDetail.regionId)">查看区域与设计设备</button>
       </div>
@@ -1636,6 +2088,11 @@ defineExpose({
           <div><dt>连通关系</dt><dd>尚未工程验收</dd></div>
           <div><dt>阀门/设备</dt><dd>尚未匹配</dd></div>
           <div><dt>流量/压力</dt><dd>未接入</dd></div>
+          <template v-if="detail.data.handle===DEMO_PIPE_HANDLE">
+            <div><dt>流动演示</dt><dd>{{flowToggle?'流带运行 · 演示数据':'已停流 · 管身保留'}}</dd></div>
+            <div><dt>关联设施候选</dt><dd>除尘泵房 TG-CAD-12（同系统文字锚点，实际接管未核）</dd></div>
+            <div><dt>方向依据</dt><dd>按折线绘制方向演示，不作水力方向证据</dd></div>
+          </template>
         </dl>
         <p>{{detail.type==='yardBand'||detail.type==='matchedContour'?detail.data.limitations:
           '当前为原CAD审查信息，不代表已完成物理管网或设施单体的建模验收。'}}</p>
@@ -1721,8 +2178,11 @@ defineExpose({
 <style scoped>
 .l1-system-tab{height:31px;padding:0 10px;font-weight:650;font-size:10px;gap:5px;border-color:#cfdfe9;background:#fffffff2;transition:background .16s,border-color .16s}
 .l1-system-tab.chosen{background:#dff5fb;border-color:#64b5c9;color:#216d87;box-shadow:0 3px 8px #5da5be1e}
-.l1-fire-toggle{height:31px;padding:0 10px;border:1px dashed #d5aa9d;background:#fff9f7;color:#a97368;font-size:10px;white-space:nowrap;flex:none}
-.l1-fire-toggle.chosen{background:#fde8e2;border-color:#c98978;color:#9d4e3a}
+.l1-actions .l1-fire-switch{display:inline-flex;align-items:center;gap:7px;min-height:32px;color:#35576d;cursor:pointer}
+.l1-fire-switch i{display:inline-flex;align-items:center;width:25px;height:15px;border-radius:9px;background:#788b98;padding:2px;box-sizing:border-box}
+.l1-fire-switch i::after{content:'';width:11px;height:11px;border-radius:50%;background:white}
+.l1-fire-switch[aria-checked="true"] i{background:#ad4446;justify-content:flex-end}
+.l1-fire-switch:focus-visible{outline:2px solid #1b7396;outline-offset:2px}
 .l1-system-evidence{position:absolute;top:129px;left:16px;z-index:3;display:flex;gap:7px;align-items:center;
  max-width:calc(100% - 34px);pointer-events:none;background:#fffffff0;border:1px solid #e0ebf1;border-radius:9px;
  color:#63869a;padding:5px 8px;font-size:9px;box-shadow:0 3px 12px #5d96a219}
@@ -1762,6 +2222,9 @@ defineExpose({
 .l1-compass-caption{font-size:9px;margin-top:5px;color:#7b99a9}
 .l1-site-legend{position:absolute;top:134px;left:17px;z-index:4;display:flex;align-items:center;gap:8px;
  max-width:calc(100% - 35px);white-space:nowrap;overflow-x:auto;scrollbar-width:none;pointer-events:none}
+@media (min-width:1000px){
+ .l1-zone:not(:has(.l1-tool-toggle[aria-expanded="true"])) .l1-site-legend{top:83px}
+}
 .l1-site-legend>span{display:inline-flex;gap:6px;align-items:center;border:1px solid #dceaf1;background:#ffffffd9;
  font-size:10px;padding:4px 7px;border-radius:9px;color:#497c90}
 .l1-site-legend b{color:#ad8f6e;font-size:9px;font-weight:550}
@@ -1830,6 +2293,14 @@ defineExpose({
  border:1px solid #80d5c6;border-radius:10px;background:#e7faf6ef;color:#207f79;
  font-size:10px;cursor:pointer;pointer-events:auto;white-space:nowrap}
 .l1-chain-shortcut b{color:#639c93;font-size:9px;font-weight:500}
+.l1-flow-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 9px;
+ border:1px solid #b9d7e4;border-radius:10px;background:#f2fbfeef;color:#2b6d86;
+ font-size:10px;cursor:pointer;pointer-events:auto;white-space:nowrap}
+.l1-flow-chip i{width:7px;height:7px;border-radius:50%;background:#9fb4bd}
+.l1-flow-chip.live i{background:#14b4d6;box-shadow:0 0 0 3px #14b4d633;animation:l1FlowPulse 1.6s ease-in-out infinite}
+.l1-flow-chip b{color:#5b8ea2;font-size:9px;font-weight:600}
+.l1-flow-chip.live b{color:#0f86a3}
+@keyframes l1FlowPulse{0%,100%{opacity:1}50%{opacity:.35}}
 .l1-float-label.chain{background:#dffbf3ef;border:1px solid #71c8b5;border-left:3px solid #2b9a83;
  color:#28786d;font-weight:760;box-shadow:0 3px 14px #399b8c35}
 .l1-float-label.chain .l1-label-pulse{background:#32b19b;box-shadow:0 0 0 3px #57cdbc35}

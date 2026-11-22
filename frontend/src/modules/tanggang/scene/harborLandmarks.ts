@@ -1,6 +1,9 @@
 // Source XY are DWG text anchors in 5188 local coordinates. All dimensions below
 // are illustrative display units; they do not describe built footprints or elevations.
 export const landmarksSource = 'de51fe02e029c880f9cee8e9ff0bc060e449603f4c213aef485ad161f3accd47'
+// 人工湖表现湖心相对 CAD 文字点的偏移（displayXZ）。岸线为表现层构造，
+// 标牌引线落在可见湖岸上，源文字点仍用于追溯与详情。
+export const lakeDisplayOffset = { x: 7.3, z: 1.3 }
 // evidenceLevel 只描述位置证据，不描述体量：anchor_only 表示仅有 CAD 文字锚点，
 // 图内未找到可用于建模的闭合轮廓；contour_matched 表示有源闭合几何可对齐。
 export type Landmark = { handle:string; name:string; layer:string; x:number; z:number; kind:string; width:number; depth:number; height:number; evidence?:string; evidenceLevel?:'anchor_only'|'contour_matched'; footprintHandle?:string }
@@ -219,25 +222,53 @@ export const landmarks: Landmark[] = [
     "evidence": "CAD 文字锚点 10340E（图层 $pm单体，x=3.13、z=45.08）。与 103415 是同名“生态蓄水池”的两处相邻文字点，相距约 16.5 个场景单位；源图没有核出两座独立池体轮廓。现仅保留文字锚点与候选边框，不表示两座已建水池。"
   },
   {
+    "handle": "FAC60",
+    "name": "集水池",
+    "layer": "$pm单体",
+    "x": 8.33183,
+    "z": 39.86324,
+    "kind": "pool",
+    "width": 6.0,
+    "depth": 3.8,
+    "height": 0.23,
+    "evidenceLevel": "anchor_only",
+    "evidence": "CAD 文字锚点 FAC60 经 TG-CAD-09「北部集水池（原图“集水池”）」定位（x=8.33183、z=39.86324）。源图设计北池 2 座，本处与 10B85C 成组；池体轮廓与单池身份待核，水面与池壁为 L1 示意。进深为默认机位可读性示意。"
+  },
+  {
     "handle": "10B85C",
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": -24.42,
     "z": 39.93,
     "kind": "pool",
-    "width": 3.6,
-    "depth": 1.5,
-    "height": 0.23
+    "width": 6.0,
+    "depth": 3.8,
+    "height": 0.23,
+    "evidenceLevel": "anchor_only",
+    "evidence": "CAD 文字锚点 10B85C（图层 $管综-雨水）。与 FAC60 同为北侧集水池设计 2 座的位置来源；池体轮廓与单池身份待核。"
+  },
+  {
+    "handle": "10AE0B",
+    "name": "集水池",
+    "layer": "$管综-雨水",
+    "x": -17.78064,
+    "z": -42.6,
+    "kind": "pool",
+    "width": 6.2,
+    "depth": 2.6,
+    "height": 0.23,
+    "evidenceLevel": "anchor_only",
+    "evidence": "CAD 文字锚点 10AE0B 经 TG-CAD-10「南部集水池（原图“集水池”）」定位（x=-17.78064、z=-46.49161）。与 10AE12、10AE14、10AE0E、10AE10 组成南池设计 5 座；池体轮廓待核。为避开前置管架遮挡，首页显示位置较文字点贴靠堆场南缘并北移约 3.9 单位；进深为可读性示意，不是实测池壁尺寸。"
   },
   {
     "handle": "10AE12",
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": -34.28,
-    "z": -46.14,
+    "z": -42.6,
     "kind": "pool",
-    "width": 3.1,
-    "depth": 1.35,
+    "width": 6.6,
+    "depth": 2.6,
     "height": 0.23
   },
   {
@@ -245,10 +276,10 @@ export const landmarks: Landmark[] = [
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": -8.39,
-    "z": -46.49,
+    "z": -42.6,
     "kind": "pool",
-    "width": 3.1,
-    "depth": 1.35,
+    "width": 5.6,
+    "depth": 2.6,
     "height": 0.23
   },
   {
@@ -256,10 +287,10 @@ export const landmarks: Landmark[] = [
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": -1.2,
-    "z": -46.49,
+    "z": -42.6,
     "kind": "pool",
-    "width": 3.1,
-    "depth": 1.35,
+    "width": 5.0,
+    "depth": 2.6,
     "height": 0.23
   },
   {
@@ -267,10 +298,10 @@ export const landmarks: Landmark[] = [
     "name": "集水池",
     "layer": "$管综-雨水",
     "x": 15.48,
-    "z": -46.49,
+    "z": -42.6,
     "kind": "pool",
-    "width": 3.1,
-    "depth": 1.35,
+    "width": 6.4,
+    "depth": 2.6,
     "height": 0.23
   }
 ]

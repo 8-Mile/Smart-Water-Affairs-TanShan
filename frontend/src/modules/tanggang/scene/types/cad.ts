@@ -2,7 +2,7 @@
  * 唐港三维场景 CAD / 系统清单 / 审计数据契约。
  * 从 5188 L1WaterScene.vue 抽出的纯类型定义，无运行时代码。
  */
-import type { InstancedMesh } from 'three'
+import type { BufferAttribute, Mesh } from 'three'
 
 export type Pt2 = [number, number]
 
@@ -121,7 +121,20 @@ export type Entry =
   | { type: 'yardBand'; data: YardBand }
   | { type: 'matchedContour'; data: MatchedContour }
 
-export type PipeBatch = { mesh: InstancedMesh; edges: CadLine[]; layer: string; system: string }
+export type PipeBatch = {
+  mesh: Mesh
+  edges: CadLine[]
+  layer: string
+  system: string
+  /** 沿路径累计弧长的流带属性（顶点里程） */
+  flowAttr?: BufferAttribute
+  /** 按顶点控制流带开关；停流时置 0，管身保持可见 */
+  onAttr?: BufferAttribute
+  /** 是否包含演示主管 139320 */
+  demo?: boolean
+  /** 建批时的逐顶点流带开关（仅演示 handle=1），运行/停流在此基线上切换 */
+  flowBase?: Float32Array
+}
 
 export type Label = {
   id: string
@@ -143,6 +156,9 @@ export type FloatingMark = {
   kind: string
   x: number
   z: number
+  /** 可选：标牌引线落点（displayXZ）。缺省时使用 CAD 文字点 x/z。 */
+  labelX?: number
+  labelZ?: number
   regionId: string
   sourceHandle: string
   note: string

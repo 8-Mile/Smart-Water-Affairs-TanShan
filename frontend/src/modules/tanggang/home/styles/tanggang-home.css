@@ -1370,7 +1370,7 @@
  .tanggang-home .screen-stage .brand img{width:31px;height:31px}.tanggang-home .screen-stage .brand b{font-size:17px}.tanggang-home .screen-stage .brand small{font-size:9px;letter-spacing:.5px}
  .tanggang-home .screen-stage .header-tail{grid-row:1;grid-column:2}.tanggang-home .screen-stage .snapshot-dot{font-size:10px}
  .tanggang-home .screen-stage .topbar nav{grid-row:2;grid-column:1/-1;position:relative;margin:0;display:flex;justify-content:space-around;gap:12px;overflow-x:auto;scrollbar-width:none;border-top:1px solid #e5edf5;height:37px}.tanggang-home .screen-stage .topbar nav a{font-size:12px;flex:none}
- .tanggang-home .screen-stage>.scene-layer{--scene-view-height:460px}
+ .tanggang-home .screen-stage>.scene-layer{--scene-view-height:max(460px,calc(100dvh - 92px))}
  .tanggang-home .screen-stage .l1-hud{top:10px;left:10px;right:10px;flex-wrap:wrap;gap:5px;align-items:start}.tanggang-home .screen-stage .l1-hud>div:first-child{flex:1 1 100%}
  .tanggang-home .screen-stage .l1-eyebrow{font-size:9px;gap:5px}.tanggang-home .screen-stage .l1-eyebrow span{font-size:8px}.tanggang-home .screen-stage .l1-hud h2{font-size:16px;margin:4px 0 2px}.tanggang-home .screen-stage .l1-hud p{font-size:9px}
  .tanggang-home .screen-stage .l1-actions{width:100%;max-width:100%;flex:1 1 100%;gap:5px;display:flex;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:3px}.tanggang-home .screen-stage .l1-actions :is(button, .tanggang-home a){flex:none;font-size:10px;min-height:29px;padding:6px 8px}

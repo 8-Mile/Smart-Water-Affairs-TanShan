@@ -1,0 +1,18 @@
+--- a/frontend/src/modules/tanggang/scene/L1WaterScene.vue
++++ b/frontend/src/modules/tanggang/scene/L1WaterScene.vue
+@@ -1422,6 +1422,15 @@
+     // 逐显示帧绘制：跳过帧会让转动时物体与标牌抖动。标签只在相机变化时重排，
+     // 静止时每 30 帧兜底一次（数据更新走 refresh，不依赖逐帧重算）。
+     const cam=camera!
++    // Give the distant yard enough depth precision while keeping nearby views accessible.
++    const range = orbit ? cam.position.distanceTo(orbit.target) : 0
++    const elevationWeight = THREE.MathUtils.smoothstep(cam.position.y, 18, 54)
++    const overviewWeight = THREE.MathUtils.smoothstep(range, 95, 235)
++    const nextNear = 0.1 + 7.9 * elevationWeight * overviewWeight
++    if (Math.abs(cam.near - nextNear) > 0.001) {
++      cam.near = nextNear
++      cam.updateProjectionMatrix()
++    }
+     const sig=`${cam.position.x.toFixed(2)},${cam.position.y.toFixed(2)},${cam.position.z.toFixed(2)},${cam.quaternion.x.toFixed(3)},${cam.quaternion.y.toFixed(3)},${cam.quaternion.z.toFixed(3)},${cam.quaternion.w.toFixed(3)}`
+     if(sig!==labelSig||++n%30===0){labelSig=sig;updateCompass();createScreenLabels()}
+     renderer?.render(scene!,cam)
