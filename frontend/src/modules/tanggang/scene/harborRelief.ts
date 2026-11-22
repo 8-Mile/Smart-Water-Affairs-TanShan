@@ -142,7 +142,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       uFogFar:{value:680},
       uShoreOrigin:{value:new T.Vector2(0,0)},
       uShoreNormal:{value:new T.Vector2(0,1)},
-      uShoreWidth:{value:9},
+      uShoreWidth:{value:14},
       // 平面反射：由 L1WaterScene 每帧写入镜像相机的纹理矩阵与 RTT。
       uReflection:{value:null as T.Texture|null},
       uHasReflection:{value:0},
@@ -1484,6 +1484,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     }
     const wakeTex=new T.CanvasTexture(wakeCanvas);wakeTex.colorSpace=T.SRGBColorSpace
     const wakeMat=new T.MeshBasicMaterial({map:wakeTex,transparent:true,depthWrite:false,opacity:.5})
+    // 船体接触水面的暗带与湿痕：略大于船体的深色贴片，压在船底。
+    const hullShadowMat=new T.MeshBasicMaterial({color:'#0a2c33',transparent:true,depthWrite:false,opacity:.42})
     materials.push(wakeMat)
     const berths=data.anchors.filter(p=>p.modelType==='berth_anchor')
     berths.forEach((berth,berthIndex)=>{
@@ -1508,6 +1510,11 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       wake.name='船尾尾迹'
       wake.renderOrder=2
       group.add(wake);portResources.add(wakeGeo)
+      const hullGeo=new T.PlaneGeometry(shipLength*.92,4.6).rotateX(-Math.PI/2).rotateY(shipRot)
+        .translate(cx,.065,-cz)
+      const hull=new T.Mesh(hullGeo,hullShadowMat)
+      hull.name='船体接触暗带';hull.renderOrder=1
+      group.add(hull);portResources.add(hullGeo)
       // Fixed berth draft; vessel identity and berth status are not simulated.
       ship.userData.bobBase=.04
       // 船体在首页代表泊位，只打开所属泊位详情。
