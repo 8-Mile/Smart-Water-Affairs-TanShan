@@ -36,6 +36,8 @@ from app.models.tanggang import (
     TanggangObjectLink, TanggangLinkAsset, TanggangLinkMetric, TanggangLinkRevision,
 )
 from app.models.tanggang_provenance import TanggangPointReview, TanggangPointReviewRevision
+from app.models.tanggang_board import TanggangBoard, TanggangBoardRevision
+from app.models.tanggang_equipment_draft import TanggangDemoEquipment
 from app.models.user import User
 
 __all__ = [
@@ -78,6 +80,9 @@ __all__ = [
     "Archive",
     "ArchiveCategory",
     "ArchiveFavorite",
+    "TanggangDemoEquipment",
+    "TanggangBoard",
+    "TanggangBoardRevision",
     "TanggangPointReview",
     "TanggangPointReviewRevision",
     "TanggangObjectLink",

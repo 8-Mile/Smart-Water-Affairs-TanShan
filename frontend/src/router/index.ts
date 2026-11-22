@@ -88,6 +88,18 @@ const router = createRouter({
           // 无页面级权限码：右下角悬浮入口，所有登录用户可用
           meta: { title: '智能助手' },
         },
+        {
+          path: 'port/analysis/equipment-drafts',
+          name: 'tg-demo-equipment',
+          component: () => import('@/modules/tanggang/business/PortDemoEquipmentView.vue'),
+          meta: { title: '演示设备录入' },
+        },
+        {
+          path: 'port/analysis/boards',
+          name: 'tg-a2ui-boards',
+          component: () => import('@/modules/tanggang/business/PortBoardsView.vue'),
+          meta: { title: '我的看板' },
+        },
         // system
         {
           path: 'system/departments',

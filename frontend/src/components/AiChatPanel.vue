@@ -126,10 +126,10 @@
             type="textarea"
             :rows="3"
             placeholder="输入消息，Enter 发送（Shift+Enter 换行）"
-            :disabled="loading"
+            :disabled="loading || !healthOk"
             @keydown="onKeydown"
           />
-          <el-button type="primary" :loading="loading" :disabled="!input.trim()" @click="send">
+          <el-button type="primary" :loading="loading" :disabled="!input.trim() || !healthOk" @click="send">
             发送
           </el-button>
         </div>
@@ -258,10 +258,11 @@ async function refreshHealth() {
       healthLabel.value = '不可用'
       healthHint.value = d?.error || ollama?.error || '请检查 Ollama 与 ai-service'
     }
-  } catch {
+  } catch (e: unknown) {
     healthOk.value = false
-    healthLabel.value = '不可用'
-    healthHint.value = '无法连接 AI 接口'
+    const issue=e as {response?:{status?:number;data?:{detail?:string}}}
+    healthLabel.value = issue?.response?.status===503?'未启用':'不可用'
+    healthHint.value = issue?.response?.data?.detail || '无法连接 AI 接口'
   }
 }
 

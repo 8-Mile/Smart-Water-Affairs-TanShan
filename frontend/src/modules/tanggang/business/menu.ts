@@ -38,6 +38,7 @@ export const tanggangMenus: TanggangNavItem[] = [
   ]},
   { id:'analysis',title:'分析中心',icon:'ri:brain-line',path:'/ai/chat',children:[
     {id:'analysis-ai',title:'AI智能助手',icon:'ri:robot-2-line',path:'/ai/chat'},
+    {id:'analysis-boards',title:'我的看板',icon:'ri:layout-grid-line',path:'/port/analysis/boards'},
   ]},
   { id:'system',title:'系统管理',icon:'ri:settings-3-line',path:'/system/users',children:[
     {id:'system-org',title:'组织设置',icon:'ri:building-line',path:'/system/departments',permission:'sys:dept:list'},

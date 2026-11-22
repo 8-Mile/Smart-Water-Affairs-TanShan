@@ -4,6 +4,7 @@ import {useRouter} from 'vue-router'
 import {ElMessage} from 'element-plus'
 import {useScenarioStore} from '../simulation/store'
 import type {MonitorRuleEvidence} from '../simulation/monitorEvidence'
+import PublishedBoards from './PublishedBoards.vue'
 import './business.css'
 import './scenario-pages.css'
 
@@ -91,6 +92,7 @@ function exportEvidence(){
       </div>
     </div>
 
+    <PublishedBoards target="/port/operations/monitor" />
     <div v-if="!current" class="tg-analysis-empty">
       <h2>尚未运行情景</h2>
       <p>选择统一情景后，可以查看模拟监护规则、诊断证据和核查流程。</p>
@@ -120,6 +122,7 @@ function exportEvidence(){
           <el-descriptions-item label="假设流量">{{fmt(latest?.flowM3h,'m³/h')}}</el-descriptions-item>
         </el-descriptions>
       </section>
+
 
       <div class="tg-monitor-workflow">
         <div class="tg-monitor-evidence">

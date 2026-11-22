@@ -3,6 +3,7 @@ import {computed} from 'vue'
 import {useRouter} from 'vue-router'
 import {useScenarioStore} from '../simulation/store'
 import SupplyPlanComparison from './SupplyPlanComparison.vue'
+import PublishedBoards from './PublishedBoards.vue'
 import './business.css'
 import './scenario-pages.css'
 const router=useRouter(),store=useScenarioStore()
@@ -28,6 +29,7 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
         <el-button @click="router.push('/port/process/middle')">中压供水工艺</el-button></div>
     </div>
     <div class="tg-biz-note"><b>数据说明：</b>{{store.running?'以下全部来自统一推演控制台，是演示假设而非实际用水量、管网输水能力。':'现场大机负荷与泵组能力尚未接入；本页没有模拟参数调整入口，只接收全局“情景推演”结果。'}}</div>
+    <PublishedBoards target="/port/water/supply" />
     <div v-if="!r" class="tg-analysis-empty">
       <div class="tg-empty-icon">◇</div><h2>尚未运行统一情景</h2>
       <p>在系统右下角“情景推演”统一入口选择情景，所有业务页面使用同一次推演结果，不必重新填写用水量。</p>
@@ -72,6 +74,7 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
         </section>
       </div>
       <SupplyPlanComparison />
+
       <section class="tg-biz-card art-card tg-analysis-footer">
         <div>
           <h2>监护关联核查</h2>
