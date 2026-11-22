@@ -244,6 +244,7 @@ function exportEvidence(){
             <p class="tg-monitor-review-copy">模拟记录只保存在当前情景。切换情景、刷新或退出后清空；不构成设备恢复验收。</p>
           </template>
           <div class="tg-monitor-links">
+            <el-button type="primary" plain size="small" @click="router.push('/port/operations/decision')">模拟处置研判</el-button>
             <el-button plain size="small" @click="router.push('/alarm/realtime')">查看正式告警</el-button>
             <el-button plain size="small" @click="router.push('/repair/list')">查看维修工单</el-button>
           </div>

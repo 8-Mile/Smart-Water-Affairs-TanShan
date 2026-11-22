@@ -3,6 +3,7 @@
     <el-button @click="router.push('/port/water/supply')">供水推演</el-button>
     <el-button @click="router.push('/port/analysis/boards')">我的看板</el-button>
     <el-button @click="router.push('/port/analysis/reports')">运行复盘</el-button>
+    <el-button @click="router.push('/port/operations/decision')">模拟处置研判</el-button>
     <el-button v-if="hasPerm('eq:create')" @click="router.push('/port/analysis/equipment-drafts')">演示设备录入</el-button>
   </div>
   <AiChatPanel />

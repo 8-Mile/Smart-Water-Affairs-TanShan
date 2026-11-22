@@ -39,7 +39,7 @@ from app.models.tanggang_provenance import TanggangPointReview, TanggangPointRev
 from app.models.tanggang_board import TanggangBoard, TanggangBoardRevision
 from app.models.tanggang_equipment_draft import TanggangDemoEquipment
 from app.models.tanggang_mock_ai import (
-    TanggangMockAiSession, TanggangMockAiMessage, TanggangMockAiAction,
+    TanggangMockAiSession, TanggangMockAiMessage, TanggangMockAiAction, TanggangMockAiDecision,
 )
 from app.models.user import User
 

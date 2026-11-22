@@ -173,6 +173,7 @@
 import { nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useScenarioStore } from '@/modules/tanggang/simulation/store'
+import { simContext } from '@/modules/tanggang/simulation/mockContext'
 import { ElMessage } from 'element-plus'
 import {
   aiCancel,
@@ -184,7 +185,6 @@ import {
   type AiPendingAction,
   type AiSessionSummary,
   type AiToolTraceItem,
-  type AiDemoContext,
   type AiRouteLink,
 } from '@/api/ai'
 
@@ -209,7 +209,7 @@ const router = useRouter()
 const scenarioStore = useScenarioStore()
 const isMock = ref(false)
 const knownRoutes = new Set([
-  '/port/water/supply','/port/operations/monitor',
+  '/port/water/supply','/port/operations/monitor','/port/operations/decision',
   '/port/analysis/boards','/port/analysis/reports',
   '/port/analysis/equipment-drafts',
 ])
@@ -232,35 +232,6 @@ async function gotoKnownRoute(path:string){
   },950)
 }
 
-function currentDemoContext(): AiDemoContext | undefined {
-  const result = scenarioStore.result
-  const monitor = scenarioStore.monitorEvidence
-  const id = scenarioStore.activeId
-  if (!scenarioStore.running || !id || !result || !monitor) return undefined
-  return {
-    data_mode: 'SIM',
-    field_verified: false,
-    scenario_id: id,
-    run_number: scenarioStore.runNumber,
-    demand_m3h: result.demandedM3h,
-    delivered_m3h: result.deliveredM3h,
-    shortage_m3h: result.shortageM3h,
-    coverage_percent: result.coveragePercent,
-    pool_forecast_m3: result.forecastPoolM3,
-    monitor_risk: monitor.risk,
-    triggered_rules: monitor.rules.filter(r => r.outcome === 'TRIGGERED').map(r => r.label),
-    insufficient_rules: monitor.rules.filter(r => r.outcome === 'INSUFFICIENT').map(r => r.label),
-    affected_terminals: (scenarioStore.impactAnalysis?.affectedTerminals || []).map(t => ({
-      label: t.label, demand_m3h: t.demandM3h,
-      allocated_m3h: t.allocatedM3h, shortage_m3h: t.shortageM3h,
-    })),
-    checkpoints: (scenarioStore.impactAnalysis?.checkpoints || []).map(x => x.label),
-    review_status: scenarioStore.monitorReview?.status || 'not_started',
-    review_outcome: scenarioStore.monitorReview?.outcome || null,
-    review_note: scenarioStore.monitorReview?.note || '',
-    scenario_started_at: scenarioStore.startedAt,
-  }
-}
 
 const messages = ref<Msg[]>([])
 const sessions = ref<AiSessionSummary[]>([])
@@ -281,6 +252,7 @@ const examples = [
   '在除尘系统新增设备，设备名称：演示喷雾泵，设备编号：SIM-FOG-001，参数：待核实',
   '帮我生成供水分析看板',
   '生成本轮SIM运行复盘报告',
+  '分析本轮SIM处置方案',
 ]
 
 function fill(text: string) {
@@ -468,7 +440,7 @@ async function send() {
         void scrollBottom()
       },
       abortCtrl.signal,
-      currentDemoContext(),
+      simContext(scenarioStore),
     )
     await loadSessions()
   } catch (e: unknown) {

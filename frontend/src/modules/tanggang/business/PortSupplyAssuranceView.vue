@@ -81,7 +81,10 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
           <p>{{impact?.conclusion}}</p>
           <p>{{reviewText}}。关联结果只来自同一SIM情景，不能推断设备故障根因，也不生成真实告警或工单。</p>
         </div>
-        <el-button type="primary" plain @click="router.push('/port/operations/monitor')">查看监护证据</el-button>
+        <div class="tg-biz-actions">
+          <el-button plain @click="router.push('/port/operations/monitor')">查看监护证据</el-button>
+          <el-button type="primary" plain @click="router.push('/port/operations/decision')">模拟处置研判</el-button>
+        </div>
       </section>
     </template>
   </main>

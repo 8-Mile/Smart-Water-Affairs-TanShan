@@ -58,7 +58,7 @@ export interface AiSessionSummary {
 }
 
 export interface AiRouteLink {
-  path: '/port/water/supply' | '/port/operations/monitor' |
+  path: '/port/water/supply' | '/port/operations/monitor' | '/port/operations/decision' |
     '/port/analysis/boards' | '/port/analysis/reports' |
     '/port/analysis/equipment-drafts'
   label: string
@@ -76,6 +76,18 @@ export interface AiSessionDetail {
   messages: AiSessionMessage[]
   pending_actions?: AiPendingAction[]
   mock?: boolean
+}
+export type SimPlanId = 'as-is' | 'defer' | 'storage-first' | 'standby'
+export interface AiSimPlan {
+  id: SimPlanId
+  title: string
+  shortage_m3h: number
+  deferred_m3h: number
+  raw_end_storage_m3: number
+  safety_margin_m3: number
+  constraint: 'CONSTRAINT_FAIL' | 'UNVERIFIED'
+  blockers: string[]
+  field_validated: false
 }
 export interface AiDemoContext {
   data_mode: 'SIM'
@@ -101,14 +113,24 @@ export interface AiDemoContext {
   review_outcome: 'requires-field-check' | 'sim-recovery-conditions' | null
   review_note: string
   scenario_started_at: string
+  plans: AiSimPlan[]
 }
-export interface AiSimReportContent extends AiDemoContext {
+export interface AiSimReportContent extends Omit<AiDemoContext, 'plans'> {
+  plans?: AiSimPlan[]
   report_version: string
   data_origin: 'BROWSER_SIM_SNAPSHOT'
   production_case_created: false
   repair_order_created: false
   conclusion: string
   next_action: string
+  sim_decision?: {
+    id: number
+    selected_plan_id: SimPlanId
+    rationale: string
+    status: 'selected' | 'reviewed'
+    review?: AiSimDecisionReview | null
+    real_dispatch_executed: false
+  }
 }
 export interface AiSimReport {
   id: number
@@ -124,6 +146,78 @@ export function fetchAiSimReports() {
 
 export function fetchAiSimReport(id: number) {
   return http.get<ApiResponse<AiSimReport>>('/ai/mock-reports/' + id, { silent: true })
+}
+
+export interface AiSimAgentStep {
+  id: 'supply' | 'monitor' | 'operations'
+  name: string
+  mode: 'MOCK_RULE'
+  finding: string
+  evidence: string
+  limitation: string
+}
+export interface AiSimDecisionAnalysis {
+  data_mode: 'SIM'
+  field_verified: false
+  scenario_id: string
+  run_number: number
+  roles: AiSimAgentStep[]
+  plans: AiSimPlan[]
+  notice: string
+}
+export interface AiSimDecisionReview {
+  run_number: number
+  data_mode: 'SIM'
+  field_verified: false
+  before_shortage_m3h: number
+  after_shortage_m3h: number
+  shortage_delta_m3h: number
+  finding: string
+  after_monitor_risk: string
+  constraint: 'CONSTRAINT_FAIL' | 'UNVERIFIED'
+  human_note: string
+  simulation_only: true
+  plan_executed: false
+  effect_attribution: 'NOT_DEMONSTRATED'
+  warning: string
+}
+export interface AiSimDecision {
+  id: number
+  status: 'selected' | 'reviewed'
+  scenario_id: string
+  baseline_run: number
+  selected_plan_id: SimPlanId
+  selected_plan: AiSimPlan
+  baseline: { shortage_m3h: number, monitor_risk: string }
+  rationale: string
+  analysis: AiSimDecisionAnalysis
+  review: AiSimDecisionReview | null
+  created_at: string
+  data_mode: 'SIM'
+  field_verified: false
+  real_dispatch_executed: false
+}
+export function analyzeSimDecision(demoContext: AiDemoContext) {
+  return http.post<ApiResponse<AiSimDecisionAnalysis>>(
+    '/ai/mock-decisions/analyze', demoContext, { silent: true },
+  )
+}
+export function fetchSimDecisions() {
+  return http.get<ApiResponse<AiSimDecision[]>>('/ai/mock-decisions', { silent: true })
+}
+export function createSimDecision(
+  demoContext: AiDemoContext, planId: SimPlanId, rationale: string,
+) {
+  return http.post<ApiResponse<AiSimDecision>>('/ai/mock-decisions', {
+    demo_context: demoContext, plan_id: planId, rationale,
+  }, { silent: true })
+}
+export function reviewSimDecision(
+  id: number, demoContext: AiDemoContext, humanNote: string,
+) {
+  return http.post<ApiResponse<AiSimDecision>>('/ai/mock-decisions/'+id+'/review', {
+    demo_context: demoContext, human_note: humanNote,
+  }, { silent: true })
 }
 
 export type AiStreamEvent =

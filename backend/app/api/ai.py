@@ -15,7 +15,7 @@ from app.models.ai_audit import AiAuditLog
 from app.models.tanggang_mock_ai import TanggangMockAiReport
 from app.models.user import User
 from app.services.ai_client import ai_service_client
-from app.services import tanggang_mock_ai
+from app.services import tanggang_mock_ai, tanggang_mock_decision
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -25,6 +25,18 @@ class SimTerminalSnapshot(BaseModel):
     demand_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
     allocated_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
     shortage_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
+
+
+class SimPlanSnapshot(BaseModel):
+    id: Literal["as-is", "defer", "storage-first", "standby"]
+    title: str = Field(min_length=2, max_length=80)
+    shortage_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
+    deferred_m3h: float = Field(ge=0, le=1000000, allow_inf_nan=False)
+    raw_end_storage_m3: float = Field(ge=-10000000, le=100000000, allow_inf_nan=False)
+    safety_margin_m3: float = Field(ge=-10000000, le=100000000, allow_inf_nan=False)
+    constraint: Literal["CONSTRAINT_FAIL", "UNVERIFIED"]
+    blockers: list[str] = Field(default_factory=list, max_length=12)
+    field_validated: Literal[False] = False
 
 
 class DemoContext(BaseModel):
@@ -48,6 +60,7 @@ class DemoContext(BaseModel):
     review_outcome: Literal["requires-field-check", "sim-recovery-conditions"] | None = None
     review_note: str = Field(default="", max_length=1000)
     scenario_started_at: str = Field(default="", max_length=48)
+    plans: list[SimPlanSnapshot] = Field(default_factory=list, max_length=4)
 
 
 class ChatBody(BaseModel):
@@ -421,3 +434,68 @@ def mock_report_detail(report_id: int, current_user: CurrentUser, db: DbSession)
         "run_number": row.run_number, "created_at": row.created_at,
         "report": json.loads(row.report_json),
     })
+
+
+
+class SimDecisionBody(BaseModel):
+    demo_context: DemoContext
+    plan_id: Literal["as-is", "defer", "storage-first", "standby"]
+    rationale: str = Field(min_length=8, max_length=1000)
+
+
+class SimDecisionReviewBody(BaseModel):
+    demo_context: DemoContext
+    human_note: str = Field(min_length=8, max_length=1000)
+
+
+def _require_mock_mode() -> None:
+    if not _mock_mode():
+        raise HTTPException(status_code=404, detail="该环境未启用SIM研判")
+
+
+@router.post("/mock-decisions/analyze")
+def mock_decision_analyze(
+    body: DemoContext, current_user: CurrentUser,
+):
+    """Three fixed mock roles; read-only and from ONE user-supplied SIM snapshot."""
+    _require_mock_mode()
+    return ok(tanggang_mock_decision.analyze(body.model_dump()))
+
+
+@router.get("/mock-decisions")
+def mock_decisions_list(current_user: CurrentUser, db: DbSession):
+    _require_mock_mode()
+    return ok(tanggang_mock_decision.list_mine(db, current_user))
+
+
+@router.post("/mock-decisions")
+def mock_decision_create(
+    body: SimDecisionBody, current_user: CurrentUser, db: DbSession,
+):
+    _require_mock_mode()
+    return ok(tanggang_mock_decision.create(
+        db, current_user, body.demo_context.model_dump(),
+        body.plan_id, body.rationale,
+    ))
+
+
+@router.get("/mock-decisions/{decision_id}")
+def mock_decision_detail(
+    decision_id: int, current_user: CurrentUser, db: DbSession,
+):
+    _require_mock_mode()
+    return ok(tanggang_mock_decision._visible(
+        tanggang_mock_decision.get_mine(db, current_user, decision_id),
+    ))
+
+
+@router.post("/mock-decisions/{decision_id}/review")
+def mock_decision_review(
+    decision_id: int, body: SimDecisionReviewBody,
+    current_user: CurrentUser, db: DbSession,
+):
+    _require_mock_mode()
+    return ok(tanggang_mock_decision.review(
+        db, current_user, decision_id,
+        body.demo_context.model_dump(), body.human_note,
+    ))

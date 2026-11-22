@@ -136,9 +136,20 @@ onMounted(refresh)
                 <span>{{item}}</span><span class="tg-biz-label">待核实</span>
               </div>
             </div>
+            <el-descriptions v-if="report.sim_decision" :column="1" border size="small">
+              <el-descriptions-item label="关联SIM研究方案">
+                #{{report.sim_decision.id}} · {{report.sim_decision.selected_plan_id}}
+              </el-descriptions-item>
+              <el-descriptions-item label="研究选择依据">{{report.sim_decision.rationale}}</el-descriptions-item>
+              <el-descriptions-item label="模拟复核">
+                {{report.sim_decision.review?.finding||'待新情景模拟复核'}}
+              </el-descriptions-item>
+              <el-descriptions-item label="生产处置">未执行</el-descriptions-item>
+            </el-descriptions>
             <p class="tg-biz-sub">{{report.next_action}}</p>
             <div class="tg-biz-actions">
               <el-button plain @click="router.push('/port/water/supply')">供水保障</el-button>
+              <el-button plain @click="router.push('/port/operations/decision')">模拟处置研判</el-button>
               <el-button plain @click="router.push('/port/operations/monitor')">主动监护</el-button>
             </div>
           </section>

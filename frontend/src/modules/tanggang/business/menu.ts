@@ -26,6 +26,7 @@ export const tanggangMenus: TanggangNavItem[] = [
   ]},
   { id:'operations',title:'运行处置',icon:'ri:alarm-warning-line',path:'/port/operations/monitor',children:[
     {id:'active-monitor',title:'主动智能监护',icon:'ri:shield-check-line',path:'/port/operations/monitor'},
+    {id:'sim-decision',title:'模拟处置研判',icon:'ri:flow-chart',path:'/port/operations/decision'},
     {id:'alarm',title:'告警中心',icon:'ri:alarm-warning-line',path:'/alarm/realtime',permission:'alarm:realtime'},
     {id:'repair',title:'维修工单',icon:'ri:tools-line',path:'/repair/list',permission:'repair:list'},
   ]},

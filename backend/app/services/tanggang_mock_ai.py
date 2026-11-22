@@ -21,7 +21,8 @@ from app.models.equipment import Equipment
 from app.models.tanggang_board import TanggangBoard
 from app.models.tanggang_equipment_draft import TanggangDemoEquipment
 from app.models.tanggang_mock_ai import (
-    TanggangMockAiAction, TanggangMockAiMessage, TanggangMockAiSession, TanggangMockAiReport,
+    TanggangMockAiAction, TanggangMockAiMessage, TanggangMockAiSession,
+    TanggangMockAiReport, TanggangMockAiDecision,
 )
 from app.models.user import User
 from app.api.tanggang_board import BoardBody, _rev, _snapshot
@@ -286,6 +287,23 @@ def _plan_sim_report(db: Session, user: User, session_id: str, context: dict | N
             "管网连接与真实工单状态；不得据此直接下发泵阀控制。"
         ),
     }
+    # An explicitly related SIM decision can be included as traceable context
+    # only when it belongs to this user and this same SIM run.
+    related = db.query(TanggangMockAiDecision).filter(
+        TanggangMockAiDecision.owner_id == user.id,
+        TanggangMockAiDecision.scenario_id == context["scenario_id"],
+    ).order_by(TanggangMockAiDecision.id.desc()).limit(40).all()
+    for choice in related:
+        reviewed = json.loads(choice.review_json) if choice.review_json else None
+        if (choice.baseline_run == context["run_number"] or
+            (reviewed and reviewed["run_number"] == context["run_number"])):
+            report["sim_decision"] = {
+                "id": choice.id, "selected_plan_id": choice.selected_plan_id,
+                "rationale": choice.rationale, "status": choice.status,
+                "review": reviewed, "real_dispatch_executed": False,
+            }
+            break
+
     summary = (
         f"第{context['run_number']}轮 {context['scenario_id']}："
         f"模拟需水{context['demand_m3h']:g}、分配{context['delivered_m3h']:g}、"
@@ -309,6 +327,8 @@ def _plan_sim_report(db: Session, user: User, session_id: str, context: dict | N
 
 
 NAV_TARGETS = (
+    ("处置研判", "/port/operations/decision", "打开SIM处置研判"),
+    ("模拟处置", "/port/operations/decision", "打开SIM处置研判"),
     ("运行复盘", "/port/analysis/reports", "打开运行复盘"),
     ("复盘记录", "/port/analysis/reports", "打开运行复盘"),
     ("我的看板", "/port/analysis/boards", "打开我的看板"),
@@ -324,6 +344,10 @@ NAV_PREFIX = re.compile(r"^(?:请|帮我|给我|直接|现在|我要|我想)?\s*
 
 
 def _navigation(message: str) -> list[dict]:
+    if re.search(r"处置方案|处置建议|处置研判|方案研判|多Agent|多智能体", message, re.I) and (
+        not re.search(r"实际控制|下发指令|PLC|派工|启停", message, re.I)
+    ):
+        return [{"path": "/port/operations/decision", "label": "进入SIM处置研判"}]
     if not NAV_PREFIX.search(message.strip()):
         return []
     for phrase, path, label in NAV_TARGETS:
@@ -342,7 +366,9 @@ def _route_intent(db: Session, user: User, session_id: str, message: str,
             [], [],
         )
     navigation = _navigation(query)
-    if navigation:
+    # Plain 'open/go to' is navigation; 'analyze decisions' must execute the
+    # grounded three-role read-only analysis before adding its link.
+    if navigation and NAV_PREFIX.search(query):
         return (
             f"已找到系统内业务页面：{navigation[0]['label']}。"
             "点击下方入口即可前往，不执行任何业务写入。",
@@ -351,6 +377,34 @@ def _route_intent(db: Session, user: User, session_id: str, message: str,
     if (bool(re.search(r"看板", query)) and
         bool(re.search(r"添加|增加|加上|加入|移除|删除|去掉|去除", query))):
         return _plan_board_edit(db, user, session_id, query)
+    if re.search(r"处置方案|处置建议|处置研判|方案研判|多Agent|多智能体", query, re.I):
+        if not context:
+            return (
+                "请先启动统一SIM推演，再进行本轮处置方案研判。"
+                "研判需要同一轮供水、监护与四种方案比选结果，不允许直接生成现场派工。",
+                [], [],
+            )
+        from app.services.tanggang_mock_decision import analyze
+        try:
+            assessment = analyze(context)
+        except HTTPException:
+            return (
+                "当前演示快照没有完整的四方案比选数据。请重新运行统一SIM情景。",
+                [], [],
+            )
+        summary = "\n".join(
+            f"{step['name']}（MOCK规则）：{step['finding']}\n"
+            f"依据：{step['evidence']}\n限制：{step['limitation']}"
+            for step in assessment["roles"]
+        )
+        return (
+            f"本轮SIM跨角色研判 · {context['scenario_id']} 第{context['run_number']}轮\n"
+            + summary
+            + "\n以上并非真实多Agent自主推理。请前往“处置研判”选择一项SIM研究方案，"
+              "记录理由；新一轮SIM可用于数值复核，不会下发现场指令。",
+            [{"name": "mock_"+step["id"], "ok": True}
+             for step in assessment["roles"]], [],
+        )
     if re.search(r"复盘|运行报告|演示报告", query):
         return _plan_sim_report(db, user, session_id, context)
     wants_board = bool(re.search(r"看板|图表|可视化布局", query))

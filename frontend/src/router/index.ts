@@ -95,6 +95,12 @@ const router = createRouter({
           meta: { title: '演示设备录入' },
         },
         {
+          path: 'port/operations/decision',
+          name: 'tg-sim-decision',
+          component: () => import('@/modules/tanggang/business/PortSimDecisionsView.vue'),
+          meta: { title: '模拟处置研判' },
+        },
+        {
           path: 'port/analysis/reports',
           name: 'tg-sim-reports',
           component: () => import('@/modules/tanggang/business/PortSimReportsView.vue'),
