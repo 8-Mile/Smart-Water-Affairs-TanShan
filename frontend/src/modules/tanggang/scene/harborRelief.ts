@@ -328,9 +328,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // L1 池体示意材质：浅色池沿、暗内壁、下沉水面；不是实测池壁构造。
   const basinWall=palette('#ccd7d2',.74,.03)
   const basinInner=palette('#2b4149',.9,.03)
-  const basinWater=palette('#1f7f94',.22,.05)
-  basinWater.envMapIntensity=.35
-  basinWater.emissive=new T.Color('#0b4557');basinWater.emissiveIntensity=.42
+  const basinWater=palette('#145e70',.26,.05)
+  basinWater.envMapIntensity=.25
+  basinWater.emissive=new T.Color('#08323f');basinWater.emissiveIntensity=.25
   const walkway=palette('#c3cbc4',.93,0)
   const grating=palette('#8b9999',.52,.56)
   const glazing=palette('#5d90a7',.30,.20)
@@ -1812,6 +1812,15 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   }
   // Batch static primitives by material. Keep only interactive source features as individual meshes.
   buildRoads()
+  // 码头前沿：护舷与系缆桩，补设计图的岸线细节。
+  const buildDockEdge=()=>{
+    const fender=palette('#2b3033',.8,.08), bollard=palette('#79848a',.55,.35)
+    for(let x=-45;x<=41;x+=8.5){
+      add(new T.BoxGeometry(.95,1.15,.5).translate(x,.52,-50.55),fender)
+      add(new T.CylinderGeometry(.22,.26,.9,10).translate(x+4.2,.4,-50.05),bollard)
+    }
+  }
+  buildDockEdge()
   const waterMeshes:T.Mesh[]=[]
   for(const [m,list] of batches){
     const normalized=list.map(g=>{
