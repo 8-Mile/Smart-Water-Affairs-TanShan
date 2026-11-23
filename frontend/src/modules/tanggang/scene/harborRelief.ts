@@ -132,8 +132,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       uTime:{value:0},
       // 与场景主光一致：DirectionalLight position (64,104,-44)，阴影朝屏幕右下。
       uSunDir:{value:new T.Vector3(64,104,-44).normalize()},
-      uDeepColor:{value:new T.Color('#0d6070')},
-      uShallowColor:{value:new T.Color('#4ab8bd')},
+      uDeepColor:{value:new T.Color('#0e5f72')},
+      uShallowColor:{value:new T.Color('#46a9ba')},
       uSkyZenith:{value:new T.Color('#4c8cba')},
       uSkyHorizon:{value:new T.Color('#c3d9dd')},
       uSunColor:{value:new T.Color('#ffe9c4')},
@@ -323,7 +323,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   materials.push(sea)
   const hull=palette('#1d2c37',.45,.3), red=palette('#9b5a46',.6,.1), hatch=palette('#456a7a',.45,.3)
   const canopy=palette('#375b3d',.97,0), canopyLight=palette('#566f47',.97,0)
-  const concrete=palette('#b9bdb4',.95,0), coalPad=palette('#474f4d',.95,0)
+  const concrete=palette('#b9bdb4',.95,0), coalPad=palette('#8a8f88',.95,0)
   const orangeMetal=palette('#d2762f',.5,.38), silver=palette('#c3ced2',.3,.78)
   const clarifier=palette('#9fb0b3',.46,.42), fence=palette('#3f93c8',.55,.25)
   const grass=palette('#5d8a4c',.99,0), grassAlt=palette('#527d42',.99,0), grassDry=palette('#6d9155',.99,0)
@@ -396,21 +396,19 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     materials.push(m)
     return [kind,m]
   })) as Record<PileKind,T.MeshStandardMaterial>
-  // CC0 PBR 地面：沥青道路、混凝土场坪、草地。UV 已按世界单位生成（prism）。
-  const asphalt=mineralMap('pbr/asphalt/color.jpg',true)
-  const asphaltN=mineralMap('pbr/asphalt/normal.jpg')
-  const asphaltR=mineralMap('pbr/asphalt/rough.jpg')
-  asphalt.repeat.set(1,1);asphaltN.repeat.set(1,1);asphaltR.repeat.set(1,1)
-  const roadPbr=palette('#969c94',.94,0)
+  // CC0 PBR 地面：混凝土场坪、草地。UV 已按世界单位生成（prism）。
+  // 场坪道路用浅色混凝土面层：设计图里堆间通道是灰色地坪，
+  // 早期套用深色沥青照片贴图，远看会把整条通道压成黑条。
+  const roadPbr=palette('#a7aca4',.94,0)
   roadPbr.polygonOffset=true;roadPbr.polygonOffsetFactor=-3;roadPbr.polygonOffsetUnits=-6
-  roadPbr.map=asphalt;roadPbr.normalMap=asphaltN;roadPbr.roughnessMap=asphaltR
-  roadPbr.normalScale.set(.55,.55)
   const concreteMap=mineralMap('pbr/concrete/color.jpg',true)
   const concreteN=mineralMap('pbr/concrete/normal.jpg')
   const concreteR=mineralMap('pbr/concrete/rough.jpg')
   deck.map=concreteMap;deck.normalMap=concreteN;deck.roughnessMap=concreteR
   deck.color.set('#7e857c')
   concreteMap.repeat.set(.30,.30);concreteN.repeat.set(.30,.30);concreteR.repeat.set(.30,.30)
+  roadPbr.map=concreteMap;roadPbr.normalMap=concreteN;roadPbr.roughnessMap=concreteR
+  roadPbr.normalScale.set(.4,.4)
   const grassMap=mineralMap('pbr/grass/color.jpg',true)
   const grassN=mineralMap('pbr/grass/normal.jpg')
   const grassR=mineralMap('pbr/grass/rough.jpg')
@@ -463,7 +461,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     textures.push(t);return t
   }
   const tyreMat=new T.MeshBasicMaterial({map:tyreTracks(),transparent:true,depthWrite:false,opacity:.85})
-  const dustMat=new T.MeshBasicMaterial({map:coalDust(),transparent:true,depthWrite:false,opacity:.75})
+  const dustMat=new T.MeshBasicMaterial({map:coalDust(),transparent:true,depthWrite:false,opacity:.50})
   materials.push(tyreMat,dustMat)
   const batches=new Map<T.Material,T.BufferGeometry[]>()
   function add(g:T.BufferGeometry,m:T.Material){
@@ -707,9 +705,23 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     }
     const t=new T.CanvasTexture(cv);t.colorSpace=T.SRGBColorSpace;textures.push(t);return t
   }
+  // 堆脚接触暗带：矩形足印 + 软边，只在堆体四周留一圈窄脏边。
+  // 早期用纯色大平面（1.18×堆宽）会把堆间通道压成近黑条。
+  function footprintShadow(){
+    const size=128,cv=document.createElement('canvas');cv.width=cv.height=size
+    const c2=cv.getContext('2d')
+    if(c2){
+      c2.clearRect(0,0,size,size)
+      c2.filter='blur(6px)'
+      c2.fillStyle='rgba(11,15,17,.72)'
+      const pad=size*.08
+      c2.fillRect(pad,pad,size-2*pad,size-2*pad)
+    }
+    const t=new T.CanvasTexture(cv);t.colorSpace=T.SRGBColorSpace;textures.push(t);return t
+  }
   const shadowTex=contactShadow()
-  const shadowMat=new T.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:.72})
-  const softShadowMat=new T.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:.42})
+  const shadowMat=new T.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:.58})
+  const softShadowMat=new T.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:.40})
   materials.push(shadowMat,softShadowMat)
   const splitGap=4.2
   // 程序化堆体先保证首屏可读；Blender GLB 加载完成后隐藏并由精细资产接管。
@@ -752,15 +764,15 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         const pileMesh=interactive(geo,pileMaterials[kind],{pick:'reliefPoint',pointId:anchor.id,sourceHandle:anchor.handle})
         proceduralPiles.push(pileMesh)
         // Soft contact shadow keeps the pile visually planted on the pad.
-        const sh=new T.PlaneGeometry(width+1.2,length+1.2).rotateX(-Math.PI/2).translate(footX,.1115,-cz)
+        const sh=new T.PlaneGeometry(width+.7,length+.7).rotateX(-Math.PI/2).translate(footX,.1115,-cz)
         add(sh,shadowMat)
         // 堆脚积煤/尘土：沿两侧与端部铺不规则暗斑，让堆体与场坪之间有过浆脏边。
         for(const s of [-1,1]){
-          const dx=footX+s*(width/2+.62)
-          add(stripUv(strip([dx,cz-length/2-.6],[dx,cz+length/2+.6],1.45,.0016,.1104),3.6),dustMat)
+          const dx=footX+s*(width/2+.45)
+          add(stripUv(strip([dx,cz-length/2-.5],[dx,cz+length/2+.5],.95,.0016,.1104),3.6),dustMat)
         }
-        for(const z of [cz-length/2-.55,cz+length/2+.55])
-          add(stripUv(strip([footX-width/2-.9,z],[footX+width/2+.9,z],1.35,.0016,.1104),3.6),dustMat)
+        for(const z of [cz-length/2-.45,cz+length/2+.45])
+          add(stripUv(strip([footX-width/2-.75,z],[footX+width/2+.75,z],.95,.0016,.1104),3.6),dustMat)
         // 堆脚散落煤块：沿长边坡脚与端部确定性抛洒，越靠坡脚越密。
         const rnd=(k:number)=>{const v=Math.sin(k*127.1+seed*311.7)*43758.5453;return v-Math.floor(v)}
         const spots=lumpSpots[kind]
@@ -1472,7 +1484,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // in modeling/harbor/create_port_assets.py. Placement follows CAD berth anchors and
   // yard band centres; the asset form itself is presentation geometry.
   const stockpileResources=new Set<T.Material|T.BufferGeometry>()
-  const pileContact=new T.MeshBasicMaterial({color:'#0b0e11',transparent:true,opacity:.34,depthWrite:false})
+  const pileContact=new T.MeshBasicMaterial({map:footprintShadow(),transparent:true,depthWrite:false,opacity:.55})
   materials.push(pileContact)
   // 程序化堆面：世界坐标值噪声同时调色与粗糙度，做出湿煤/干灰斑块，
   // 不使用任何平铺贴图，远景不会重复成瓦楞或鱼鳞。
@@ -1523,10 +1535,10 @@ roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
       // 湿煤与干矿的反射差异：按锚点做确定性粗糙度分布，煤堆更湿更亮，
       // 灰矿偏干偏哑，避免 16 堆共用同一层高光，远景读成塑料模型。
       const wet=(h%97)/96
-      const baseRough=kind==='coal'?.56:kind==='brown'?.74:.84
-      tinted.roughness=Math.min(1,baseRough+.18*wet)
+      const baseRough=kind==='coal'?.64:kind==='brown'?.78:.86
+      tinted.roughness=Math.min(1,baseRough+.16*wet)
       tinted.metalness=kind==='coal'?.03+.04*wet:.01+.02*wet
-      tinted.envMapIntensity=.38+.22*wet
+      tinted.envMapIntensity=.30+.16*wet
       applyPileSurface(tinted,(h%1000)/17)
       materials.push(tinted)
       part.material=tinted
@@ -1539,7 +1551,8 @@ roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
       // 堆脚接触暗带：让堆体压住地面，而不是悬浮的黑条。
       const box=new T.Box3().setFromObject(part)
       const size=box.getSize(new T.Vector3()),center=box.getCenter(new T.Vector3())
-      const shadowGeo=new T.PlaneGeometry(size.x*1.18,size.z*1.03)
+      // 接触暗带只比足印略大：早期 1.18× 的纯黑平面会盖到堆间通道上。
+      const shadowGeo=new T.PlaneGeometry(size.x*1.06,size.z*1.04)
         .rotateX(-Math.PI/2).translate(center.x,.035,center.z)
       const shadowMesh=new T.Mesh(shadowGeo,pileContact)
       shadowMesh.renderOrder=1
@@ -1941,7 +1954,7 @@ roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
   buildRoads()
   // 码头前沿：护舷与系缆桩，补设计图的岸线细节。
   const buildDockEdge=()=>{
-    const fender=palette('#2b3033',.8,.08), bollard=palette('#79848a',.55,.35)
+    const fender=palette('#2b3033',.8,.08), bollard=palette('#4e565b',.6,.3)
     // 默认机位距码头约 150 单位，护舷与系缆桩按真实比例会被缩成几个像素；
     // 适当放大并加密，让远景能读出岸线设施，而不是一条空白混凝土边。
     for(let x=-45;x<=41;x+=7.2){
