@@ -7,7 +7,8 @@
 import {computed,onMounted,ref} from 'vue'
 import {fetchProcessDiagram,type EditableProcessSystemId,
   type ProcessDiagramRecord,type ProcessDiagramConnection} from '@/api/tanggangProcessDiagrams'
-import {defaultProcessDiagram,sourceImage,schematicRoute} from './fogDiagram'
+import {defaultProcessDiagram,sourceImage} from './fogDiagram'
+import {calculateProcessFlowRoute} from './processFlowRouting'
 import {isLegacyUnconnectedTemplate,processFlowZones} from './processFlow'
 import type {ProcessSchematicSection} from './processSchematic'
 import type {ProcessMockDevice,ProcessDeviceKind} from './processMock'
@@ -29,12 +30,17 @@ function documentFlow(){
   return computed(()=>{
     if(props.systemId==='fog')return null
     const fallback=defaultProcessDiagram(props.systemId,props.systemName,props.sections)
-    const published=remote.value?.published
+    const published=remote.value?.system_id===props.systemId?remote.value?.published:null
     return published&&!isLegacyUnconnectedTemplate(props.systemId,published)?
       published:fallback
   })
 }
 const flowZones=computed(()=>processFlowZones(props.systemId))
+const effectRoutes=computed(()=>new Map(flow.value?.connections.map(c=>
+  [c.id,calculateProcessFlowRoute(c,flow.value!)] )||[]))
+function connectionPath(line:ProcessDiagramConnection):string{
+  return effectRoutes.value.get(line.id)?.path||''
+}
 onMounted(async()=>{
   if(props.systemId==='fog')return
   try{remote.value=(await fetchProcessDiagram(props.systemId)).data.data}catch{
@@ -128,10 +134,10 @@ function stateFor(id:string){
         </g>
         <g v-for="line in flow.connections" :key="line.id"
           :data-effect-flow-medium="line.medium" pointer-events="none">
-          <path :d="schematicRoute(line,flow)" fill="none"
+          <path :d="connectionPath(line)" fill="none"
             stroke="#fff" stroke-width="13"
             stroke-linecap="round" stroke-linejoin="round"/>
-          <path :d="schematicRoute(line,flow)" fill="none"
+          <path :d="connectionPath(line)" fill="none"
             :stroke="flowColor(line)" :stroke-width="line.medium==='signal'?3:7"
             stroke-linecap="round" stroke-linejoin="round"
             :stroke-dasharray="line.relation==='conditional'?'6 12':

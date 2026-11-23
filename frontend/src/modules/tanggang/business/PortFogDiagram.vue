@@ -23,6 +23,7 @@ import type {ProcessMockDevice} from './processMock'
 import type {TanggangDevice} from '../mapping/tanggangCatalog'
 import type {ProcessSchematicSection} from './processSchematic'
 import {isLegacyUnconnectedTemplate,processFlowZones,processFlowSummary} from './processFlow'
+import {calculateProcessFlowRoute} from './processFlowRouting'
 import {usePermissions} from '@/utils/permissions'
 
 const props=defineProps<{
@@ -95,6 +96,12 @@ const flowZones=computed(()=>processFlowZones(props.systemId))
 const visibleConnections=computed(()=>stage.value.connections.filter(c=>
   c.medium==='signal'?showSignal.value:showWater.value,
 ))
+const flowRoutes=computed(()=>new Map(stage.value.connections.map(c=>
+  [c.id,calculateProcessFlowRoute(c,stage.value)])))
+function connectionPath(c:ProcessDiagramConnection):string{
+  return props.systemId==='fog'?schematicRoute(c,stage.value):
+    flowRoutes.value.get(c.id)?.path||''
+}
 function routeColor(c:ProcessDiagramConnection):string{
   return c.medium==='sludge'?'#ac7b4e':
     c.medium==='chemical'?'#c39452':
@@ -105,6 +112,8 @@ function routeDash(c:ProcessDiagramConnection):string{
     c.relation==='conditional'?'5 12':'17 8'
 }
 function labelPosition(c:ProcessDiagramConnection):{x:number;y:number}{
+  if(props.systemId!=='fog')
+    return flowRoutes.value.get(c.id)?.label||{x:0,y:0}
   const a=stage.value.nodes.find(n=>n.id===c.source_node_id)
   const b=stage.value.nodes.find(n=>n.id===c.target_node_id)
   if(!a||!b)return {x:0,y:0}
@@ -643,10 +652,10 @@ const iconLabel=(id:string|null)=>id?
             class="tg-diagram-pipe" :data-flow-connection="line.id"
             :data-flow-medium="line.medium" :data-flow-relation="line.relation||'design'"
             pointer-events="none">
-            <path :d="schematicRoute(line,stage)" fill="none"
+            <path :d="connectionPath(line)" fill="none"
               stroke="#fff" :stroke-width="line.medium==='signal'?7:11"
               stroke-linecap="round" stroke-linejoin="round" opacity=".96"/>
-            <path :d="schematicRoute(line,stage)" fill="none"
+            <path :d="connectionPath(line)" fill="none"
               :stroke="routeColor(line)"
               :stroke-width="line.medium==='signal'?3:6" stroke-linecap="round"
               stroke-linejoin="round"
