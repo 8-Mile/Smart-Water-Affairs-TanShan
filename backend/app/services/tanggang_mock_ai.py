@@ -278,6 +278,7 @@ def _plan_sim_report(db: Session, user: User, session_id: str, context: dict | N
         "review_status": context.get("review_status", "not_started"),
         "review_outcome": context.get("review_outcome"),
         "review_note": note,
+        "process_checks": context.get("process_checks", []),
         "conclusion": (
             "模拟分配存在缺口，需要核实终端负荷和设备能力"
             if context["shortage_m3h"] > 0 else

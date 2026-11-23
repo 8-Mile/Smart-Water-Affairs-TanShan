@@ -89,6 +89,20 @@ export interface AiSimPlan {
   blockers: string[]
   field_validated: false
 }
+export interface AiSimProcessCheck {
+  system_id:'fog'|'middle'|'mineral'|'rain'|'pool'|'domestic'
+  facility_id:string
+  facility_name:string
+  state:'running'|'available'|'attention'|'fault'
+  note:string
+  scenario_id:'baseline'|'peak'|'storm'|'pump-fault'
+  run_uid:string
+  data_mode:'SIM'
+  field_verified:false
+  production_alarm_created:false
+  repair_order_created:false
+  recorded_at:string
+}
 export interface AiDemoContext {
   data_mode: 'SIM'
   field_verified: false
@@ -113,6 +127,7 @@ export interface AiDemoContext {
   review_status: 'not_started' | 'investigating' | 'recorded'
   review_outcome: 'requires-field-check' | 'sim-recovery-conditions' | null
   review_note: string
+  process_checks?: AiSimProcessCheck[]
   scenario_started_at: string
   plans: AiSimPlan[]
 }

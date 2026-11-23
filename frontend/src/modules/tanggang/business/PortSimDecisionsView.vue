@@ -10,12 +10,14 @@ import {
   type AiSimDecisionAnalysis,type AiSimDecision,type SimPlanId,
   type AiSimEvidence,type AiSimEvidenceItem,type SimEvidenceStatus,
 } from '@/api/ai'
+import {simNodeOrigin,simNodeReturnPath} from './processReviewNavigation'
 import './business.css'
 import './scenario-pages.css'
 
 const router=useRouter()
 const route=useRoute()
 const scenario=useScenarioStore()
+const linkedNode=computed(()=>simNodeOrigin(route.query,scenario.processChecks,scenario.runUid))
 const context=computed(()=>simContext(scenario))
 const analysis=ref<AiSimDecisionAnalysis|null>(null)
 const allCases=ref<AiSimDecision[]>([])
@@ -189,6 +191,16 @@ onMounted(async()=>{await Promise.all([refresh(),analyze()])})
       </div>
     </div>
 
+    <section v-if="linkedNode" class="tg-biz-card art-card tg-decision-origin"
+      data-testid="decision-node-origin">
+      <div>
+        <strong>关联SIM工艺节点：{{linkedNode.facility_name}}</strong>
+        <p>{{linkedNode.note}}</p>
+        <small>仅该轮浏览器核查 · 研判结论不是现场设备处置指令</small>
+      </div>
+      <el-button size="small" plain
+        @click="router.push(simNodeReturnPath(linkedNode))">返回原工艺节点</el-button>
+    </section>
     <div class="tg-biz-note">
       <b>数据说明：</b>全部为同一浏览器情景计算。三个分析角色为可追溯的Mock规则，不是真实自主Agent；不会批准或执行泵阀调度。
     </div>
@@ -369,6 +381,12 @@ onMounted(async()=>{await Promise.all([refresh(),analyze()])})
 </template>
 
 <style scoped>
+.tg-decision-origin{display:flex;align-items:center;justify-content:space-between;
+  gap:8px 20px;flex-wrap:wrap;margin-bottom:14px}
+.tg-decision-origin strong{font-size:12px;font-weight:650;color:#365d75}
+.tg-decision-origin p{margin:6px 0;font-size:12px;color:#6c899b}
+.tg-decision-origin small{font-size:11px;color:#8a9fac}
+
 .tg-decision-roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .tg-decision-role{border:1px solid var(--el-border-color-light);border-radius:7px;padding:13px;min-width:0}
 .tg-decision-role-title{font-size:13px;font-weight:600;margin-bottom:8px}

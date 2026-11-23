@@ -29,6 +29,7 @@ export function simContext(store: ReturnType<typeof useScenarioStore>): AiDemoCo
     review_status:store.monitorReview?.status||'not_started',
     review_outcome:store.monitorReview?.outcome||null,
     review_note:store.monitorReview?.note||'',
+    process_checks:store.processChecks.map(x=>({...x})),
     scenario_started_at:store.startedAt,
     plans:store.supplyPlans.map(p=>({
       id:p.id,title:p.title,

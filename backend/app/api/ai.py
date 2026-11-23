@@ -5,7 +5,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Header, HTTPException, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -39,6 +39,26 @@ class SimPlanSnapshot(BaseModel):
     field_validated: Literal[False] = False
 
 
+class SimProcessCheckSnapshot(BaseModel):
+    # User-authored browser-only SIM review, never a field verification or
+    # real alarm/work order. The client can't pass arbitrary workflow claims.
+    system_id: Literal["fog", "middle", "mineral", "rain", "pool", "domestic"]
+    facility_id: str = Field(min_length=5, max_length=75, pattern=r"^EQ-[A-Z0-9-]+$")
+    facility_name: str = Field(min_length=1, max_length=120)
+    state: Literal["running", "available", "attention", "fault"]
+    note: str = Field(min_length=8, max_length=600)
+    scenario_id: Literal["baseline", "peak", "storm", "pump-fault"]
+    run_uid: str = Field(
+        min_length=36, max_length=36,
+        pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    )
+    data_mode: Literal["SIM"] = "SIM"
+    field_verified: Literal[False] = False
+    production_alarm_created: Literal[False] = False
+    repair_order_created: Literal[False] = False
+    recorded_at: str = Field(max_length=48)
+
+
 class DemoContext(BaseModel):
     # Client-supplied SIM snapshot is illustrative; server never regards it
     # as a measured SCADA reading or as authorization to perform real work.
@@ -65,8 +85,23 @@ class DemoContext(BaseModel):
     review_status: Literal["not_started", "investigating", "recorded"] = "not_started"
     review_outcome: Literal["requires-field-check", "sim-recovery-conditions"] | None = None
     review_note: str = Field(default="", max_length=1000)
+    process_checks: list[SimProcessCheckSnapshot] = Field(default_factory=list, max_length=24)
     scenario_started_at: str = Field(default="", max_length=48)
     plans: list[SimPlanSnapshot] = Field(default_factory=list, max_length=4)
+
+    @model_validator(mode="after")
+    def validate_process_checks(self):
+        if self.process_checks and not self.run_uid:
+            raise ValueError("SIM节点核查必须包含运行唯一标识")
+        seen: set[tuple[str, str]] = set()
+        for check in self.process_checks:
+            if check.run_uid != self.run_uid or check.scenario_id != self.scenario_id:
+                raise ValueError("SIM节点核查不得跨情景或运行轮次")
+            key = (check.system_id, check.facility_id)
+            if key in seen:
+                raise ValueError("SIM节点重复核查快照不得覆盖")
+            seen.add(key)
+        return self
 
 
 class ChatBody(BaseModel):

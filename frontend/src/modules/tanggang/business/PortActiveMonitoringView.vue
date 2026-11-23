@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import {computed,ref,watch} from 'vue'
-import {useRouter} from 'vue-router'
+import {useRoute,useRouter} from 'vue-router'
 import {ElMessage} from 'element-plus'
 import {useScenarioStore} from '../simulation/store'
 import type {MonitorRuleEvidence} from '../simulation/monitorEvidence'
 import PublishedBoards from './PublishedBoards.vue'
+import {simNodeOrigin,simNodeReturnPath} from './processReviewNavigation'
 import './business.css'
 import './scenario-pages.css'
 
-const router=useRouter(),store=useScenarioStore()
+const router=useRouter(),route=useRoute(),store=useScenarioStore()
+const linkedNode=computed(()=>simNodeOrigin(route.query,store.processChecks,store.runUid))
 const current=computed(()=>store.monitorEvidence)
 const impact=computed(()=>store.impactAnalysis)
 const expanded=ref<string[]>([])
@@ -91,6 +93,17 @@ function exportEvidence(){
         <el-button plain @click="router.push('/alarm/realtime')">告警中心</el-button>
       </div>
     </div>
+
+    <section v-if="linkedNode" class="tg-biz-card art-card tg-monitor-node-origin"
+      data-testid="monitor-node-origin">
+      <div>
+        <strong>来自工艺节点的SIM核查：{{linkedNode.facility_name}}</strong>
+        <p>{{linkedNode.note}}</p>
+        <small>仅当前模拟轮次 · 不是正式故障记录</small>
+      </div>
+      <el-button plain size="small"
+        @click="router.push(simNodeReturnPath(linkedNode))">返回原工艺节点</el-button>
+    </section>
 
     <PublishedBoards target="/port/operations/monitor" />
     <div v-if="!current" class="tg-analysis-empty">
@@ -258,6 +271,12 @@ function exportEvidence(){
 
 <style scoped>
 /* Use the existing 5190 business tokens/components; no standalone dashboard skin. */
+.tg-monitor-node-origin{display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:8px 20px;margin-bottom:14px}
+.tg-monitor-node-origin strong{font-size:12px;font-weight:650;color:#365d75}
+.tg-monitor-node-origin p{font-size:12px;color:#6c8899;margin:6px 0}
+.tg-monitor-node-origin small{font-size:11px;color:#8aa0ad}
+
 .tg-monitor-page{min-width:0}
 .tg-monitor-status{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}
 .tg-monitor-overline{display:block;font-size:11px;color:var(--art-gray-500,#8297a6);margin-bottom:7px}

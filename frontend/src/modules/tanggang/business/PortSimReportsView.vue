@@ -154,6 +154,39 @@ onMounted(refresh)
               </el-descriptions-item>
               <el-descriptions-item label="生产处置">未执行</el-descriptions-item>
             </el-descriptions>
+            <div v-if="report.process_checks?.length" class="tg-replay-evidence"
+              data-testid="report-process-checks">
+              <div class="tg-biz-card-head">
+                <h2>工艺节点模拟核查（报告生成时）</h2>
+                <span class="tg-mini-note">
+                  {{report.process_checks.length}}项 · 无正式告警/工单
+                </span>
+              </div>
+              <el-table :data="report.process_checks" size="small" stripe>
+                <el-table-column prop="facility_name" label="设计设施" min-width="140"/>
+                <el-table-column label="模拟状态" min-width="92">
+                  <template #default="{row}">
+                    {{row.state==='fault'?'SIM异常':
+                      row.state==='attention'?'SIM关注':'模拟正常'}}
+                  </template>
+                </el-table-column>
+                <el-table-column prop="note" label="人工核查意见" min-width="185"
+                  show-overflow-tooltip/>
+                <el-table-column label="操作" width="96">
+                  <template #default="{row}">
+                    <el-button link type="primary" size="small"
+                      @click="router.push({
+                        path:'/port/process/'+row.system_id,
+                        query:{facility:row.facility_id},
+                      })">查看设施</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <p class="tg-mini-note">
+                以上记录是当次浏览器SIM快照中的人工演示意见，
+                不是现场巡检、维修验收或正式生产事件。
+              </p>
+            </div>
             <div v-if="report.sim_evidence" class="tg-replay-evidence">
               <div class="tg-biz-card-head">
                 <h2>资料核查状态（报告生成时）</h2>

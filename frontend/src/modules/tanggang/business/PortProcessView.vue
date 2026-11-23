@@ -10,7 +10,8 @@ import {usePermissions} from '@/utils/permissions'
 import {
   fetchTanggangObjectLinks,type TanggangObjectLink,type TanggangSystemId,
 } from '@/api/tanggang'
-import {useScenarioStore} from '../simulation/store'
+import {useScenarioStore,type SimProcessSystem} from '../simulation/store'
+import {ElMessage} from 'element-plus'
 import './business.css'
 import './scenario-pages.css'
 
@@ -37,6 +38,17 @@ const selectedId=computed(()=>{
 const selectedDevice=computed(()=>unique.value.find(d=>d.id===selectedId.value)||null)
 const detailPanel=ref<HTMLElement|null>(null)
 const selectedMock=computed(()=>selectedId.value?mockByFacility.value.get(selectedId.value):null)
+const nodeNote=ref('')
+const nodeReviewError=ref('')
+const selectedCheck=computed(()=>sim.processChecks.find(x=>
+  x.system_id===sysId.value&&x.facility_id===selectedId.value&&
+  x.run_uid===sim.runUid)||null)
+const currentSystemChecks=computed(()=>sim.processChecks.filter(x=>
+  x.system_id===sysId.value&&x.run_uid===sim.runUid))
+const monitorRelevant=computed(()=>
+  sysId.value==='middle'&&['EQ-P-MID','EQ-P-METER'].includes(selectedId.value||''))
+const canViewAlarms=computed(()=>hasPerm('alarm:realtime'))
+const canViewRepairs=computed(()=>hasPerm('repair:list'))
 const objectLinks=ref<TanggangObjectLink[]>([])
 const linkError=ref('')
 const bindingOpen=ref(false)
@@ -98,6 +110,44 @@ async function loadObjectLinks(id:string){
   }
 }
 watch(sysId,id=>{void loadObjectLinks(id)},{immediate:true})
+watch(()=>[selectedId.value,sim.runUid],()=>{
+  nodeNote.value=selectedCheck.value?.note||''
+  nodeReviewError.value=''
+})
+function recordNodeCheck(){
+  const device=selectedDevice.value
+  const mock=selectedMock.value
+  if(!device||!mock)return
+  nodeReviewError.value=''
+  try{
+    sim.recordProcessCheck({
+      systemId:sysId.value as SimProcessSystem,
+      facilityId:device.id,
+      facilityName:device.name,
+      state:mock.state,
+      note:nodeNote.value,
+    })
+    ElMessage.success('本轮SIM节点核查意见已记录；未产生正式告警或工单')
+  }catch(e){
+    nodeReviewError.value=e instanceof Error?e.message:'模拟核查记录失败'
+  }
+}
+function nodeSourceQuery(){
+  const check=selectedCheck.value
+  return check?{
+    from_system:check.system_id,
+    from_facility:check.facility_id,
+    run_uid:check.run_uid,
+  }:{}
+}
+function openSimMonitor(){
+  if(!sim.running){sim.openConsole();return}
+  void router.push({path:'/port/operations/monitor',query:nodeSourceQuery()})
+}
+function openSimDecision(){
+  if(!sim.running){sim.openConsole();return}
+  void router.push({path:'/port/operations/decision',query:nodeSourceQuery()})
+}
 onMounted(async()=>{
   try{catalog.value=await loadTanggangCatalog()}
   catch(e){error.value=e instanceof Error?e.message:String(e)}
@@ -190,6 +240,54 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
                 <el-button v-if="sysId==='middle'&&selectedDevice.id==='EQ-P-MID'"
                   size="small" plain @click="router.push('/port/operations/monitor')">查看模拟监护</el-button>
               </div>
+            </div>
+            <div class="tg-process-action" data-testid="process-node-actions">
+              <div class="tg-biz-card-head">
+                <h3>SIM节点核查与后续处置</h3>
+                <span class="tg-mini-note">仅浏览器当前情景</span>
+              </div>
+              <div class="tg-process-stepbar">
+                <span>查看Mock状态</span><b>›</b><span>人工核查</span><b>›</b>
+                <span>规则研判</span><b>›</b><span>模拟复盘</span>
+              </div>
+              <p v-if="!sim.running" class="tg-mini-note">
+                当前为静态Mock基线。启动统一情景后可登记本轮模拟核查意见。
+              </p>
+              <template v-else>
+                <el-input v-model="nodeNote" type="textarea" :rows="3"
+                  maxlength="600" show-word-limit
+                  placeholder="填写设备现象、模拟读数、建议排查动作（不少于8字）；不会创建正式工单"
+                  data-testid="process-node-note"/>
+                <p v-if="nodeReviewError" class="tg-process-inline-error" role="alert">{{nodeReviewError}}</p>
+                <el-button type="primary" plain size="small"
+                  :disabled="nodeNote.trim().length<8"
+                  data-testid="process-record-check" @click="recordNodeCheck">
+                  {{selectedCheck?'更新本轮SIM核查':'记录本轮SIM核查'}}
+                </el-button>
+                <div v-if="selectedCheck" class="tg-process-check-record">
+                  <strong>已记录模拟核查</strong>
+                  <span>{{selectedCheck.note}}</span>
+                  <small>本轮{{currentSystemChecks.length}}个节点已留痕 · 现场未核实</small>
+                </div>
+              </template>
+              <div class="tg-biz-actions tg-process-action-links">
+                <el-button size="small" plain
+                  @click="openSimMonitor">{{monitorRelevant?'查看中压泵SIM监护':'查看模拟监护总览'}}</el-button>
+                <el-button size="small" plain
+                  @click="openSimDecision">模拟处置研判</el-button>
+                <el-button size="small" plain
+                  @click="router.push(nextPath)">{{nextLabel}}</el-button>
+              </div>
+              <div class="tg-biz-actions tg-process-formal-links">
+                <el-button v-if="canViewAlarms" size="small" link
+                  @click="router.push('/alarm/realtime')">查看正式告警中心</el-button>
+                <el-button v-if="canViewRepairs" size="small" link
+                  @click="router.push('/repair/list')">查看正式维修工单</el-button>
+              </div>
+              <p class="tg-mini-note">
+                SIM设备异常不等于正式告警；这里只能查看正式模块，
+                不会为该节点自动创建、关联或关闭任何生产事件。
+              </p>
             </div>
             <div class="tg-process-fields">
               <h3>设计建议测点</h3>
@@ -285,6 +383,18 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
 .tg-process-reading-row strong{font-variant-numeric:tabular-nums;font-weight:640;color:#386984}
 .tg-process-reading-row small{font-size:10px;color:#aa803e;white-space:nowrap}
 .tg-process-mock .tg-mini-note{margin:0!important}
+.tg-process-action{display:grid;gap:10px;padding:12px 0;border-bottom:1px solid #e7eff4}
+.tg-process-action h3{font-size:13px;font-weight:660;color:#365c73;margin:0}
+.tg-process-action .tg-biz-card-head{margin:0}
+.tg-process-stepbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+  font-size:11px;color:#7892a1}
+.tg-process-stepbar b{font-weight:500;color:#abc0cc}
+.tg-process-action-links,.tg-process-formal-links{flex-wrap:wrap}
+.tg-process-check-record{padding:10px 11px;border:1px solid #dce9ef;
+  border-radius:6px;background:rgba(241,248,251,.7);display:grid;gap:5px;
+  font-size:12px;line-height:1.6;color:#547a90}
+.tg-process-check-record strong{font-weight:640;color:#386883}
+.tg-process-check-record small{font-size:11px;color:#839ba9}
 .tg-process-fields h3,.tg-process-bindings h3{font-size:13px;font-weight:660;
   color:#365c73;margin:0 0 11px}
 .tg-process-field-items{display:flex;flex-wrap:wrap;gap:7px}

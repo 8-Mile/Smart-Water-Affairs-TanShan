@@ -148,7 +148,14 @@ def create_app() -> FastAPI:
     ):
         return JSONResponse(
             status_code=422,
-            content=fail(message="参数校验失败", code=422, data=exc.errors()),
+            # Pydantic model validators may include a ValueError instance in
+            # errors()[].ctx; JSONResponse cannot serialize that object.
+            # The plain-text "msg" already carries the rejection reason.
+            content=fail(
+                message="参数校验失败", code=422,
+                data=[{k: v for k, v in error.items() if k != "ctx"}
+                      for error in exc.errors()],
+            ),
         )
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
