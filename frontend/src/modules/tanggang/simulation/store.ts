@@ -5,7 +5,12 @@ import { compareSupplyPlans } from './supplyPlans'
 import {assessSimMonitor} from './monitorEvidence'
 import {analyzeSimOperationalImpact} from './impactAnalysis'
 import {AUTO_FEED_VERSION,autoScenarioAt} from './autoWaterFeed'
+import {
+  makeMockTelemetryFrame,assessTelemetryFrame,
+  type TelemetryFrame,type FrameAssessment,
+} from './telemetryContract'
 import {calculateWaterEconomics,calculateProcessImpacts} from './waterOperations'
+import {asSimulatedEvents} from './operationsEventReadModel'
 import {
   emptyCaseState,evaluateOperatingCases,acknowledgeOperatingCase,
   closeRecoveredOperatingCase,activeOperatingCases,
@@ -46,8 +51,23 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     eventCount:number;dataMode:'SIM';feedVersion:typeof AUTO_FEED_VERSION
   }
   const autoHistory=ref<AutoSample[]>([])
+  const autoTelemetryFrame=ref<TelemetryFrame|null>(null)
+  const telemetryAssessment=computed<FrameAssessment|null>(()=>
+    autoTelemetryFrame.value
+      ?assessTelemetryFrame(autoTelemetryFrame.value,new Date().toISOString()):null,
+  )
+  function prepareAutoTelemetry(scenario:ReturnType<typeof autoScenarioAt>,frame:number){
+    const at=new Date().toISOString()
+    const sample=makeMockTelemetryFrame(scenario,frame,at)
+    const quality=assessTelemetryFrame(sample,at)
+    if(!quality.modelCanCalculate||quality.productionEligible){
+      throw Error('自动Mock数据质量校验失败，拒绝推进运行模型')
+    }
+    return sample
+  }
   const autoCaseState=ref(emptyCaseState())
   const operatingCases=computed(()=>autoCaseState.value.cases)
+  const simulatedEventViews=computed(()=>asSimulatedEvents(operatingCases.value))
   const activeCases=computed(()=>activeOperatingCases(autoCaseState.value))
   const newCaseCount=computed(()=>activeCases.value.filter(x=>x.status==='new').length)
   const pendingCaseCount=computed(()=>activeCases.value.length)
@@ -185,10 +205,12 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     if(running.value&&!autoEnabled.value)return
     if(autoEnabled.value)return
     const scenario=autoScenarioAt(0)
+    const telemetry=prepareAutoTelemetry(scenario,0)
     calculateScenario(scenario)
     compareSupplyPlans(scenario)
     activeId.value=scenario.id
     activeInputs.value=scenario.inputs
+    autoTelemetryFrame.value=telemetry
     autoFrame.value=0
     autoEnabled.value=true
     autoHistory.value=[]
@@ -204,11 +226,13 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     if(!autoEnabled.value)return
     const nextFrame=autoFrame.value+1
     const scenario=autoScenarioAt(nextFrame)
+    const telemetry=prepareAutoTelemetry(scenario,nextFrame)
     calculateScenario(scenario)
     compareSupplyPlans(scenario)
     const previous=activeId.value
     activeId.value=scenario.id
     activeInputs.value=scenario.inputs
+    autoTelemetryFrame.value=telemetry
     autoFrame.value=nextFrame
     if(previous!==scenario.id){
       runNumber.value+=1
@@ -245,6 +269,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     calculateScenario({...def,inputs:proposed})
     compareSupplyPlans({...def,inputs:proposed})
     autoEnabled.value=false
+    autoTelemetryFrame.value=null
     activeInputs.value=proposed
     activeId.value=id
     runNumber.value+=1
@@ -265,6 +290,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     processChecks.value=[]
     autoCaseState.value=emptyCaseState()
     autoHistory.value=[]
+    autoTelemetryFrame.value=null
     autoLastUpdated.value=''
     startedAt.value=''
     runUid.value=''
@@ -278,8 +304,9 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     effectiveScenario,result,supplyPlans,impactAnalysis,monitorEvidence,monitorReview,
     processChecks,recordProcessCheck,beginMonitorReview,recordMonitorReview,
     running,start,stop,startAuto,advanceAuto,autoEnabled,autoFrame,
-    autoHistory,autoLastUpdated,waterEconomics,processImpacts,
-    operatingCases,activeCases,newCaseCount,pendingCaseCount,
+    autoHistory,autoLastUpdated,autoTelemetryFrame,telemetryAssessment,
+    waterEconomics,processImpacts,
+    operatingCases,simulatedEventViews,activeCases,newCaseCount,pendingCaseCount,
     acknowledgeCase,closeRecoveredCase,
     openConsole,closeConsole}
 })

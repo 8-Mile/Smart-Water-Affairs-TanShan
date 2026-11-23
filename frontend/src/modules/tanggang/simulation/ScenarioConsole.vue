@@ -9,7 +9,8 @@ const router=useRouter()
 const route=useRoute()
 // Daily monitoring and six process views already auto-run; do not place
 // a manual simulation launcher over the production-style workspace.
-const showLauncher=computed(()=>route.path!=='/port/water/supply'&&
+const showLauncher=computed(()=>
+  route.path!=='/port/water/supply'&&route.path!=='/port/water/rain-risk'&&
   !route.path.startsWith('/port/process/'))
 const store=useScenarioStore()
 let feedTimer:ReturnType<typeof setInterval>|null=null

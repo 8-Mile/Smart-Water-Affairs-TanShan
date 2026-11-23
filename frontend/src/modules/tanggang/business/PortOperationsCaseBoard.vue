@@ -6,9 +6,10 @@ import {ElMessage} from 'element-plus'
 import {useScenarioStore} from '../simulation/store'
 import {processName} from '../simulation/waterOperations'
 import type {OperatingCase} from '../simulation/operationsCases'
+import type {ProcessId} from '../simulation/waterOperations'
 import {RECOVERY_CONFIRM_FRAMES} from '../simulation/operationsCases'
 
-const props=withDefaults(defineProps<{mode?:'compact'|'full'}>(),{mode:'compact'})
+const props=withDefaults(defineProps<{mode?:'compact'|'full';sourceSystemId?:ProcessId}>(),{mode:'compact'})
 const store=useScenarioStore()
 const route=useRoute(),router=useRouter()
 const picked=ref('')
@@ -16,15 +17,16 @@ const note=ref('')
 const error=ref('')
 const showClosed=ref(false)
 const visibleCases=computed(()=>store.operatingCases.filter(x=>
-  showClosed.value||x.status!=='closed',
+  (!props.sourceSystemId||x.sourceProcess===props.sourceSystemId)&&
+  (showClosed.value||x.status!=='closed'),
 ).slice(-16).reverse())
 const selected=computed<OperatingCase|null>(()=>
-  store.operatingCases.find(x=>x.id===picked.value)||null)
-watch(()=>store.operatingCases.map(c=>c.id).join('|'),()=>{
+  visibleCases.value.find(x=>x.id===picked.value)||null)
+watch(()=>visibleCases.value.map(c=>c.id).join('|'),()=>{
   if(selected.value)return
   const requested=route.query.case
-  picked.value=typeof requested==='string'&&store.operatingCases.some(c=>c.id===requested)
-    ?requested:store.activeCases[store.activeCases.length-1]?.id||''
+  picked.value=typeof requested==='string'&&visibleCases.value.some(c=>c.id===requested)
+    ?requested:visibleCases.value[0]?.id||''
 },{immediate:true})
 watch(picked,()=>{note.value='';error.value=''})
 function pick(id:string){picked.value=id}
@@ -62,8 +64,10 @@ const actionEnabled=computed(()=>(canResolve.value||canAcknowledge.value)&&note.
   <section class="tg-caseboard" :class="mode" data-testid="sim-case-board">
     <header class="tg-caseboard-head">
       <div><h3>自动事件</h3>
-        <span v-if="store.pendingCaseCount" class="tg-caseboard-count"
-          data-testid="sim-case-count">{{store.pendingCaseCount}} 条待处理</span>
+        <span v-if="props.sourceSystemId?store.activeCases.some(x=>x.sourceProcess===props.sourceSystemId):store.pendingCaseCount" class="tg-caseboard-count"
+          data-testid="sim-case-count">{{props.sourceSystemId?
+            store.activeCases.filter(x=>x.sourceProcess===props.sourceSystemId).length:
+            store.pendingCaseCount}} 条待处理</span>
         <span v-else class="tg-caseboard-count">当前无待处理事件</span>
       </div>
       <el-button link size="small" :disabled="!store.operatingCases.length"

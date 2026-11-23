@@ -105,5 +105,12 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
 </style>
 
 <style scoped>
-.tg-analysis-page>.tg-biz-head{justify-content:flex-end;min-height:0}
+.tg-analysis-page>.tg-biz-head{
+  display:flex;align-items:center;justify-content:flex-end;
+  min-height:44px;flex:0 0 auto;height:auto;margin-bottom:14px;
+}
+.tg-analysis-page>.tg-biz-head .tg-biz-actions{position:relative;
+  display:flex;justify-content:flex-end;align-items:center;gap:10px;
+  flex-wrap:wrap}
+
 </style>
