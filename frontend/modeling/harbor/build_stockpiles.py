@@ -20,7 +20,7 @@ SCENE = os.path.join(ROOT, 'public/tanggang/cad/l1-v2_2/scene-v2.2.json')
 SPATIAL = os.path.join(ROOT, 'public/tanggang/cad/l1-v2_6/spatial-candidates-v2.6.json')
 OUT = os.path.join(ROOT, 'public/tanggang/models/harbor/stockpiles-16.glb')
 
-NU, NV = 44, 120
+NU, NV = 56, 150
 SPLIT_GAP = 4.2
 KINDS = ['coal', 'brown', 'grey']
 
@@ -39,43 +39,59 @@ def hash01(a, b, seed):
 
 def build_mesh(name, left, right, length, height, seed, kind):
     verts, faces, colors = [], [], []
-    crest, shoulder = 0.24, 0.09
+    # 平顶 + 窄折肩 + 直坡脚：真实平堆的断面，而不是两端浑圆的“香肠”。
+    crest, shoulder = 0.30, 0.06
     for j in range(NV + 1):
         t = j / NV
         z = (t - 0.5) * length
-        end_f = min(1.0, min(t, 1 - t) * length / 9.0)
-        # 每堆 2–4 个锥峰：峰数与峰位随 seed 变化，避免 16 堆都长成同样的三峰长条。
-        peak = 0.42
+        end_f = min(1.0, min(t, 1 - t) * length / 8.0)
+        # 每堆 2–4 个缓峰：只让堆脊沿长度轻微起伏，峰高差收窄到 7%，避免鼓包。
+        peak = 0.50
         n_peaks = 2 + int(hash01(seed, 7, 3) * 3)
         for k in range(n_peaks):
-            centre = (k + 0.5) / n_peaks + (hash01(k, seed, 1) - 0.5) * 0.10
-            amp = 0.80 + 0.20 * hash01(k, seed, 2)
-            width = 0.13 + 0.03 * hash01(k, seed, 4)
+            centre = (k + 0.5) / n_peaks + (hash01(k, seed, 1) - 0.5) * 0.08
+            amp = 0.93 + 0.07 * hash01(k, seed, 2)
+            width = 0.16 + 0.05 * hash01(k, seed, 4)
             peak = max(peak, math.exp(-((t - centre) / width) ** 2) * amp)
+        # 坡脚滑落的外扩量沿长度低频变化，让堆脚不再是笔直的边线。
+        toe = 0.5 + 0.35 * math.sin(z * 0.55 + seed * 1.7)
+        toe += 0.25 * math.sin(z * 1.21 - seed * 0.9)
+        toe = max(0.0, min(1.0, toe + 0.18))
         for i in range(NU + 1):
             u = i / NU * 2 - 1
             d = abs(u)
             if d <= crest:
                 face = 1.0
             elif d <= crest + shoulder:
-                face = 1.0 - (d - crest) / shoulder * 0.06
+                face = 1.0 - (d - crest) / shoulder * 0.04
             else:
                 slope = (d - crest - shoulder) / (1.0 - crest - shoulder)
-                face = 0.94 * (1.0 - slope) ** 1.15
+                # 直坡面（接近自然安息角），不再用大弧度把侧面吹成圆鼓。
+                face = 0.96 * (1.0 - slope) ** 1.02
             # 逐顶点随机高度会让法线逐点跳动，远景读成“迷宫/鱼鳞”亮暗斑。
             # 坡面起伏改由下面连续的低频 bump 承担，法线保持平滑。
             rough = 0.0
-            x = u * (left if u < 0 else right) * (0.74 + 0.26 * abs(math.sin(t * math.pi * 3.0 + seed * 0.9)))
+            x0 = u * (left if u < 0 else right)
+            # 只在坡面下部向外摊开 3.5%，形成不规则的滑落脚/积煤边。
+            flare = 1.0
+            if d > crest + shoulder:
+                flare = 1.0 + 0.035 * ((1.0 - face) ** 2) * toe
+            x = x0 * flare
             # 多尺度起伏：只留低频，避免坡面出现规则波纹。
-            bump = (0.16 * math.sin(x * 0.42 + z * 0.23 + seed)
-                    + 0.05 * math.sin(x * 1.10 - z * 0.63 + seed * 2.7))
+            bump = (0.10 * math.sin(x * 0.42 + z * 0.23 + seed)
+                    + 0.035 * math.sin(x * 1.05 - z * 0.61 + seed * 2.7))
             y = 0.02 + height * end_f * max(0.0, face) * peak + rough * height + bump * end_f * max(0.0, face)
             verts.append((x, z, max(0.02, y)))
             # 低频明暗斑块（约 5 单位尺度），去掉逐顶点 grain，避免混叠亮线。
             shade = 0.90 + 0.10 * hash01(math.floor(x * 0.18), math.floor(z * 0.18), seed)
+            # 顺坡向的滑落痕：低频竖向条带，越靠坡脚越明显，读作推土/塌落纹理。
+            scar = 0.0
+            if d > crest:
+                scar = 0.06 * (0.5 + 0.5 * math.sin(x * 2.6 + z * 0.17 + seed * 3.1)) * (1.0 - face)
+                scar += 0.03 * (0.5 + 0.5 * math.sin(x * 5.3 - z * 0.31 + seed * 1.7)) * (1.0 - face)
             # 顶面浮灰明显亮、坡脚压暗：把“长条平面”读成有厚度的锥形堆体。
-            channel = shade * (0.50 + 0.58 * max(0.0, face))
-            colors.append(min(1.0, channel))
+            channel = shade * (0.50 + 0.55 * max(0.0, face)) - scar
+            colors.append(max(0.06, min(1.0, channel)))
     for j in range(NV):
         for i in range(NU):
             a = j * (NU + 1) + i

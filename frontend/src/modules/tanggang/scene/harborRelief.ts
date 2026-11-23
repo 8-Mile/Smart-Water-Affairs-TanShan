@@ -121,7 +121,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const wall=palette('#eef2ef',.62,.04), roof=palette('#8f948e',.66,.10), steel=palette('#677e86',.5,.42)
   const accent=palette('#cf7628',.52,.3), pool=palette('#2c8fa9',.16,.18), coping=palette('#dbe6e1',.7,.05)
   pool.emissive=new T.Color('#124a5c');pool.emissiveIntensity=.5
-  const poolRim=palette('#cfd8d4',.62,.05), poolInner=palette('#35606a',.86,.05)
+  // 池沿压顶：比早期浅绿灰压暗一档，远景不再是一片发白的池框。
+  const poolRim=palette('#b2bfba',.74,.04), poolInner=palette('#35606a',.86,.05)
   const glint=palette('#dcf4f2',.3)
   // 海面：多方向重力波的解析法线 + Fresnel 天空反射 + 太阳高光/闪点。
   // 不再依赖可平铺法线贴图，避免近景重复纹理与远景整片镜面。
@@ -298,12 +299,15 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         color += uSunColor * glitter * (0.8 + sparkleMask) * 1.6 * nearFine;
         color *= 1.0 + .40 * dot(ripples, vec2(.82,.57));
         // 近岸：白沫带 + 湿痕 + 细碎风浪白点，避免水岸交界是一条硬边。
-        float lap = .09 + .10 * sin(dot(p,vec2(1.5,.7)) + .6*uTime);
-        float fringe = 1.0-smoothstep(.03,.24+footprint,abs(shore-lap));
-        vec3 foamColor = vec3(.83,.89,.90);
-        color = mix(color, foamColor, fringe*.72);
-        float foamLine = 1.0-smoothstep(0.0,.06+footprint,abs(shore-lap-1.05));
-        color = mix(color, foamColor, foamLine*.42);
+        float lap = .10 + .12 * sin(dot(p,vec2(1.5,.7)) + .6*uTime);
+        float fringe = 1.0-smoothstep(.03,.34+footprint,abs(shore-lap));
+        vec3 foamColor = vec3(.88,.93,.94);
+        color = mix(color, foamColor, fringe*.92);
+        float foamLine = 1.0-smoothstep(0.0,.10+footprint,abs(shore-lap-1.05));
+        color = mix(color, foamColor, foamLine*.62);
+        // 贴岸湿白的水膜：向海侧铺开数米，避免白沫只是一条细线。
+        float wash = 1.0-smoothstep(0.0,3.2+footprint,max(shore,0.0));
+        color = mix(color, foamColor, wash*.16);
         float chop = smoothstep(.55,.95,length(ripples));
         color = mix(color, vec3(.72,.80,.82), chop*.10*nearFine);
         color += uSkyHorizon * 0.04;
@@ -326,11 +330,12 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const galleryBody=palette('#b7c2c7',.62,.14)
   const forestFloor=palette('#2c4524',.99,0)
   // L1 池体示意材质：浅色池沿、暗内壁、下沉水面；不是实测池壁构造。
-  const basinWall=palette('#ccd7d2',.74,.03)
+  const basinWall=palette('#b7c2bd',.82,.02)
   const basinInner=palette('#2b4149',.9,.03)
-  const basinWater=palette('#0b3d4a',.32,.04)
-  basinWater.envMapIntensity=.15
-  basinWater.emissive=new T.Color('#061f27');basinWater.emissiveIntensity=.15
+  // 设计图的集水池是青绿色水面，不是近黑的墨蓝；保留一点自发光避免俯视发死。
+  const basinWater=palette('#15707f',.28,.04)
+  basinWater.envMapIntensity=.22
+  basinWater.emissive=new T.Color('#0a3f49');basinWater.emissiveIntensity=.22
   const walkway=palette('#c3cbc4',.93,0)
   const grating=palette('#8b9999',.52,.56)
   const glazing=palette('#5d90a7',.30,.20)
@@ -385,7 +390,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     // 煤/褐矿/灰矿：深色基色 + 顶点色明暗，完全不挂任何平铺贴图。
     // 之前照片色图和法线在 150 单位外会重复成“鱼鳞/瓦楞”纹，是“一看就是贴图”的主因。
     // 现在只靠 Blender 烘焙的顶点色（顶亮坡暗 + 颗粒）和几何本身表现体积。
-    const tint={coal:'#3c434a',brown:'#6f5940',grey:'#7c8285'}[kind]
+    const tint={coal:'#343b42',brown:'#5d4a35',grey:'#6b7275'}[kind]
     const m=new T.MeshStandardMaterial({color:tint,roughness:1,metalness:.02,vertexColors:true})
     m.envMapIntensity=.5
     materials.push(m)
@@ -528,11 +533,11 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     add(new T.BoxGeometry(w,wallH,tw).translate(x,y0+wallH/2,-(z+d/2-tw/2)),basinWall)
     add(new T.BoxGeometry(tw,wallH,d-2*tw).translate(x-w/2+tw/2,y0+wallH/2,-z),basinWall)
     add(new T.BoxGeometry(tw,wallH,d-2*tw).translate(x+w/2-tw/2,y0+wallH/2,-z),basinWall)
-    // 浅色压顶，比池壁略宽，远景能读出池沿
-    add(new T.BoxGeometry(w+.24,.05,tw+.14).translate(x,y0+wallH+.025,-(z-d/2+tw/2)),poolRim)
-    add(new T.BoxGeometry(w+.24,.05,tw+.14).translate(x,y0+wallH+.025,-(z+d/2-tw/2)),poolRim)
-    add(new T.BoxGeometry(tw+.14,.05,d-2*tw+.24).translate(x-w/2+tw/2,y0+wallH+.025,-z),poolRim)
-    add(new T.BoxGeometry(tw+.14,.05,d-2*tw+.24).translate(x+w/2-tw/2,y0+wallH+.025,-z),poolRim)
+    // 压顶只比池壁外挑一点，避免俯视时浅色池沿占掉大半池面
+    add(new T.BoxGeometry(w+.16,.05,tw+.10).translate(x,y0+wallH+.025,-(z-d/2+tw/2)),poolRim)
+    add(new T.BoxGeometry(w+.16,.05,tw+.10).translate(x,y0+wallH+.025,-(z+d/2-tw/2)),poolRim)
+    add(new T.BoxGeometry(tw+.10,.05,d-2*tw+.16).translate(x-w/2+tw/2,y0+wallH+.025,-z),poolRim)
+    add(new T.BoxGeometry(tw+.10,.05,d-2*tw+.16).translate(x+w/2-tw/2,y0+wallH+.025,-z),poolRim)
     // 暗内壁：水面以上的窄带，明确“池沿高于水面”
     add(new T.BoxGeometry(w-2*tw-.02,.09,.025).translate(x,y0+wallH-.05,-(z-d/2+tw+.012)),basinInner)
     add(new T.BoxGeometry(w-2*tw-.02,.09,.025).translate(x,y0+wallH-.05,-(z+d/2-tw-.012)),basinInner)
@@ -1421,10 +1426,38 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const stockpileResources=new Set<T.Material|T.BufferGeometry>()
   const pileContact=new T.MeshBasicMaterial({color:'#0b0e11',transparent:true,opacity:.34,depthWrite:false})
   materials.push(pileContact)
+  // 程序化堆面：世界坐标值噪声同时调色与粗糙度，做出湿煤/干灰斑块，
+  // 不使用任何平铺贴图，远景不会重复成瓦楞或鱼鳞。
+  const applyPileSurface=(m:T.MeshStandardMaterial,seed:number)=>{
+    m.onBeforeCompile=(shader)=>{
+      shader.uniforms.uPileSeed={value:seed}
+      shader.vertexShader=shader.vertexShader
+        .replace('#include <common>','#include <common>\nvarying vec3 vPileWorld;')
+        .replace('#include <begin_vertex>','#include <begin_vertex>\nvPileWorld=(modelMatrix*vec4(transformed,1.0)).xyz;')
+      shader.fragmentShader=shader.fragmentShader
+        .replace('#include <common>',`#include <common>
+varying vec3 vPileWorld;
+uniform float uPileSeed;
+float pileHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}
+float pileNoise(vec2 p){
+  vec2 i=floor(p),f=fract(p),u=f*f*(3.0-2.0*f);
+  return mix(mix(pileHash(i),pileHash(i+vec2(1.0,0.0)),u.x),
+             mix(pileHash(i+vec2(0.0,1.0)),pileHash(i+vec2(1.0,1.0)),u.x),u.y);
+}`)
+        .replace('#include <color_fragment>',`#include <color_fragment>
+float pileMott=pileNoise(vPileWorld.xz*.55+uPileSeed)*.65
+             +pileNoise(vPileWorld.xz*1.9+uPileSeed*2.3)*.35;
+diffuseColor.rgb*=0.72+0.44*pileMott;`)
+        .replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+float pileWet=pileNoise(vPileWorld.xz*.33+uPileSeed*.7);
+roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
+    }
+    m.needsUpdate=true
+  }
   // 16 堆精细资产：Blender 按 CAD 平面生成多峰堆体，几何与顶点色随 GLB 载入；
   // 材质仍复用前端三套 PBR，保证颜色与贴图统一。
   async function loadStockpiles(){
-    const gltf=await new GLTFLoader().loadAsync(import.meta.env.BASE_URL+'tanggang/models/harbor/stockpiles-16.glb?v=15')
+    const gltf=await new GLTFLoader().loadAsync(import.meta.env.BASE_URL+'tanggang/models/harbor/stockpiles-16.glb?v=17')
     if(disposed)return false
     const model=gltf.scene
     const shadows:T.Mesh[]=[]
@@ -1439,6 +1472,14 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       for(const ch of anchorId)h=(h*31+ch.charCodeAt(0))>>>0
       const tinted=base.clone()
       tinted.color=base.color.clone().multiplyScalar(.72+.46*(h%100)/100)
+      // 湿煤与干矿的反射差异：按锚点做确定性粗糙度分布，煤堆更湿更亮，
+      // 灰矿偏干偏哑，避免 16 堆共用同一层高光，远景读成塑料模型。
+      const wet=(h%97)/96
+      const baseRough=kind==='coal'?.56:kind==='brown'?.74:.84
+      tinted.roughness=Math.min(1,baseRough+.18*wet)
+      tinted.metalness=kind==='coal'?.03+.04*wet:.01+.02*wet
+      tinted.envMapIntensity=.38+.22*wet
+      applyPileSurface(tinted,(h%1000)/17)
       materials.push(tinted)
       part.material=tinted
       // Blender 导出的法线在共享顶点上不连续，远景会读成迷宫状亮暗斑；
@@ -1853,9 +1894,11 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   // 码头前沿：护舷与系缆桩，补设计图的岸线细节。
   const buildDockEdge=()=>{
     const fender=palette('#2b3033',.8,.08), bollard=palette('#79848a',.55,.35)
-    for(let x=-45;x<=41;x+=8.5){
-      add(new T.BoxGeometry(.95,1.15,.5).translate(x,.52,-50.55),fender)
-      add(new T.CylinderGeometry(.22,.26,.9,10).translate(x+4.2,.4,-50.05),bollard)
+    // 默认机位距码头约 150 单位，护舷与系缆桩按真实比例会被缩成几个像素；
+    // 适当放大并加密，让远景能读出岸线设施，而不是一条空白混凝土边。
+    for(let x=-45;x<=41;x+=7.2){
+      add(new T.BoxGeometry(1.30,1.50,.62).translate(x,.66,-50.55),fender)
+      add(new T.CylinderGeometry(.30,.34,1.05,10).translate(x+3.6,.48,-50.05),bollard)
     }
   }
   buildDockEdge()

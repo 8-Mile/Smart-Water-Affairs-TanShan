@@ -1688,8 +1688,8 @@ function setup() {
     // 上半球：天顶深蓝 → 中层天蓝 → 地平线暖白薄雾；地平线严格落在等距柱状图的 H/2。
     const grad=ctx.createLinearGradient(0,0,0,hz)
     grad.addColorStop(0,'#1e5f9e');grad.addColorStop(.45,'#4e93c8')
-    grad.addColorStop(.80,'#9cc4da');grad.addColorStop(.90,'#a8c9dc')
-    grad.addColorStop(.985,'#cbdde3');grad.addColorStop(1,'#dde9e9')
+    grad.addColorStop(.80,'#8ebbd7');grad.addColorStop(.90,'#9dc2d9')
+    grad.addColorStop(.985,'#c4d8e0');grad.addColorStop(1,'#d6e5e7')
     ctx.fillStyle=grad;ctx.fillRect(0,0,W,hz)
     // 下半球：海雾与海面反照，参与 IBL，避免天空球下半部纯白。
     const seaGrad=ctx.createLinearGradient(0,hz,0,H)
@@ -1702,26 +1702,42 @@ function setup() {
     halo.addColorStop(.32,'rgba(255,240,206,.30)');halo.addColorStop(1,'rgba(255,236,206,0)')
     ctx.fillStyle=halo;ctx.beginPath();ctx.arc(sunX,sunY,300,0,Math.PI*2);ctx.fill()
     ctx.fillStyle='rgba(255,254,246,.97)';ctx.beginPath();ctx.arc(sunX,sunY,34,0,Math.PI*2);ctx.fill()
-    // 层积云：上密下疏、横向拉长，避免上一版等距圆斑。
-    for(let i=0;i<34;i++){
-      const cx=((i*263+97)%W), cy=90+((i*127)%(hz-190))
-      const rx=150+(i*71)%320, ry=20+(i*37)%26
-      const alpha=.10+.16*((i*17)%5)/4
-      const cloud=ctx.createRadialGradient(cx,cy,0,cx,cy,rx)
-      cloud.addColorStop(0,`rgba(255,255,255,${alpha})`)
-      cloud.addColorStop(.45,`rgba(250,252,255,${alpha*.55})`)
-      cloud.addColorStop(1,'rgba(255,255,255,0)')
-      ctx.save();ctx.translate(cx,cy);ctx.scale(1,ry/rx);ctx.translate(-cx,-cy)
-      ctx.fillStyle=cloud;ctx.beginPath();ctx.arc(cx,cy,rx,0,Math.PI*2);ctx.fill();ctx.restore()
+    // 单团云：中心偏上受光发白，外圈带一点灰蓝，按椭圆压扁成横向云块。
+    const cloud=(cx:number,cy:number,rx:number,ry:number,alpha:number,tone=230)=>{
+      const g=ctx.createRadialGradient(cx,cy-ry*.55,0,cx,cy,rx)
+      g.addColorStop(0,`rgba(255,255,252,${alpha})`)
+      g.addColorStop(.45,`rgba(${tone+12},${tone+16},${tone+20},${alpha*.92})`)
+      g.addColorStop(.78,`rgba(${tone-16},${tone-10},${tone-4},${alpha*.55})`)
+      g.addColorStop(1,`rgba(${tone},${tone+4},${tone+8},0)`)
+      ctx.save();ctx.translate(cx,cy);ctx.scale(1,Math.max(.16,ry/rx));ctx.translate(-cx,-cy)
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,rx,0,Math.PI*2);ctx.fill();ctx.restore()
     }
-    // 地平线附近的远云带：默认机位只看到 0–4° 仰角，需要低空云才有层次。
-    for(let i=0;i<12;i++){
-      const cx=(i*181+40)%W, cy=hz-38-((i*29)%44), rx=210+(i*53)%300, ry=10+(i*7)%8
-      const cloud=ctx.createRadialGradient(cx,cy,0,cx,cy,rx)
-      cloud.addColorStop(0,'rgba(250,252,252,.50)');cloud.addColorStop(.45,'rgba(226,235,239,.26)')
-      cloud.addColorStop(1,'rgba(255,255,255,0)')
-      ctx.save();ctx.translate(cx,cy);ctx.scale(1,ry/rx);ctx.translate(-cx,-cy)
-      ctx.fillStyle=cloud;ctx.beginPath();ctx.arc(cx,cy,rx,0,Math.PI*2);ctx.fill();ctx.restore()
+    // 高空卷云：稀薄横条，只补天顶层次。
+    for(let i=0;i<14;i++){
+      const cx=((i*317+41)%W), cy=60+((i*167)%300)
+      cloud(cx,cy,120+(i*67)%240,9+(i*13)%10,.07+.05*((i*11)%4)/3,238)
+    }
+    // 中空积云：少量云团，团与团之间留出蓝天，避免连成一条白雾带。
+    for(let i=0;i<9;i++){
+      const cx=((i*233+150)%W), cy=hz-92+((i*53)%50)
+      const scale=.85+((i*29)%5)/7
+      for(let k=0;k<4;k++){
+        const ox=((k*47+i*31)%150-75)*scale
+        const oy=((k*23+i*13)%20-10)*scale
+        cloud(cx+ox,cy+oy,(42+((k*17+i*37)%40))*scale,(12+((k*5+i*11)%8))*scale,
+          .38+((k*13+i*7)%4)*.08,198)
+      }
+    }
+    // 低空积云带：画面 0–16° 仰角主要靠这一层读出“有云”，团心实、云底灰。
+    for(let i=0;i<8;i++){
+      const cx=((i*257+90)%W), cy=hz-26-((i*41)%46)
+      const scale=.9+((i*19)%5)/8
+      for(let k=0;k<3;k++){
+        const ox=((k*61+i*37)%140-70)*scale
+        const oy=((k*13+i*9)%14-7)*scale
+        cloud(cx+ox,cy+oy,(56+((k*11+i*29)%44))*scale,(10+((k*3+i*5)%6))*scale,
+          .52+((k*7+i*11)%3)*.08,186)
+      }
     }
     // 太阳方位的地平线暖雾，给近地平线一点方向感。
     const glow=ctx.createRadialGradient(sunX,hz,0,sunX,hz,720)
@@ -1731,7 +1747,7 @@ function setup() {
     ctx.fillStyle=glow;ctx.beginPath();ctx.arc(sunX,hz,720,0,Math.PI*2);ctx.fill();ctx.restore()
     // 地平线薄雾带：压住天空与海面的硬接缝。
     const haze=ctx.createLinearGradient(0,hz-46,0,hz+16)
-    haze.addColorStop(0,'rgba(236,243,240,0)');haze.addColorStop(.72,'rgba(236,243,240,.40)')
+    haze.addColorStop(0,'rgba(236,243,240,0)');haze.addColorStop(.72,'rgba(236,243,240,.28)')
     haze.addColorStop(1,'rgba(214,229,227,0)')
     ctx.fillStyle=haze;ctx.fillRect(0,hz-46,W,62)
   }
@@ -1749,17 +1765,16 @@ function setup() {
     environmentTextures.push(env.texture)
     pmrem.dispose()
   }catch{/* environment map is optional */}
-  // 晴天 HDR：设计图为淡蓝晴空，用 clear puresky 接管背景与 IBL。
+  // 晴天 HDR 只接管 IBL；背景保留 Canvas 天空，因为 clear puresky 没有云，
+  // 直接当背景会回到“只有灰蓝渐变”的死板天空。云层画在 Canvas 上更可控。
   new RGBELoader().load(import.meta.env.BASE_URL+'tanggang/environment/syferfontein_clear_puresky_2k.hdr',(hdr)=>{
     if(!active||!scene||!renderer)return
     hdr.mapping=THREE.EquirectangularReflectionMapping
     const pmrem=new THREE.PMREMGenerator(renderer)
     const env=pmrem.fromEquirectangular(hdr)
-    scene.background=hdr
     scene.environment=env.texture
     scene.backgroundRotation.set(0,THREE.MathUtils.degToRad(0),0)
     scene.environmentRotation.copy(scene.backgroundRotation)
-    scene.backgroundIntensity=1.0
     scene.environmentIntensity=.92
     environmentTextures.push(hdr,env.texture)
     hdrSky=hdr
