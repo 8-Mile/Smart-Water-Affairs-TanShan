@@ -7,12 +7,6 @@ import { landmarks, landmarksSource, lakeDisplayOffset } from './harborLandmarks
 import { buildHarborRelief } from './harborRelief'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
-import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js'
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
 
 /**
  * 与 5175 唐港首页集成用的受控接口：
@@ -427,8 +421,6 @@ let reflectionRT: THREE.WebGLRenderTarget | null = null
 let reflectionCamera: THREE.PerspectiveCamera | null = null
 let reflectionSignature = ''
 let reflectionFrames = 0
-let composer: EffectComposer | null = null
-let renderPass: RenderPass | null = null
 const _reflOrigin = new THREE.Vector3()
 const _reflCamPos = new THREE.Vector3()
 const _reflView = new THREE.Vector3()
@@ -1572,8 +1564,6 @@ function initWaterReflection(){
   reflectionCamera=new THREE.PerspectiveCamera(camera?.fov??34,camera?.aspect??1,camera?.near??.1,camera?.far??1500)
   relief.seaMaterial.uniforms.uReflection.value=reflectionRT.texture
   relief.seaMaterial.uniforms.uHasReflection.value=0
-  // 后处理管线在渲染目标里是线性空间；雾色需与陆域材质一致，避免海面过白。
-  if(composer)(relief.seaMaterial.uniforms.uFogColor.value as THREE.Color).set('#d5e5e5')
   reflectionSignature='';reflectionFrames=0
 }
 function resizeWaterReflection(){
@@ -1642,9 +1632,10 @@ function setup() {
   camera=new THREE.PerspectiveCamera(34,Math.max(el.clientWidth,1)/Math.max(el.clientHeight,1),.1,1500)
   camera.position.set(72,92,116)
   renderer=new THREE.WebGLRenderer({alpha:false,antialias:true,powerPreference:'default'})
-  // Bound WebGL framebuffer area on Retina/4K to avoid memory spikes.
+  // Bound WebGL framebuffer area on Retina/4K to avoid memory spikes，但不再额外压低
+  // 像素比：预算内的真实 DPR 才能让高分屏/大屏不发虚。
   const initialW=Math.max(el.clientWidth,1),initialH=Math.max(el.clientHeight,1)
-  const displayPixelRatio=(w:number,h:number)=>Math.min(window.devicePixelRatio||1,1.55,
+  const displayPixelRatio=(w:number,h:number)=>Math.min(window.devicePixelRatio||1,
     Math.max(.85,Math.sqrt(13_000_000/Math.max(1,w*h))))
   renderer.setPixelRatio(displayPixelRatio(initialW,initialH))
   renderer.setSize(initialW,initialH,false)
@@ -1653,31 +1644,9 @@ function setup() {
   renderer.toneMappingExposure=1.10
   renderer.shadowMap.enabled=true
   renderer.shadowMap.type=THREE.PCFSoftShadowMap
-  // 后处理每 pass 都会重置 renderer.info；改为手动按帧重置，才能统计整帧批次。
   renderer.info.autoReset=false
-  // 桌面端后处理：Bloom 收住高光、SMAA 补回抗锯齿、OutputPass 统一色调映射与 sRGB。
-  if(initialW>=900&&initialW/initialH>=1.08){
-    composer=new EffectComposer(renderer)
-    renderPass=new RenderPass(scene,camera)
-    composer.addPass(renderPass)
-    composer.addPass(new UnrealBloomPass(new THREE.Vector2(initialW,initialH),.10,.5,.95))
-    composer.addPass(new OutputPass())
-    // 调色：轻微降饱和与暗角，保留设计图的青蓝水色与管线饱和度。
-    composer.addPass(new ShaderPass({
-      uniforms:{tDiffuse:{value:null},uSat:{value:.97},uContrast:{value:1.0},
-        uTint:{value:new THREE.Vector3(.99,1.0,1.012)},uVignette:{value:.30}},
-      vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-      fragmentShader:`uniform sampler2D tDiffuse;uniform float uSat,uContrast,uVignette;uniform vec3 uTint;varying vec2 vUv;
-        void main(){vec3 c=texture2D(tDiffuse,vUv).rgb;float l=dot(c,vec3(.2126,.7152,.0722));
-        c=mix(vec3(l),c,uSat);c=(c-.5)*uContrast+.5;c*=uTint;
-        float v=smoothstep(.95,.32,length(vUv-.5));c=mix(c,c*(.88+.12*v),uVignette);
-        gl_FragColor=vec4(clamp(c,0.,1.),1.);}`
-    }))
-    // 类型声明仍按旧签名要求宽高，运行时已是无参构造。
-    composer.addPass(new (SMAAPass as unknown as { new(): SMAAPass })())
-    composer.setPixelRatio(renderer.getPixelRatio())
-    composer.setSize(initialW,initialH)
-  }
+  // 直接渲染到画布：走渲染器自带 MSAA，避免后处理链在部分显卡/浏览器上
+  // 产生二次色调映射，导致整屏发白、发虚。
   // Daylight sky: equirectangular canvas used as both background and IBL source.
   // It describes atmosphere only; it is not survey or meteorological data.
   const sky=document.createElement('canvas')
@@ -1830,7 +1799,6 @@ function setup() {
     camera.updateProjectionMatrix()
     renderer.setPixelRatio(displayPixelRatio(w,h))
     renderer.setSize(w,h,false)
-    if(composer){composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(w,h)}
     resizeWaterReflection()
     if(reframe)resetCameraPosition()
   }
@@ -1877,8 +1845,7 @@ function setup() {
     if(sig!==labelSig||++n%30===0){labelSig=sig;updateCompass();createScreenLabels()}
     maybeUpdateWaterReflection(cam)
     renderer?.info.reset()
-    if(composer)composer.render()
-    else renderer?.render(scene!,cam)
+    renderer?.render(scene!,cam)
   }
   tick()
 }
@@ -2051,7 +2018,6 @@ onBeforeUnmount(()=>{
   orbit?.dispose()
   relief?.dispose()
   reflectionRT?.dispose();reflectionRT=null;reflectionCamera=null
-  composer?.dispose();composer=null;renderPass=null
   shadowSun?.shadow.map?.dispose()
   disposeHighlights()
   disposeContinuitySelection()
