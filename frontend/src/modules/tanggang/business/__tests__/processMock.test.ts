@@ -52,8 +52,13 @@ describe('TG-104 六系统工艺节点Mock数据源',()=>{
     expect(mockProcessDevice(shared,null).readings).toEqual(
       mockProcessDevice(shared,null).readings,
     )
-    expect(a.context).toBe('ACTIVE_SCENARIO')
-    expect(a.scenarioId).toBe('peak')
+    // A shared PLC fixture is not automatically affected by the peak
+    // model, even if some related pumps are highlighted.
+    expect(a.context).toBe('MOCK_BASELINE')
+    expect(a.scenarioId).toBeNull()
+    const pump=mockProcessDevice(device('EQ-P-MID'),run)
+    expect(pump.context).toBe('ACTIVE_SCENARIO')
+    expect(pump.scenarioId).toBe('peak')
   })
   it('泵故障情景仅作用于明确的中压泵组，其他共用泵不自动故障',()=>{
     const fault=SCENARIOS['pump-fault']

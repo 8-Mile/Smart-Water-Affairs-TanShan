@@ -8,11 +8,26 @@ const props=defineProps<{
   sections:ProcessSchematicSection[]
   selectedFacilityId:string|null
   linkedFacilityIds:ReadonlySet<string>
+  reviewedFacilityIds:ReadonlySet<string>
+  simRunning:boolean
   sourceLayers:string[]
   mockByFacility:ReadonlyMap<string,ProcessMockDevice>
 }>()
-const emit=defineEmits<{select:[id:string]}>()
+const emit=defineEmits<{
+  select:[id:string]
+  focusAttention:[]
+  focusReviewed:[]
+}>()
 const totalNodes=computed(()=>props.sections.reduce((n,s)=>n+s.devices.length,0))
+const attentionCount=computed(()=>props.simRunning
+  ?props.sections.reduce((n,section)=>n+section.devices.filter(d=>
+      ['attention','fault'].includes(props.mockByFacility.get(d.id)?.state||'available'),
+    ).length,0):0)
+const reviewedCount=computed(()=>props.simRunning
+  ?props.sections.reduce((n,section)=>n+section.devices.filter(d=>
+      props.reviewedFacilityIds.has(d.id),
+    ).length,0):0)
+
 const icons:Record<ProcessDeviceKind,string>={
   pump:'ri:water-flash-line',
   pool:'ri:drop-line',
@@ -35,6 +50,17 @@ function iconOf(id:string){
       <h2>工艺设施分区</h2>
       <span class="tg-scada-board-count">{{totalNodes}} 个设计设施类别</span>
     </div>
+    <div class="tg-scada-quickbar" data-testid="process-focus-bar">
+      <span>{{simRunning?'SIM节点快速定位':'Mock基线 · 可启动情景'}}</span>
+      <el-button size="small" text :disabled="!attentionCount"
+        @click="emit('focusAttention')">
+        定位SIM关注/异常（{{attentionCount}}）
+      </el-button>
+      <el-button size="small" text :disabled="!reviewedCount"
+        @click="emit('focusReviewed')">
+        定位本轮已核查（{{reviewedCount}}）
+      </el-button>
+    </div>
     <div class="tg-scada-canvas">
       <div v-for="section in sections" :key="section.id" class="tg-scada-zone">
         <div class="tg-scada-zone-name">
@@ -46,7 +72,8 @@ function iconOf(id:string){
             :class="{'is-selected':selectedFacilityId===device.id,
                      'is-linked':linkedFacilityIds.has(device.id),
                      'is-fault':mockByFacility.get(device.id)?.state==='fault',
-                     'is-attention':mockByFacility.get(device.id)?.state==='attention'}"
+                     'is-attention':mockByFacility.get(device.id)?.state==='attention',
+                     'is-reviewed':simRunning&&reviewedFacilityIds.has(device.id)}"
             :aria-pressed="selectedFacilityId===device.id"
             :data-facility-id="device.id"
             @click="emit('select',device.id)">
@@ -58,6 +85,8 @@ function iconOf(id:string){
               <small>{{device.id}}</small>
               <span v-if="mockByFacility.get(device.id)" class="tg-scada-node-bottom">
                 <span class="tg-scada-node-state">{{mockByFacility.get(device.id)?.stateLabel}}</span>
+                <span v-if="simRunning&&reviewedFacilityIds.has(device.id)"
+                  class="tg-scada-reviewed">本轮已核查</span>
                 <span class="tg-scada-node-sample">
                   {{mockByFacility.get(device.id)?.highlight?.value||'SIM示例'}}
                 </span>
@@ -80,6 +109,13 @@ function iconOf(id:string){
 <style scoped>
 .tg-scada-board{padding:18px;min-width:0}
 .tg-scada-board-count{font-size:12px;color:var(--art-gray-500,#849aa7)}
+.tg-scada-quickbar{display:flex;gap:6px 12px;align-items:center;flex-wrap:wrap;
+  margin:-3px 0 12px;padding:0 1px 11px;border-bottom:1px solid #e4edf3}
+.tg-scada-quickbar>span{font-size:11px;color:#8299a7;margin-right:auto}
+.tg-scada-quickbar :deep(.el-button){font-size:11px;height:24px}
+.tg-scada-reviewed{font-size:10px;color:#4c8aa3;font-weight:600}
+.tg-scada-node.is-reviewed{box-shadow:inset 0 -2px 0 rgba(87,156,184,.45)}
+
 .tg-scada-canvas{
   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
   gap:13px;min-width:0;padding:15px;border:1px solid #dce7ee;border-radius:9px;

@@ -83,7 +83,6 @@ export function mockProcessDevice(
   )
   const state:ProcessMockState=fault?'fault':attention?'attention':
     ['pump','treatment','controller'].includes(kind)?'running':'available'
-  const context:ProcessMockDevice['context']=active?'ACTIVE_SCENARIO':'MOCK_BASELINE'
   const readings:ProcessMockReading[]=[]
   for(const field of device.dataFields||[]){
     const seed=hash(id+'|'+field)
@@ -156,9 +155,16 @@ export function mockProcessDevice(
     (x.value.includes('故障')||x.value.includes('MPa')))||
     readings.find(x=>/\b(MPa|m³\/h|mg\/L)\b|MPa|m³\/h/.test(x.value))||
     readings.find(x=>!x.value.includes('未配置'))||null
+  // Global SIM is not a telemetry feed. Unaffected facilities keep their
+  // independent Mock baseline rather than pretending they are in this run.
+  const directlyInScenario=!!active&&(
+    fault||attention||readings.some(r=>r.provenance==='SCENARIO_INPUT')
+  )
+  const context:ProcessMockDevice['context']=directlyInScenario
+    ?'ACTIVE_SCENARIO':'MOCK_BASELINE'
   return {
     facilityId:id,deviceKind:kind,state,stateLabel:stateText(kind,state),
-    readings,highlight,context,scenarioId:active?.id||null,
+    readings,highlight,context,scenarioId:directlyInScenario?active?.id:null,
     modelVersion:PROCESS_MOCK_MODEL,fieldVerified:false,
     productionControlEnabled:false,
   }

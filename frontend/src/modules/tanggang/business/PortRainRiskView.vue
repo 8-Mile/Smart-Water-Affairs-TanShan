@@ -14,7 +14,7 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
       <div><div class="tg-page-eyebrow">水资源管理 / 雨水收集</div><h1>雨水调蓄风险</h1>
         <p class="tg-biz-sub">降雨径流 → 有效库容 → 假设排水能力 → 条件溢流</p></div>
       <div class="tg-biz-actions"><span class="tg-datamode" :class="{sim:store.running}">{{store.running?'SIM · 情景联动':'现场数据未接入'}}</span>
-        <el-button @click="router.push('/port/process/rain')">雨水收集工艺</el-button></div>
+        <el-button @click="router.push('/port/process/rain?facility=EQ-Y-DRAIN')">雨水收集工艺</el-button></div>
     </div>
     <div class="tg-biz-note"><b>工程边界：</b>面积、径流系数、库容、排水能力均为模拟假设。尚未核实全港雨污分流、水质、许可排放、管线连接，不能将模拟外排作为现场调度建议。</div>
     <div v-if="!r" class="tg-analysis-empty">
@@ -51,7 +51,13 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
           <div v-for="event in r.events.filter(e=>e.domain==='雨水')" :key="event.id" class="tg-scenario-evidence">
             <strong>{{event.id}} · {{event.title}}</strong><span>{{event.evidence}}</span>
           </div>
-          <div class="tg-biz-actions" style="margin-top:15px"><el-button type="primary" plain @click="router.push('/port/operations/monitor')">查看监护线索</el-button></div>
+          <p class="tg-mini-note">目前未建立雨水独立监护规则；中压泵监护不代表雨水溢流监测。可到雨水设计节点记录本轮SIM人工核查。</p>
+          <div class="tg-biz-actions" style="margin-top:15px">
+            <el-button type="primary" plain
+              @click="router.push('/port/process/rain?facility=EQ-Y-DRAIN')">
+              查看排水沟及闸门设计节点
+            </el-button>
+          </div>
         </section>
       </div>
     </template>

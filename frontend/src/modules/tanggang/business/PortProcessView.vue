@@ -4,6 +4,7 @@ import {useRoute,useRouter} from 'vue-router'
 import {loadTanggangCatalog,type TanggangCatalog,type TanggangDevice} from '../mapping/tanggangCatalog'
 import {buildProcessSchematic} from './processSchematic'
 import {mockProcessDevice,type ProcessMockDevice} from './processMock'
+import {processWorkflow,processMonitorRelevant} from './processWorkflow'
 import PortProcessSchematic from './PortProcessSchematic.vue'
 import PortObjectBindingDialog from './PortObjectBindingDialog.vue'
 import {usePermissions} from '@/utils/permissions'
@@ -45,8 +46,10 @@ const selectedCheck=computed(()=>sim.processChecks.find(x=>
   x.run_uid===sim.runUid)||null)
 const currentSystemChecks=computed(()=>sim.processChecks.filter(x=>
   x.system_id===sysId.value&&x.run_uid===sim.runUid))
-const monitorRelevant=computed(()=>
-  sysId.value==='middle'&&['EQ-P-MID','EQ-P-METER'].includes(selectedId.value||''))
+const reviewedFacilityIds=computed<ReadonlySet<string>>(()=>new Set(
+  sim.running?currentSystemChecks.value.map(x=>x.facility_id):[],
+))
+const monitorRelevant=computed(()=>processMonitorRelevant(sysId.value,selectedId.value))
 const canViewAlarms=computed(()=>hasPerm('alarm:realtime'))
 const canViewRepairs=computed(()=>hasPerm('repair:list'))
 const objectLinks=ref<TanggangObjectLink[]>([])
@@ -65,26 +68,21 @@ const linksByFacility=computed(()=>{
 })
 const linkedFacilityIds=computed<ReadonlySet<string>>(()=>new Set(linksByFacility.value.keys()))
 const selectedLinks=computed(()=>selectedId.value?linksByFacility.value.get(selectedId.value)||[]:[])
-const simSummary=computed(()=>{
-  if(!sim.running||!sim.result)return null
-  const r=sim.result
-  switch(sysId.value){
-    case 'middle':return '供水需求 '+r.demandedM3h+' m³/h，模拟分配 '+r.deliveredM3h+' m³/h，缺口 '+r.shortageM3h+' m³/h'
-    case 'pool':return '假设未来'+r.input.horizonHours+'小时，统一演示水池储量 '+r.forecastPoolM3+' m³'
-    case 'rain':return '假设降雨 '+r.input.rainMm+' mm，单个演示集水单元溢流 '+r.rainOverflowM3+' m³'
-    default:return null
-  }
-})
-const nextPath=computed(()=>{
-  if(sysId.value==='middle'||sysId.value==='pool')return '/port/water/supply'
-  if(sysId.value==='rain')return '/port/water/rain-risk'
-  return '/port/operations/monitor'
-})
-const nextLabel=computed(()=>{
-  if(sysId.value==='middle'||sysId.value==='pool')return '供水保障'
-  if(sysId.value==='rain')return '雨水风险'
-  return '主动智能监护'
-})
+const workflow=computed(()=>processWorkflow(sysId.value,sim.result))
+const simSummary=computed(()=>workflow.value.simSummary)
+/** Cycle through current system facilities, never invent a new asset or route. */
+function focusNext(kind:'attention'|'reviewed'){
+  const available=unique.value.filter(device=>
+    kind==='reviewed'
+      ? reviewedFacilityIds.value.has(device.id)
+      : sim.running&&['attention','fault'].includes(
+        mockByFacility.value.get(device.id)?.state||'available',
+      ),
+  ).map(x=>x.id)
+  if(!available.length)return
+  const i=available.indexOf(selectedId.value||'')
+  selectFacility(available[(i+1)%available.length]!)
+}
 let serial=0
 async function loadObjectLinks(id:string){
   const key=++serial
@@ -175,7 +173,8 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
       <div><h1>{{displayName}}</h1></div>
       <div class="tg-biz-actions">
         <span v-if="sim.running" class="tg-datamode sim">SIM · {{sim.activeScenario?.title}}</span>
-        <el-button plain @click="router.push(nextPath)">{{nextLabel}}</el-button>
+        <el-button v-if="workflow.primary" plain
+          @click="router.push(workflow.primary.path)">{{workflow.primary.label}}</el-button>
         <el-button plain @click="router.push('/dashboard')">返回港区</el-button>
       </div>
     </div>
@@ -186,19 +185,24 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
     <template v-else>
       <div v-if="simSummary" class="tg-process-sim">
         <strong>SIM · {{simSummary}}</strong>
-        <el-button link type="primary" @click="router.push(nextPath)">查看分析</el-button>
+        <el-button v-if="workflow.primary" link type="primary"
+          @click="router.push(workflow.primary.path)">查看分析</el-button>
       </div>
       <div v-else-if="sim.running" class="tg-process-sim">
-        本情景没有与该系统具体设施核对过的模拟测点，不展示单台设备数值。
+        {{workflow.simNoEvidence}}
         <el-button link @click="sim.openConsole()">查看统一情景</el-button>
       </div>
       <div class="tg-process-grid">
         <PortProcessSchematic :sections="schematic?.sections||[]"
           :selected-facility-id="selectedId"
           :linked-facility-ids="linkedFacilityIds"
+          :reviewed-facility-ids="reviewedFacilityIds"
           :mock-by-facility="mockByFacility"
+          :sim-running="sim.running"
           :source-layers="system.focusPipeLayers"
-          @select="selectFacility"/>
+          @select="selectFacility"
+          @focus-attention="focusNext('attention')"
+          @focus-reviewed="focusNext('reviewed')"/>
 
         <section ref="detailPanel" class="tg-biz-card tg-process-detail" aria-label="当前选中设施">
           <template v-if="selectedDevice">
@@ -237,8 +241,6 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
               </p>
               <div class="tg-biz-actions">
                 <el-button size="small" plain @click="sim.openConsole()">统一情景控制台</el-button>
-                <el-button v-if="sysId==='middle'&&selectedDevice.id==='EQ-P-MID'"
-                  size="small" plain @click="router.push('/port/operations/monitor')">查看模拟监护</el-button>
               </div>
             </div>
             <div class="tg-process-action" data-testid="process-node-actions">
@@ -248,7 +250,7 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
               </div>
               <div class="tg-process-stepbar">
                 <span>查看Mock状态</span><b>›</b><span>人工核查</span><b>›</b>
-                <span>规则研判</span><b>›</b><span>模拟复盘</span>
+                <span>{{workflow.supportsDecision?'规则研判':'节点留痕'}}</span><b>›</b><span>模拟复盘</span>
               </div>
               <p v-if="!sim.running" class="tg-mini-note">
                 当前为静态Mock基线。启动统一情景后可登记本轮模拟核查意见。
@@ -271,13 +273,16 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
                 </div>
               </template>
               <div class="tg-biz-actions tg-process-action-links">
-                <el-button size="small" plain
-                  @click="openSimMonitor">{{monitorRelevant?'查看中压泵SIM监护':'查看模拟监护总览'}}</el-button>
-                <el-button size="small" plain
-                  @click="openSimDecision">模拟处置研判</el-button>
-                <el-button size="small" plain
-                  @click="router.push(nextPath)">{{nextLabel}}</el-button>
+                <el-button v-if="monitorRelevant" size="small" plain
+                  @click="openSimMonitor">中压泵SIM监护</el-button>
+                <el-button v-if="workflow.supportsDecision" size="small" plain
+                  @click="openSimDecision">供水SIM处置研判</el-button>
+                <el-button v-if="workflow.primary" size="small" plain
+                  @click="router.push(workflow.primary.path)">{{workflow.primary.label}}</el-button>
+                <el-button v-if="sim.running" size="small" plain
+                  @click="router.push('/ai/chat')">AI助手生成SIM复盘</el-button>
               </div>
+              <p class="tg-mini-note">{{workflow.scope}}</p>
               <div class="tg-biz-actions tg-process-formal-links">
                 <el-button v-if="canViewAlarms" size="small" link
                   @click="router.push('/alarm/realtime')">查看正式告警中心</el-button>
