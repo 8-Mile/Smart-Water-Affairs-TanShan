@@ -2714,6 +2714,19 @@ defineExpose({
 <style src="./styles/scene-shell.css"></style>
 
 <style>
+/* 三维场坪不再叠加白色蒙层，场景上方所有玻璃面板取消毛玻璃：
+   避免整屏发白、发虚，也让 WebGL 画布保持原始对比度。 */
+.tanggang-scene .cad-zone::after{display:none!important}
+.tanggang-scene .cad-zone{background:#dfe9ec!important}
+.tanggang-scene :is(.l1-filter,.l1-site-legend>span,.l1-selection,.l1-float-label,
+  .home-pipe-legend,.l1-compass,.l1-point-popover,.relief-controls,.l1-chain-shortcut,
+  .l1-message,.l1-help,.l1-continuity-panel,.l1-pipe-audit){
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+</style>
+
+<style>
 /* 1600–2199 大屏：三维总览 HUD 按视口轻度放大，1920 下与顶栏字号保持一致；
    ≥2200 由 scene-shell 的大屏规则接管，≤1599 保持原有紧凑尺寸。 */
 @media (min-width:1600px) and (max-width:2199px) {
