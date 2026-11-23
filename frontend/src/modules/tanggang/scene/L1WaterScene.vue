@@ -1715,11 +1715,6 @@ function setup() {
     glow.addColorStop(1,'rgba(255,245,232,0)')
     ctx.save();ctx.translate(sunX,hz);ctx.scale(1,.10);ctx.translate(-sunX,-hz)
     ctx.fillStyle=glow;ctx.beginPath();ctx.arc(sunX,hz,720,0,Math.PI*2);ctx.fill();ctx.restore()
-    // 地平线薄雾带：压住天空与海面的硬接缝。
-    const haze=ctx.createLinearGradient(0,hz-46,0,hz+16)
-    haze.addColorStop(0,'rgba(236,243,240,0)');haze.addColorStop(.72,'rgba(236,243,240,.28)')
-    haze.addColorStop(1,'rgba(214,229,227,0)')
-    ctx.fillStyle=haze;ctx.fillRect(0,hz-46,W,62)
   }
   const skyTexture=new THREE.CanvasTexture(sky)
   skyTexture.mapping=THREE.EquirectangularReflectionMapping
@@ -1727,7 +1722,8 @@ function setup() {
   skyTexture.colorSpace=THREE.SRGBColorSpace
   environmentTextures.push(skyTexture)
   scene.background=skyTexture
-  scene.fog=new THREE.Fog('#d7e6e8',190,680)
+  // 总览不使用距离雾，避免浅蓝灰雾色覆盖模型、降低材质对比度。
+  scene.fog=null
   try{
     const pmrem=new THREE.PMREMGenerator(renderer)
     const env=pmrem.fromEquirectangular(skyTexture)

@@ -126,7 +126,6 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const glint=palette('#dcf4f2',.3)
   // 海面：多方向重力波的解析法线 + Fresnel 天空反射 + 太阳高光/闪点。
   // 不再依赖可平铺法线贴图，避免近景重复纹理与远景整片镜面。
-  const seaFog=new T.Color();new T.Color('#d5e5e5').getRGB(seaFog,T.SRGBColorSpace)
   const sea=new T.ShaderMaterial({
     uniforms:{
       uTime:{value:0},
@@ -137,10 +136,6 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       uSkyZenith:{value:new T.Color('#4c8cba')},
       uSkyHorizon:{value:new T.Color('#c3d9dd')},
       uSunColor:{value:new T.Color('#ffe9c4')},
-      // 与 scene.fog 同步；fog 在色彩空间转换后混合，和标准材质一致。
-      uFogColor:{value:seaFog},
-      uFogNear:{value:190},
-      uFogFar:{value:680},
       uShoreOrigin:{value:new T.Vector2(0,0)},
       uShoreNormal:{value:new T.Vector2(0,1)},
       uShoreWidth:{value:14},
@@ -154,14 +149,12 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       varying vec3 vWorldPos;
       varying vec3 vViewDirW;
       varying vec4 vReflectCoord;
-      varying float vFogDepth;
       void main(){
         vec4 world = modelMatrix * vec4(position, 1.0);
         vWorldPos = world.xyz;
         vViewDirW = cameraPosition - world.xyz;
         vReflectCoord = uReflectMatrix * world;
         vec4 mv = viewMatrix * world;
-        vFogDepth = -mv.z;
         gl_Position = projectionMatrix * mv;
       }
     `,
@@ -173,9 +166,6 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       uniform vec3 uSkyZenith;
       uniform vec3 uSkyHorizon;
       uniform vec3 uSunColor;
-      uniform vec3 uFogColor;
-      uniform float uFogNear;
-      uniform float uFogFar;
       uniform vec2 uShoreOrigin;
       uniform vec2 uShoreNormal;
       uniform float uShoreWidth;
@@ -184,7 +174,6 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       varying vec3 vWorldPos;
       varying vec3 vViewDirW;
       varying vec4 vReflectCoord;
-      varying float vFogDepth;
 
       // 单向重力波：斜率 = A·k·dir·cos(phase)，多组叠加成非重复水面。
       vec2 waveSlope(vec2 p, vec2 dir, float wavelength, float amp, float speed, float t){
@@ -315,8 +304,6 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         gl_FragColor = vec4(color, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
-        float fogFactor = smoothstep(uFogNear, uFogFar, vFogDepth);
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, uFogColor, fogFactor);
       }
     `,
   })
