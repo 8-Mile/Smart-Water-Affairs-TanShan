@@ -3,7 +3,9 @@
  * V2.8 CAD source-handle audit. Layer-scoped documentary evidence only.
  * NEVER asserts a pipe is connected to a process node / pump / valve.
  */
-import {computed,ref,watch} from 'vue'
+import {computed,nextTick,ref,watch} from 'vue'
+import PortCadConnectionMapping from './PortCadConnectionMapping.vue'
+import type {ProcessSchematicSection} from './processSchematic'
 
 type EndpointStatus=
   'touches_another_visible_candidate'|'unmatched_visible_endpoint'|
@@ -51,6 +53,8 @@ interface Audit{
 }
 const props=defineProps<{
   systemId:string
+  systemName:string
+  sections:ProcessSchematicSection[]
   sourceLayers:string[]
 }>()
 
@@ -62,12 +66,20 @@ const activeLayer=ref('')
 const tab=ref<'unresolved'|'suspicions'|'all'>('unresolved')
 const keyword=ref('')
 const page=ref(1)
+const candidateHandle=ref('')
+const candidateLayer=ref('')
+const candidateMappingRoot=ref<HTMLElement|null>(null)
 const pageSize=15
 const trackedLayers=computed(()=>props.sourceLayers.filter(x=>!!x))
 const covered=computed(()=>trackedLayers.value.map(name=>audit.value?.layers[name]).filter(
   (x):x is Layer=>!!x,
 ))
 const selected=computed(()=>audit.value?.layers[activeLayer.value]||null)
+const handleIndex=computed<Record<string,string[]>>(()=>Object.fromEntries(
+  Object.entries(audit.value?.layers||{}).map(([layer,data])=>[
+    layer,[...new Set(data.endpoints.map(x=>x.handle.toUpperCase()))],
+  ]),
+))
 const summary=computed(()=>covered.value.reduce((sum,x)=>({
   endpoints:sum.endpoints+x.endpointCount,
   unresolved:sum.unresolved+x.unresolvedCount,
@@ -126,6 +138,8 @@ watch(()=>props.systemId,()=>{
   activeLayer.value=''
   keyword.value=''
   tab.value='unresolved'
+  candidateHandle.value=''
+  candidateLayer.value=''
 })
 async function toggle(){
   expanded.value=!expanded.value
@@ -150,6 +164,12 @@ function setLayer(layer:string){
   activeLayer.value=layer
 }
 function setTab(next:typeof tab.value){tab.value=next}
+async function chooseCandidate(handle:string){
+  candidateLayer.value=activeLayer.value
+  candidateHandle.value=handle
+  await nextTick()
+  candidateMappingRoot.value?.scrollIntoView({behavior:'smooth',block:'start'})
+}
 </script>
 
 <template>
@@ -190,6 +210,13 @@ function setTab(next:typeof tab.value){tab.value=next}
         <div v-if="systemId==='mineral'" class="tg-cad-warning">
           含矿污水系统当前只对应“污泥管”CAD图层；进出水、加药等完整物理管线不在本系统端点台账覆盖范围内。
         </div>
+        <div v-if="systemId!=='fog'" ref="candidateMappingRoot">
+          <PortCadConnectionMapping
+            :system-id="systemId as 'middle'|'mineral'|'rain'|'pool'|'domestic'"
+            :system-name="systemName" :sections="sections"
+            :handles-by-layer="handleIndex" :selected-layer="candidateLayer"
+            :selected-handle="candidateHandle"/>
+        </div>
         <template v-if="selected">
           <div class="tg-cad-actions">
             <div class="tg-cad-tabs" role="group" aria-label="CAD核查筛选">
@@ -213,6 +240,9 @@ function setTab(next:typeof tab.value){tab.value=next}
               <div class="tg-cad-record-header">
                 <code>{{item.handle}}</code>
                 <span>{{item.status}}</span>
+                <el-button v-if="item.type==='point'" size="small" link
+                  data-testid="cad-use-source-handle"
+                  @click="chooseCandidate(item.handle)">选为候选源Handle</el-button>
               </div>
               <p>{{item.details}}</p>
               <small>{{item.position}} · {{item.secondary}}</small>

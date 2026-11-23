@@ -27,6 +27,7 @@ from app.api import (
     tanggang_board,
     tanggang_equipment_draft,
     tanggang_process_diagram,
+    tanggang_cad_connection,
 )
 
 api_router = APIRouter()
@@ -61,3 +62,5 @@ api_router.include_router(tanggang_board.router)
 api_router.include_router(tanggang_equipment_draft.router)
 
 api_router.include_router(tanggang_process_diagram.router)
+
+api_router.include_router(tanggang_cad_connection.router)

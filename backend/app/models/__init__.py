@@ -39,6 +39,9 @@ from app.models.tanggang_provenance import TanggangPointReview, TanggangPointRev
 from app.models.tanggang_board import TanggangBoard, TanggangBoardRevision
 from app.models.tanggang_equipment_draft import TanggangDemoEquipment
 from app.models.tanggang_process_diagram import TanggangProcessDiagram, TanggangProcessDiagramRevision
+from app.models.tanggang_cad_connection import (
+    TanggangCadConnectionCandidate, TanggangCadConnectionCandidateRevision,
+)
 from app.models.tanggang_mock_ai import (
     TanggangMockAiSession, TanggangMockAiMessage, TanggangMockAiAction, TanggangMockAiDecision, TanggangMockAiEvidenceNote,
 )
@@ -87,6 +90,8 @@ __all__ = [
     "TanggangDemoEquipment",
     "TanggangProcessDiagram",
     "TanggangProcessDiagramRevision",
+    "TanggangCadConnectionCandidate",
+    "TanggangCadConnectionCandidateRevision",
     "TanggangBoard",
     "TanggangBoardRevision",
     "TanggangPointReview",

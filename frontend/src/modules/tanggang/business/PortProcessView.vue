@@ -243,6 +243,7 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
             @select="selectFacility"/>
           <PortCadEvidenceAudit v-if="sysId!=='fog'&&!diagramEditing"
             :key="sysId+'-cad-audit'" :system-id="sysId"
+            :system-name="displayName" :sections="schematic?.sections||[]"
             :source-layers="system.focusPipeLayers"/>
           <PortSpecialistExercise v-if="specialistSystem&&!diagramEditing"
             :system-id="specialistSystem"
