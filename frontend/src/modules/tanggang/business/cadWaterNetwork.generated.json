@@ -336,182 +336,260 @@
       "name": "1#堆场",
       "sourceHandle": "10B795",
       "sourceLayer": "$pm单体",
-      "status": "文字定位已核；单堆场边界未确认"
+      "status": "文字定位已核；单堆场边界未确认",
+      "type": "堆场",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-02": {
       "id": "TG-CAD-02",
       "name": "2#堆场",
       "sourceHandle": "10B796",
       "sourceLayer": "$pm单体",
-      "status": "文字定位已核；单堆场边界未确认"
+      "status": "文字定位已核；单堆场边界未确认",
+      "type": "堆场",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-03": {
       "id": "TG-CAD-03",
       "name": "3#堆场",
       "sourceHandle": "10B6F2",
       "sourceLayer": "$pm单体",
-      "status": "文字定位已核；单堆场边界未确认"
+      "status": "文字定位已核；单堆场边界未确认",
+      "type": "堆场",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-04": {
       "id": "TG-CAD-04",
       "name": "4#堆场",
       "sourceHandle": "10B6F3",
       "sourceLayer": "$pm单体",
-      "status": "文字定位已核；单堆场边界未确认"
+      "status": "文字定位已核；单堆场边界未确认",
+      "type": "堆场",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-05": {
       "id": "TG-CAD-05",
       "name": "5#堆场",
       "sourceHandle": "10B64F",
       "sourceLayer": "$pm单体",
-      "status": "文字定位已核；单堆场边界未确认"
+      "status": "文字定位已核；单堆场边界未确认",
+      "type": "堆场",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-06": {
       "id": "TG-CAD-06",
       "name": "6#堆场",
       "sourceHandle": "10B650",
       "sourceLayer": "$pm单体",
-      "status": "文字定位已核；单堆场边界未确认"
+      "status": "文字定位已核；单堆场边界未确认",
+      "type": "堆场",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-07": {
       "id": "TG-CAD-07",
       "name": "7#堆场",
       "sourceHandle": "E4FD1",
       "sourceLayer": "$pm单体",
-      "status": "文字定位已核；单堆场边界未确认"
+      "status": "文字定位已核；单堆场边界未确认",
+      "type": "堆场",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-08": {
       "id": "TG-CAD-08",
       "name": "8#堆场",
       "sourceHandle": "E4FD2",
       "sourceLayer": "$pm单体",
-      "status": "文字定位已核；单堆场边界未确认"
+      "status": "文字定位已核；单堆场边界未确认",
+      "type": "堆场",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-09": {
       "id": "TG-CAD-09",
       "name": "北部集水池（原图“集水池”）",
       "sourceHandle": "FAC60",
       "sourceLayer": "$pm单体",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "水务设施",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-10": {
       "id": "TG-CAD-10",
       "name": "南部集水池（原图“集水池”）",
       "sourceHandle": "10AE0B",
       "sourceLayer": "$管综-雨水",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "水务设施",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-11": {
       "id": "TG-CAD-11",
       "name": "污水处理场",
       "sourceHandle": "FAC62",
       "sourceLayer": "$pm单体",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "水务设施",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-12": {
       "id": "TG-CAD-12",
       "name": "除尘泵房",
       "sourceHandle": "116712",
       "sourceLayer": "$pm单体",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "水务设施",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-13": {
       "id": "TG-CAD-13",
       "name": "洗车台区",
       "sourceHandle": "FAE1D",
       "sourceLayer": "$pm单体",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "生产设施",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-14": {
       "id": "TG-CAD-14",
       "name": "生态蓄水池",
       "sourceHandle": "10340E",
       "sourceLayer": "$pm单体",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "水务设施",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-15": {
       "id": "TG-CAD-15",
       "name": "生态空间提升泵站",
       "sourceHandle": "1AFB89",
       "sourceLayer": "$管综-雨水",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "水务设施",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-16": {
       "id": "TG-CAD-16",
       "name": "一体化生活污水处理设施",
       "sourceHandle": "139AAA",
       "sourceLayer": "$管综-生活污水",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "水务设施",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-17": {
       "id": "TG-CAD-17",
       "name": "生活污水接入既有处理场",
       "sourceHandle": "139AA4",
       "sourceLayer": "$管综-生活污水",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "管网接点",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-18": {
       "id": "TG-CAD-18",
       "name": "生态空间补水接口",
       "sourceHandle": "13993C",
       "sourceLayer": "$管综-市政中水",
-      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验",
+      "type": "管网接点",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-19": {
       "id": "TG-CAD-19",
       "name": "51#泊位",
       "sourceHandle": "A148B",
       "sourceLayer": "00-码头布置（东侧）",
-      "status": "泊位文字已核；泊位边界另需图元关联"
+      "status": "泊位文字已核；泊位边界另需图元关联",
+      "type": "泊位",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-20": {
       "id": "TG-CAD-20",
       "name": "52#泊位",
       "sourceHandle": "A148D",
       "sourceLayer": "00-码头布置（东侧）",
-      "status": "泊位文字已核；泊位边界另需图元关联"
+      "status": "泊位文字已核；泊位边界另需图元关联",
+      "type": "泊位",
+      "isPhysicalEntity": true,
+      "verifiedFootprint": false
     },
     "TG-CAD-21": {
       "id": "TG-CAD-21",
       "name": "北侧集水池排泥管 DN100",
       "sourceHandle": "33710E",
       "sourceLayer": "$管综-污泥管",
-      "status": "仅文字插入点，不是实体位置"
+      "status": "仅文字插入点，不是实体位置",
+      "type": "设计文字（非设施中心）",
+      "isPhysicalEntity": false,
+      "verifiedFootprint": false
     },
     "TG-CAD-22": {
       "id": "TG-CAD-22",
       "name": "南侧集水池排泥管 DN100",
       "sourceHandle": "33710A",
       "sourceLayer": "$管综-污泥管",
-      "status": "仅文字插入点，不是实体位置"
+      "status": "仅文字插入点，不是实体位置",
+      "type": "设计文字（非设施中心）",
+      "isPhysicalEntity": false,
+      "verifiedFootprint": false
     },
     "TG-CAD-23": {
       "id": "TG-CAD-23",
       "name": "市政水源关联说明",
       "sourceHandle": "139716",
       "sourceLayer": "$管综-室内消防",
-      "status": "仅文字插入点，不是实体位置"
+      "status": "仅文字插入点，不是实体位置",
+      "type": "设计文字（非设施中心）",
+      "isPhysicalEntity": false,
+      "verifiedFootprint": false
     },
     "TG-CAD-24": {
       "id": "TG-CAD-24",
       "name": "消防水池补水管 DN200",
       "sourceHandle": "344AD8",
       "sourceLayer": "$管综-雨水",
-      "status": "仅文字插入点，不是实体位置"
+      "status": "仅文字插入点，不是实体位置",
+      "type": "设计文字（非设施中心）",
+      "isPhysicalEntity": false,
+      "verifiedFootprint": false
     },
     "TG-CAD-25": {
       "id": "TG-CAD-25",
       "name": "污水站设备间补水管 DN65",
       "sourceHandle": "344AD0",
       "sourceLayer": "$管综-雨水",
-      "status": "仅文字插入点，不是实体位置"
+      "status": "仅文字插入点，不是实体位置",
+      "type": "设计文字（非设施中心）",
+      "isPhysicalEntity": false,
+      "verifiedFootprint": false
     },
     "TG-CAD-26": {
       "id": "TG-CAD-26",
       "name": "清水池补水管 DN100",
       "sourceHandle": "344AD1",
       "sourceLayer": "$管综-雨水",
-      "status": "仅文字插入点，不是实体位置"
+      "status": "仅文字插入点，不是实体位置",
+      "type": "设计文字（非设施中心）",
+      "isPhysicalEntity": false,
+      "verifiedFootprint": false
     }
   }
 }

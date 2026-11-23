@@ -1,26 +1,32 @@
 <script setup lang="ts">
-import {computed,ref} from 'vue'
-import {useRouter} from 'vue-router'
+import {computed,ref,watch,onMounted,nextTick} from 'vue'
+import {useRoute,useRouter} from 'vue-router'
 import cad from './cadWaterNetwork.generated.json'
 import {WATER_PROCESSES,type ProcessId} from '../simulation/waterOperations'
+import PortCadEndpointEvidence from './PortCadEndpointEvidence.vue'
+import {relationFor} from './cadWaterTrace'
 
 type CadView='all'|'collection'|'supply'|'separate'
 type CadLink=typeof cad.designRelationships[number]
-const router=useRouter()
+const router=useRouter(),route=useRoute()
 const selectedView=ref<CadView>('all')
-const selectedId=ref('L12')
+const initialRelation=typeof route.query.cad_relation==='string'
+  ?route.query.cad_relation:'L12'
+const selectedId=ref(relationFor(initialRelation)?initialRelation:'L12')
+watch(()=>route.query.cad_relation,id=>{
+  if(typeof id==='string'&&relationFor(id))selectedId.value=id
+})
+// When arriving from a process diagram, bring the actual CAD relationship
+// into view rather than dropping the operator at the dashboard KPI row.
+onMounted(async()=>{
+  if(typeof route.query.cad_relation!=='string'||!relationFor(route.query.cad_relation))return
+  await nextTick()
+  requestAnimationFrame(()=>document.querySelector('[data-testid="cad-water-network"]')
+    ?.scrollIntoView({block:'start',behavior:'smooth'}))
+})
 const CAD_HOME='/tanggang/audit/cad-review/index.html'
 const CAD_MASTER='/tanggang/audit/cad-review/v2/index.html'
 const CAD_MAP='/tanggang/audit/cad-review/v2/唐港5152_智慧水务CAD总控梳理图_V2.png'
-const anchors:Record<string,string|undefined>={
-  yard:'TG-CAD-01',north:'TG-CAD-09',south:'TG-CAD-10',
-  sewage:'TG-CAD-11',purifier:'TG-CAD-11',clear:'TG-CAD-26',
-  sludge:'TG-CAD-21',eco:'TG-CAD-14',wash:'TG-CAD-13',
-  washsed:'TG-CAD-13',midpump:'TG-CAD-12',fogpump:'TG-CAD-12',
-  firepump:'TG-CAD-12',machine:'TG-CAD-01',
-  life:'TG-CAD-16',lifetreat:'TG-CAD-16',
-  municipal:'TG-CAD-23',reclaimed:'TG-CAD-23',
-}
 const groupNames:Record<CadView,string>={
   all:'全港关系',collection:'雨污水收集',supply:'供水与回用',separate:'生活水独立链',
 }
@@ -28,19 +34,16 @@ const links=computed<CadLink[]>(()=>cad.designRelationships.filter(e=>
   selectedView.value==='all'||e.view===selectedView.value,
 ))
 const selected=computed(()=>cad.designRelationships.find(e=>e.id===selectedId.value)||null)
-const sourceLink=computed(()=>{
-  const rel=selected.value
-  if(!rel)return null
-  // Only navigate to an existing CAD object anchor, never manufacture
-  // a pipe end or physical equipment-to-equipment verified link.
-  const id=anchors[rel.to]||anchors[rel.from]
-  const a=id?cad.cadAnchors[id as keyof typeof cad.cadAnchors]:undefined
-  return id&&a?.sourceHandle?
-    '/tanggang/audit/cad-review/index.html?focus='+encodeURIComponent(id.slice(7)):null
-})
+function selectEdge(id:string){
+  if(!relationFor(id))return
+  selectedId.value=id
+  void router.replace({path:route.path,query:{...route.query,cad_relation:id}})
+}
 function selectView(v:CadView){
   selectedView.value=v
-  if(!links.value.some(e=>e.id===selectedId.value))selectedId.value=links.value[0]?.id||''
+  if(!links.value.some(e=>e.id===selectedId.value)&&links.value[0]){
+    selectEdge(links.value[0].id)
+  }
 }
 function openSystem(id:ProcessId){void router.push('/port/process/'+id)}
 function state(status:string){
@@ -92,7 +95,7 @@ function state(status:string){
         <div class="tg-cad-water-relationships" data-testid="cad-relationships">
           <button v-for="edge in links" :key="edge.id" :data-relation-id="edge.id"
             type="button" :class="{picked:selectedId===edge.id}"
-            @click="selectedId=edge.id">
+            @click="selectEdge(edge.id)">
             <strong>{{edge.label}}</strong>
             <small>{{edge.id}} · {{state(edge.status)}}</small>
           </button>
@@ -105,17 +108,17 @@ function state(status:string){
           </div>
           <p v-if="selected.note">{{selected.note}}</p>
           <div class="tg-cad-water-sources">
-            <span>CAD依据</span>
+            <span>V2关系来源代码（非CAD Handle）</span>
             <code v-for="source in selected.sources" :key="source">{{source}}</code>
           </div>
           <div class="tg-cad-water-detail-actions">
-            <a v-if="sourceLink" :href="sourceLink" target="_blank"
-              rel="noopener" data-testid="cad-focus-source">CAD源设施定位</a>
+
             <a :href="CAD_MASTER" target="_blank" rel="noopener">查看总图</a>
           </div>
           <small class="tg-cad-water-unverified">
             {{cad.allConnectionsVerified?'工程待复核':'管段端点与启闭状态尚未核验'}}
           </small>
+          <PortCadEndpointEvidence :relation-id="selected.id"/>
         </div>
       </div>
     </div>

@@ -20,6 +20,9 @@ for obj in data['objects']:
             'sourceHandle':obj.get('sourceHandle'),
             'sourceLayer':obj.get('sourceLayer'),
             'status':obj.get('status'),
+            'type':obj.get('type'),
+            'isPhysicalEntity':obj.get('isPhysicalEntity',False),
+            'verifiedFootprint':obj.get('verifiedFootprint',False),
         }
 payload={
     'source':'frontend/public/tanggang/audit/cad-review/v2/manifest-v2.json',

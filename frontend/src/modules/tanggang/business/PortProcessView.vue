@@ -13,6 +13,7 @@ import {useProcessSpecialistStore} from './processSpecialistStore'
 import PortSpecialistExercise from './PortSpecialistExercise.vue'
 import PortProcessEffect from './PortProcessEffect.vue'
 import PortCadEvidenceAudit from './PortCadEvidenceAudit.vue'
+import PortProcessCadLinks from './PortProcessCadLinks.vue'
 import PortFogDiagram from './PortFogDiagram.vue'
 import type {EditableProcessSystemId} from '@/api/tanggangProcessDiagrams'
 import PortObjectBindingDialog from './PortObjectBindingDialog.vue'
@@ -244,6 +245,7 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
           全港协同与能效
         </el-button>
       </section>
+      <PortProcessCadLinks v-if="!diagramEditing" :system-id="sysId"/>
       <div v-if="simSummary" class="tg-process-sim">
         <strong>SIM · {{simSummary}}</strong>
         <el-button v-if="workflow.primary" link type="primary"

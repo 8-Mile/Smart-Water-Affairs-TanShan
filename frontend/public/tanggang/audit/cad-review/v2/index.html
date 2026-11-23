@@ -19,6 +19,8 @@ section{min-width:0;display:flex;flex-direction:column;min-height:0}
 .tabs{padding:16px 20px 14px;display:flex;gap:9px;align-items:center;background:#f9fcfe;border-bottom:1px solid #dfeaf1;flex:none}
 .tab{padding:11px 18px;font-size:12px;font-weight:700}
 .tab.active{background:#e5f6fa;border-color:#86c8dd;color:#267d9c}
+.tab:disabled,.tab:disabled:hover{color:#9daeb9;opacity:.65;cursor:not-allowed;
+  background:#f4f8fa;border-color:#e0eaf0}
 .tab-note{margin-left:auto;color:#7e9cad;font-size:11px}
 .toolbar{display:flex;align-items:center;gap:9px;padding:10px 20px;background:#f7fbfd;border-bottom:1px solid #e1edf2;flex:none}
 .toolbar span{font-size:11px;color:#7793a6;flex:1}
@@ -61,12 +63,13 @@ aside{border-left:1px solid #d8e7ef;background:#fff;display:flex;flex-direction:
  <section>
   <div class="tabs">
     <button class="tab active" data-view="0">总控梳理图</button>
-    <button class="tab" data-view="1">A · 供水除尘</button>
-    <button class="tab" data-view="2">B · 雨污水与污泥</button>
-    <button class="tab" data-view="3">C · 消防生活水</button>
-    <span class="tab-note">CAD图面按堆场长轴旋转约35°，并非原始正北方向</span>
+    <button class="tab" data-view="1" disabled title="V2 专业分图文件尚未提供，请使用原 CAD 图层查看">A · 供水除尘</button>
+    <button class="tab" data-view="2" disabled title="V2 专业分图文件尚未提供，请使用原 CAD 图层查看">B · 雨污水与污泥</button>
+    <button class="tab" data-view="3" disabled title="V2 专业分图文件尚未提供，请使用原 CAD 图层查看">C · 消防生活水</button>
+    <span class="tab-note">专业分图资源待补 · 当前总图可用 · 图面非原始正北向</span>
   </div>
   <div class="toolbar">
+   <a class="action" href="../index.html" target="_blank" rel="noopener">打开原CAD图层与定位</a>
    <button id="fit">适应窗口</button><button id="plus">放大</button><button id="minus">缩小</button>
    <span id="description">四张图采用同一套DWG坐标和专业管线筛选规则。</span><span id="zoom">100%</span>
    <a class="action" id="svg" target="_blank" href="./唐港5152_智慧水务CAD总控梳理图_V2.svg">打开可缩放SVG</a>
