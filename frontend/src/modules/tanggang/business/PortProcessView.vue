@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import {computed,onMounted,ref,watch} from 'vue'
+import {computed,nextTick,onMounted,ref,watch} from 'vue'
 import {useRoute,useRouter} from 'vue-router'
 import {loadTanggangCatalog,type TanggangCatalog,type TanggangDevice} from '../mapping/tanggangCatalog'
 import {buildProcessSchematic} from './processSchematic'
+import {mockProcessDevice,type ProcessMockDevice} from './processMock'
 import PortProcessSchematic from './PortProcessSchematic.vue'
 import PortObjectBindingDialog from './PortObjectBindingDialog.vue'
 import {usePermissions} from '@/utils/permissions'
@@ -25,12 +26,17 @@ const displayName=computed(()=>sysId.value==='domestic'
 const schematic=computed(()=>system.value&&catalog.value
   ?buildProcessSchematic(system.value,catalog.value):null)
 const unique=computed(()=>schematic.value?.devices||[])
+const mockByFacility=computed<ReadonlyMap<string,ProcessMockDevice>>(()=>new Map(
+  unique.value.map(device=>[device.id,mockProcessDevice(device,sim.effectiveScenario)]),
+))
 const selectedId=computed(()=>{
   const requested=route.query.facility
   if(typeof requested==='string'&&unique.value.some(x=>x.id===requested))return requested
   return unique.value[0]?.id||null
 })
 const selectedDevice=computed(()=>unique.value.find(d=>d.id===selectedId.value)||null)
+const detailPanel=ref<HTMLElement|null>(null)
+const selectedMock=computed(()=>selectedId.value?mockByFacility.value.get(selectedId.value):null)
 const objectLinks=ref<TanggangObjectLink[]>([])
 const linkError=ref('')
 const bindingOpen=ref(false)
@@ -98,7 +104,12 @@ onMounted(async()=>{
 })
 function selectFacility(id:string){
   if(!unique.value.some(x=>x.id===id))return
-  void router.replace({path:route.path,query:{facility:id}})
+  void router.replace({path:route.path,query:{facility:id}}).then(async()=>{
+    if(window.innerWidth<=900){
+      await nextTick()
+      detailPanel.value?.scrollIntoView({behavior:'smooth',block:'start'})
+    }
+  })
 }
 function openBinding(device:TanggangDevice,existing:TanggangObjectLink|null=null){
   bindingDevice.value=device
@@ -135,10 +146,11 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
         <PortProcessSchematic :sections="schematic?.sections||[]"
           :selected-facility-id="selectedId"
           :linked-facility-ids="linkedFacilityIds"
+          :mock-by-facility="mockByFacility"
           :source-layers="system.focusPipeLayers"
           @select="selectFacility"/>
 
-        <section class="tg-biz-card tg-process-detail" aria-label="当前选中设施">
+        <section ref="detailPanel" class="tg-biz-card tg-process-detail" aria-label="当前选中设施">
           <template v-if="selectedDevice">
             <div class="tg-process-detail-head">
               <h2>{{selectedDevice.name}}</h2>
@@ -147,6 +159,37 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
             <div class="tg-process-detail-meta">
               <span>{{selectedDevice.regionName}}</span>
               <span>{{selectedDevice.id}}</span>
+            </div>
+            <div v-if="selectedMock" class="tg-process-mock" data-testid="process-mock-detail">
+              <div class="tg-biz-card-head">
+                <h3>模拟运行状态</h3>
+                <span class="tg-biz-chip" :class="{warn:selectedMock.state==='fault'||selectedMock.state==='attention'}">
+                  {{selectedMock.context==='ACTIVE_SCENARIO'?'SIM情景':'Mock基线'}}
+                </span>
+              </div>
+              <div class="tg-process-mock-state" :class="selectedMock.state">
+                <span class="tg-process-mock-light" aria-hidden="true"/>
+                <strong>{{selectedMock.stateLabel}}</strong>
+                <small>非现场采集</small>
+              </div>
+              <div class="tg-process-readings">
+                <div v-for="reading in selectedMock.readings" :key="reading.key"
+                  class="tg-process-reading-row">
+                  <span>{{reading.key}}</span>
+                  <div>
+                    <strong>{{reading.value}}</strong>
+                    <small v-if="reading.provenance==='SCENARIO_INPUT'">情景输入</small>
+                  </div>
+                </div>
+              </div>
+              <p class="tg-mini-note">
+                示例值仅用于界面演练；不参与供水平衡、真实告警、工单或PLC控制。
+              </p>
+              <div class="tg-biz-actions">
+                <el-button size="small" plain @click="sim.openConsole()">统一情景控制台</el-button>
+                <el-button v-if="sysId==='middle'&&selectedDevice.id==='EQ-P-MID'"
+                  size="small" plain @click="router.push('/port/operations/monitor')">查看模拟监护</el-button>
+              </div>
             </div>
             <div class="tg-process-fields">
               <h3>设计建议测点</h3>
@@ -222,6 +265,26 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
 .tg-process-detail-head{display:flex;align-items:start;justify-content:space-between;gap:8px}
 .tg-process-detail-head h2{margin-bottom:0;font-size:17px}
 .tg-process-detail-meta{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:11px;color:#869caa}
+.tg-process-mock{border-top:1px solid #e7eff4;border-bottom:1px solid #e7eff4;
+  padding:13px 0;display:grid;gap:10px}
+.tg-process-mock .tg-biz-card-head{margin:0}
+.tg-process-mock h3{font-size:13px;font-weight:660;color:#365c73;margin:0}
+.tg-process-mock-state{display:flex;gap:8px;align-items:center;color:#357b9a;font-size:12px}
+.tg-process-mock-state strong{font-weight:620}
+.tg-process-mock-state small{font-size:11px;color:#8ca0ab;margin-left:auto}
+.tg-process-mock-state.fault{color:#ba705d}
+.tg-process-mock-state.attention{color:#ad8242}
+.tg-process-mock-light{width:9px;height:9px;border-radius:50%;background:currentColor;
+  box-shadow:0 0 0 3px color-mix(in srgb,currentColor 12%,transparent)}
+.tg-process-readings{display:grid;gap:0}
+.tg-process-reading-row{display:flex;justify-content:space-between;gap:8px;
+  align-items:center;border-bottom:1px solid #edf2f5;padding:9px 1px;font-size:12px}
+.tg-process-reading-row:last-child{border-bottom:0}
+.tg-process-reading-row>span{color:#718c9b}
+.tg-process-reading-row>div{display:flex;align-items:center;gap:8px;text-align:right}
+.tg-process-reading-row strong{font-variant-numeric:tabular-nums;font-weight:640;color:#386984}
+.tg-process-reading-row small{font-size:10px;color:#aa803e;white-space:nowrap}
+.tg-process-mock .tg-mini-note{margin:0!important}
 .tg-process-fields h3,.tg-process-bindings h3{font-size:13px;font-weight:660;
   color:#365c73;margin:0 0 11px}
 .tg-process-field-items{display:flex;flex-wrap:wrap;gap:7px}

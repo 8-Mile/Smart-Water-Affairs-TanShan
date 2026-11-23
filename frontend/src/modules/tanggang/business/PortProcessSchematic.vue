@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {computed} from 'vue'
+import {Icon} from '@iconify/vue'
+import type {ProcessMockDevice,ProcessDeviceKind} from './processMock'
 import type {ProcessSchematicSection} from './processSchematic'
 
 const props=defineProps<{
@@ -7,9 +9,24 @@ const props=defineProps<{
   selectedFacilityId:string|null
   linkedFacilityIds:ReadonlySet<string>
   sourceLayers:string[]
+  mockByFacility:ReadonlyMap<string,ProcessMockDevice>
 }>()
 const emit=defineEmits<{select:[id:string]}>()
 const totalNodes=computed(()=>props.sections.reduce((n,s)=>n+s.devices.length,0))
+const icons:Record<ProcessDeviceKind,string>={
+  pump:'ri:water-flash-line',
+  pool:'ri:drop-line',
+  valve:'ri:equalizer-line',
+  meter:'ri:dashboard-3-line',
+  controller:'ri:cpu-line',
+  pipe:'ri:route-line',
+  treatment:'ri:filter-3-line',
+  gate:'ri:door-open-line',
+  facility:'ri:settings-3-line',
+}
+function iconOf(id:string){
+  return icons[props.mockByFacility.get(id)?.deviceKind||'facility']
+}
 </script>
 
 <template>
@@ -27,14 +44,24 @@ const totalNodes=computed(()=>props.sections.reduce((n,s)=>n+s.devices.length,0)
           <button v-for="device in section.devices" :key="device.id"
             type="button" class="tg-scada-node"
             :class="{'is-selected':selectedFacilityId===device.id,
-                     'is-linked':linkedFacilityIds.has(device.id)}"
+                     'is-linked':linkedFacilityIds.has(device.id),
+                     'is-fault':mockByFacility.get(device.id)?.state==='fault',
+                     'is-attention':mockByFacility.get(device.id)?.state==='attention'}"
             :aria-pressed="selectedFacilityId===device.id"
             :data-facility-id="device.id"
             @click="emit('select',device.id)">
-            <span class="tg-scada-indicator" aria-hidden="true"/>
+            <span class="tg-scada-symbol" aria-hidden="true">
+              <Icon :icon="iconOf(device.id)" width="19" height="19"/>
+            </span>
             <span class="tg-scada-node-content">
               <strong>{{device.name}}</strong>
               <small>{{device.id}}</small>
+              <span v-if="mockByFacility.get(device.id)" class="tg-scada-node-bottom">
+                <span class="tg-scada-node-state">{{mockByFacility.get(device.id)?.stateLabel}}</span>
+                <span class="tg-scada-node-sample">
+                  {{mockByFacility.get(device.id)?.highlight?.value||'SIM示例'}}
+                </span>
+              </span>
             </span>
             <span v-if="linkedFacilityIds.has(device.id)"
               class="tg-scada-link-dot" aria-label="已登记对象关联"/>
@@ -44,7 +71,7 @@ const totalNodes=computed(()=>props.sections.reduce((n,s)=>n+s.devices.length,0)
       <div v-if="!sections.length" class="tg-biz-empty">暂无可显示的设计设施</div>
     </div>
     <div class="tg-scada-board-foot">
-      <span>CAD设计分区 · 非管网连通图</span>
+      <span>CAD设计分区 · 节点值均为Mock · 非水力连通图</span>
       <span v-if="sourceLayers.length">参考图层：{{sourceLayers.join('、')}}</span>
     </div>
   </section>
@@ -67,7 +94,7 @@ const totalNodes=computed(()=>props.sections.reduce((n,s)=>n+s.devices.length,0)
   padding:0 0 10px;margin:0 0 11px}
 .tg-scada-zone-name strong{font-size:13px;color:#355c72;font-weight:650}
 .tg-scada-nodes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.tg-scada-node{width:100%;min-width:0;min-height:70px;display:flex;align-items:flex-start;
+.tg-scada-node{width:100%;min-width:0;min-height:92px;display:flex;align-items:flex-start;
   gap:9px;text-align:left;padding:12px 10px;
   border-radius:7px;border:1px solid #d6e4eb;background:rgba(255,255,255,.92);
   cursor:pointer;font:inherit;color:inherit;transition:border-color .16s,background .16s,box-shadow .16s}
@@ -75,9 +102,18 @@ const totalNodes=computed(()=>props.sections.reduce((n,s)=>n+s.devices.length,0)
 .tg-scada-node:focus-visible{outline:2px solid var(--theme-color,#3c93b4);outline-offset:2px}
 .tg-scada-node.is-selected{border-color:var(--theme-color,#4193b4);background:#eff8fc;
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-color,#4193b4) 32%,transparent)}
-.tg-scada-indicator{display:block;width:8px;height:8px;border-radius:2px;
-  background:#b7c9d2;border:1px solid #9bb5c3;margin-top:4px;flex-shrink:0}
-.tg-scada-node.is-linked .tg-scada-indicator{background:#82b8cf;border-color:#62a1bf}
+.tg-scada-symbol{display:flex;align-items:center;justify-content:center;flex:0 0 29px;
+  width:29px;height:29px;background:#eaf3f7;border:1px solid #d9e9ef;border-radius:6px;color:#4589a8}
+.tg-scada-node.is-fault{border-color:#e9b2a6;background:#fff9f7}
+.tg-scada-node.is-fault .tg-scada-symbol{background:#fff0ea;color:#bd715b;border-color:#efd2c6}
+.tg-scada-node.is-attention{border-color:#ead5ac;background:#fffdf7}
+.tg-scada-node.is-attention .tg-scada-symbol{background:#fff5e4;color:#af8b52}
+.tg-scada-node-bottom{display:flex;gap:4px 8px;align-items:baseline;flex-wrap:wrap}
+.tg-scada-node-state{font-size:10px;color:#6a90a4;white-space:nowrap}
+.tg-scada-node.is-fault .tg-scada-node-state{color:#ba705d}
+.tg-scada-node.is-attention .tg-scada-node-state{color:#b38947}
+.tg-scada-node-sample{font-size:11px;color:#486e86;font-variant-numeric:tabular-nums}
+
 .tg-scada-node-content{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
 .tg-scada-node-content strong{font-size:12px;font-weight:620;line-height:1.5;
   color:#33586e;overflow-wrap:anywhere}
