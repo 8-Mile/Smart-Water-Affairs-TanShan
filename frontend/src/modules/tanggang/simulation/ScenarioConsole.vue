@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import {computed,reactive,ref,watch,onMounted,onUnmounted} from 'vue'
-import {useRouter} from 'vue-router'
+import {useRoute,useRouter} from 'vue-router'
 import {ElMessage,ElMessageBox} from 'element-plus'
 import {SCENARIOS,SCENARIO_IDS,type ScenarioId,type ScenarioInputs} from './engine'
 import {useScenarioStore} from './store'
 import {AUTO_FRAME_INTERVAL_MS} from './autoWaterFeed'
 const router=useRouter()
+const route=useRoute()
+// Daily monitoring and six process views already auto-run; do not place
+// a manual simulation launcher over the production-style workspace.
+const showLauncher=computed(()=>route.path!=='/port/water/supply'&&
+  !route.path.startsWith('/port/process/'))
 const store=useScenarioStore()
 let feedTimer:ReturnType<typeof setInterval>|null=null
 onMounted(()=>{
@@ -77,7 +82,8 @@ const nav=[
 </script>
 <template>
   <div class="tg-sim-global" aria-label="统一情景推演入口">
-    <button type="button" class="tg-sim-launch" :class="{active:store.running}"
+    <button v-if="showLauncher" type="button" class="tg-sim-launch"
+      :class="{active:store.running}"
       :aria-label="store.running?'情景推演运行中，打开统一控制台':'打开统一情景推演控制台'"
       @click="store.openConsole()">
       <span class="tg-sim-launch-icon">◇</span>

@@ -5,6 +5,7 @@ import {ElMessage} from 'element-plus'
 import {useScenarioStore} from '../simulation/store'
 import type {MonitorRuleEvidence} from '../simulation/monitorEvidence'
 import PublishedBoards from './PublishedBoards.vue'
+import PortOperationsCaseBoard from './PortOperationsCaseBoard.vue'
 import {simNodeOrigin,simNodeReturnPath} from './processReviewNavigation'
 import './business.css'
 import './scenario-pages.css'
@@ -105,6 +106,10 @@ function exportEvidence(){
         @click="router.push(simNodeReturnPath(linkedNode))">返回原工艺节点</el-button>
     </section>
 
+    <section class="tg-biz-card art-card tg-monitor-autocases"
+      data-testid="monitor-auto-case-board">
+      <PortOperationsCaseBoard mode="full" />
+    </section>
     <PublishedBoards target="/port/operations/monitor" />
     <div v-if="!current" class="tg-analysis-empty">
       <h2>尚未运行情景</h2>

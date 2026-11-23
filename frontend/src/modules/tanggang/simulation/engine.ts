@@ -136,16 +136,21 @@ export function calculateScenario(s:ScenarioDefinition):ScenarioResult{
   }
   const usableCapacity=x.capacityM3h-x.reservedM3h
   let remain=usableCapacity
+  let deliveredRaw=0
   const allocated=new Map<string,SimTerminalAssessment>()
   for(const t of [...x.terminals].sort((a,b)=>a.priority-b.priority||a.id.localeCompare(b.id))){
     const flow=Math.min(remain,t.demandM3h)
     remain-=flow
-    allocated.set(t.id,{...t,allocatedM3h:round(flow),shortageM3h:round(t.demandM3h-flow)})
+    deliveredRaw+=flow
+    allocated.set(t.id,{...t,allocatedM3h:round(flow),shortageM3h:round(Math.max(0,t.demandM3h-flow))})
   }
   const terminals=x.terminals.map(t=>allocated.get(t.id)!)
   const demand=x.terminals.reduce((n,t)=>n+t.demandM3h,0)
-  const delivered=terminals.reduce((n,t)=>n+t.allocatedM3h,0)
-  const shortage=Math.max(0,demand-delivered)
+  // Sum physical model allocation BEFORE rounding display fields.
+  // Individually rounded terminal values can differ by 0.1 m³/h and must
+  // never trigger a false supply-shortage or pump incident.
+  const delivered=deliveredRaw
+  const shortage=Math.max(0,demand-deliveredRaw)
   const change=x.poolInflowM3h-delivered
   const limit=(t:number)=>round(Math.max(0,Math.min(x.poolCapacityM3,x.poolInitialM3+change*t)))
   const hourMarks=[0,2,4,6,8,10,12,24,48,72].filter(t=>t<=x.horizonHours)
@@ -168,11 +173,11 @@ export function calculateScenario(s:ScenarioDefinition):ScenarioResult{
   const lowP=p!==null&&p<1.15
   const highC=c!==null&&c>120
   // 不使用不适用的流量绝对值作当前情景故障判断：供水需求/设备工况尚无额定数据。
-  const level:SimSeverity=status==='fault'||lowP?'critical':highC||shortage>0?'attention':'normal'
+  const level:SimSeverity=status==='fault'||lowP?'critical':highC?'attention':'normal'
   const pumpTitle=status==='fault'?'模拟泵组异常，需核查设备及供水能力':
     lowP?'模拟压力偏低，需多点核验':
     highC?'压力未越限但模拟电流偏高':
-    shortage>0?'供水存在假设缺口，建议核实运行工况':'演示条件下未发现定义的监护异常'
+    '演示条件下未发现定义的设备监护异常'
   const checks=['核对厂家运行状态和现场时序数据','检查上下游压力、阀位与备用泵条件','必要时从原告警中心核对真实事件编号']
   const rainCaptured=x.rainMm/1000*x.rainCatchmentM2*x.runoffCoefficient
   const rainDrain=x.rainDrainM3h*x.rainDurationH

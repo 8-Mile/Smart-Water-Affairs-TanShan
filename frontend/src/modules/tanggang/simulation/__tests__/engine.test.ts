@@ -10,6 +10,35 @@ describe('唐港统一情景推演计算和隔离',()=>{
     expect(r.shortageM3h).toBe(0)
     expect(r.events).toHaveLength(0)
   })
+  it('小数流量不能因单终端舍入误报供水缺口或泵组关注',()=>{
+    const scenario={...SCENARIOS.baseline,inputs:{
+      ...SCENARIOS.baseline.inputs,
+      capacityM3h:107.87,
+      terminals:[
+        {...SCENARIOS.baseline.inputs.terminals[0]!,demandM3h:33.97},
+        {...SCENARIOS.baseline.inputs.terminals[1]!,demandM3h:22.14},
+      ],
+      currentA:83.9,pressureMpa:1.209,
+    }}
+    const r=calculateScenario(scenario)
+    expect(r.demandedM3h).toBe(56.1)
+    expect(r.deliveredM3h).toBe(56.1)
+    expect(r.shortageM3h).toBe(0)
+    expect(r.events).toHaveLength(0)
+    expect(r.pumpDiagnosis.level).toBe('normal')
+  })
+  it('仅供水能力不足不应虚构泵设备监护异常',()=>{
+    const scenario={...SCENARIOS.baseline,inputs:{
+      ...SCENARIOS.baseline.inputs,
+      capacityM3h:36,
+      pressureMpa:1.22,currentA:85,pumpState:'running' as const,
+    }}
+    const result=calculateScenario(scenario)
+    expect(result.shortageM3h).toBeGreaterThan(0)
+    expect(result.events.map(x=>x.id)).toContain('SIM-SUPPLY')
+    expect(result.events.map(x=>x.id)).not.toContain('SIM-PUMP')
+    expect(result.pumpDiagnosis.level).toBe('normal')
+  })
   it('多机集中用水使供水缺口、储量预测、监护线索一致',()=>{
     const r=calculateScenario(SCENARIOS.peak)
     expect(r.demandedM3h).toBe(139)

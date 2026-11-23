@@ -9,7 +9,7 @@ import {
   WATER_PROCESSES,WATER_RELATIONSHIPS,processName,
   DEFAULT_WATER_POLICY, type ProcessId,
 } from '../simulation/waterOperations'
-import {AUTO_FRAME_INTERVAL_MS} from '../simulation/autoWaterFeed'
+import PortOperationsCaseBoard from './PortOperationsCaseBoard.vue'
 const router=useRouter()
 const store=useScenarioStore()
 const econ=computed(()=>store.waterEconomics)
@@ -21,7 +21,6 @@ const impactMap=computed(()=>new Map(store.processImpacts.map(x=>[x.systemId,x])
 const fmt=(v:number|null|undefined,precision=1)=>
   v===null||v===undefined?'—':
   v.toLocaleString('zh-CN',{maximumFractionDigits:precision,minimumFractionDigits:precision})
-const sourceTitle=(id:string)=>DEFAULT_WATER_POLICY.source.find(x=>x.id===id)?.title||id
 const metricSign=(v:number|null|undefined,unit:string)=>{
   if(v===null||v===undefined)return '不可比'
   if(Math.abs(v)<.0001)return '0 '+unit
@@ -67,32 +66,11 @@ const trend=computed(()=>{
   }).join(' ')
   return {demand:poly(s=>s.demandM3h),delivered:poly(s=>s.deliveredM3h)}
 })
-const events=computed(()=>output.value?.events||[])
 const shownAssumptions=computed(()=>DEFAULT_WATER_POLICY.source)
-const note='当前为自动更新的模拟工况，不代表真实监测、真实水价或节能验收。水源、泵效、阀门、管段及工艺可行性仍需工程确认。'
 </script>
 
 <template>
   <section class="tg-ops-section" data-testid="water-operations-overview">
-    <header class="tg-biz-card tg-ops-header">
-      <div>
-        <div class="tg-ops-overline">港区水务 · 统一业务运行</div>
-        <h2>从集水、处理、储存到供水的协同运行</h2>
-        <p>六套专业系统共用一套运行状态和分析结果；系统自动发现问题、计算供需与经济指标，人员只在需要决策时介入。</p>
-      </div>
-      <div class="tg-ops-operating">
-        <span class="tg-ops-status" data-testid="water-automatic-mode">
-          <i :class="{manual:!store.autoEnabled}"/>
-          {{store.autoEnabled?'Mock自动运行':
-            store.running?'手动情景分析':'等待数据源'}}
-        </span>
-        <small v-if="store.autoEnabled">
-          每 {{AUTO_FRAME_INTERVAL_MS/1000}} 秒刷新 · 第 {{store.autoFrame+1}} 帧
-        </small>
-        <small v-else>现场设备数据未接入</small>
-      </div>
-    </header>
-
     <template v-if="output&&econ">
       <div class="tg-ops-kpis" data-testid="water-economics-kpis">
         <div class="tg-biz-card tg-ops-kpi">
@@ -106,17 +84,19 @@ const note='当前为自动更新的模拟工况，不代表真实监测、真�
           <p>含假设达标处理回用与市政中水</p>
         </div>
         <div class="tg-biz-card tg-ops-kpi">
-          <span>同等供水量的模型电耗变化</span>
+          <span>电耗变化（同量）</span>
           <strong :class="{'tg-ops-negative':(econ.savedEnergyKwhH??0)<0}">
             {{econ.energyReductionPercent===null?'不可比':
+              (econ.savedEnergyKwhH!==null&&econ.savedEnergyKwhH<0?'↑':'↓')+
               fmt(Math.abs(econ.energyReductionPercent),1)+'%'}}
           </strong>
           <p>{{metricSign(econ.savedEnergyKwhH,'kWh/h')}} · 不是实测节能</p>
         </div>
         <div class="tg-biz-card tg-ops-kpi">
-          <span>同等供水量的模型成本变化</span>
+          <span>综合成本变化（同量）</span>
           <strong :class="{'tg-ops-negative':(econ.savedCostYuanH??0)<0}">
             {{econ.costReductionPercent===null?'不可比':
+              (econ.savedCostYuanH!==null&&econ.savedCostYuanH<0?'↑':'↓')+
               fmt(Math.abs(econ.costReductionPercent),1)+'%'}}
           </strong>
           <p>{{metricSign(econ.savedCostYuanH,'元/h')}} · 假设单价</p>
@@ -125,9 +105,8 @@ const note='当前为自动更新的模拟工况，不代表真实监测、真�
 
       <section class="tg-biz-card tg-ops-map-card" data-testid="water-network-graph">
         <div class="tg-biz-card-head">
-          <div><h2>六系统业务关联</h2>
-            <p>点击系统查看具体工艺；点击连线查看上下游依赖和证据等级</p></div>
-          <span class="tg-biz-chip">设计工艺关系 · 非经核实管道拓扑</span>
+          <h2>六系统业务关联</h2>
+          <span class="tg-biz-chip">CAD设计关系</span>
         </div>
         <div class="tg-ops-map-scroll">
           <svg viewBox="0 0 1316 547" class="tg-ops-map-svg"
@@ -191,12 +170,11 @@ const note='当前为自动更新的模拟工况，不代表真实监测、真�
               <text x="18" y="31" font-size="17" fill="#345f77" font-weight="700">
                 {{process.label}}
               </text>
-              <text x="18" y="58" font-size="12" fill="#67889b">
-                {{impactMap.get(process.id)?.level==='critical'?'需关注运行风险':
-                  impactMap.get(process.id)?.level==='attention'?'条件关注':
-                  process.id==='domestic'?'独立管理':'设计流程参考'}}
+              <text x="18" y="66" font-size="12" fill="#67889b">
+                {{impactMap.get(process.id)?.level==='critical'?'SIM风险':
+                  impactMap.get(process.id)?.level==='attention'?'SIM关注':
+                  process.id==='domestic'?'独立管理':'SIM正常'}}
               </text>
-              <text x="18" y="82" font-size="11" fill="#94a8b4">进入专业工艺 ›</text>
             </g>
             <text x="620" y="465" fill="#849dab" font-size="13">
               办公给水计量与生活污水独立展示，不参与回用节能计算
@@ -224,9 +202,8 @@ const note='当前为自动更新的模拟工况，不代表真实监测、真�
       <div class="tg-ops-grid">
         <section class="tg-biz-card tg-ops-analysis" data-testid="water-source-economics">
           <div class="tg-biz-card-head">
-            <div><h2>水源匹配及综合成本</h2>
-              <p>同一已分配水量、相同单位价格与能源核算口径</p></div>
-            <span class="tg-biz-chip">模型约束优化</span>
+            <h2>水源匹配及综合成本</h2>
+            <span class="tg-biz-chip">SIM / 模型比选</span>
           </div>
           <table class="tg-ops-economics-table">
             <thead><tr>
@@ -258,17 +235,11 @@ const note='当前为自动更新的模拟工况，不代表真实监测、真�
               <p>{{fmt(econ.energyPriority.energyKwhH)}} kWh/h · {{fmt(econ.energyPriority.specificKwhM3,3)}} kWh/m³</p>
             </div>
           </div>
-          <p class="tg-ops-analysis-note">
-            成本优先按“水费/处理费 + 电费”最小选择水源；节电优先按单位水源电耗最小选择。
-            两种方案都保持相同的已分配水量，不允许通过少供水虚报节能。回用比例提高可能增加处理电耗，
-            降低电耗也可能大幅增加自来水成本。
-          </p>
         </section>
 
         <section class="tg-biz-card tg-ops-analysis" data-testid="water-auto-diagnosis">
           <div class="tg-biz-card-head">
-            <div><h2>自动分析与处置线索</h2>
-              <p>持续监听同一Mock数据源，不需要人工调节工况</p></div>
+            <h2>运行风险与工艺影响</h2>
             <span class="tg-biz-chip">{{store.activeScenario?.title}}</span>
           </div>
           <div class="tg-ops-process-impact">
@@ -279,24 +250,13 @@ const note='当前为自动更新的模拟工况，不代表真实监测、真�
               <el-button size="small" link @click="go(impact.systemId)">查看</el-button>
             </div>
           </div>
-          <div v-if="events.length" class="tg-ops-events">
-            <strong>自动触发的规则判断（{{events.length}}）</strong>
-            <div v-for="event in events" :key="event.id">
-              <span :class="'level-'+event.level">{{event.title}}</span>
-              <small>{{event.evidence}}</small>
-              <el-button size="small" link @click="router.push(event.path)">分析依据</el-button>
-            </div>
-          </div>
-          <div v-else class="tg-ops-no-event">
-            当前模拟参数未触发已配置的异常规则，不代表真实现场已验证安全。
-          </div>
+          <PortOperationsCaseBoard mode="compact"/>
         </section>
       </div>
 
       <section class="tg-biz-card tg-ops-trend" data-testid="water-automatic-trend">
         <div class="tg-biz-card-head">
-          <div><h2>自动更新的供需与处理记录</h2>
-            <p>仅当前浏览器内存中的最近 {{store.autoHistory.length}} 个模拟数据帧，不是历史生产曲线</p></div>
+          <h2>供需趋势 · {{store.autoHistory.length}} 帧</h2>
           <span class="tg-biz-chip">需求曲线 / 分配曲线</span>
         </div>
         <svg class="tg-ops-trend-svg" viewBox="0 0 1050 95"
@@ -307,14 +267,11 @@ const note='当前为自动更新的模拟工况，不代表真实监测、真�
           <path v-if="trend.delivered" :d="trend.delivered" fill="none"
             stroke="#4a9bbb" stroke-width="3" stroke-linejoin="round"/>
         </svg>
-        <p class="tg-ops-analysis-note">随着Mock数据帧变化，缺口、储量、规则关注、源水组合与经济测算同步重新计算；
-          本页面没有自动下发泵、阀门控制指令。</p>
       </section>
 
       <section class="tg-biz-card tg-ops-model">
         <div class="tg-ops-model-head">
-          <div><strong>计算依据与工程适用边界</strong>
-            <p>关键公式、基准与优化假设应可查证，不使用无来源的“节能XX%”宣传数字。</p></div>
+          <strong>计算依据</strong>
           <el-button size="small" plain data-testid="water-assumption-toggle"
             @click="expandedAssumptions=!expandedAssumptions">
             {{expandedAssumptions?'收起':'查看计算公式与假设'}}
@@ -343,7 +300,6 @@ const note='当前为自动更新的模拟工况，不代表真实监测、真�
           <p><b>模型版本：</b>{{econ.modelVersion}} · 数据模式 SIM ·
             现场确认 false · 工程节能验收 false</p>
         </div>
-        <p class="tg-ops-boundary">{{note}}</p>
       </section>
     </template>
     <div v-else class="tg-biz-card tg-ops-model">

@@ -24,12 +24,9 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
 <template>
   <main class="tg-biz tg-analysis-page page-fill">
     <div class="tg-biz-head">
-      <div><div class="tg-page-eyebrow">水资源管理 / 生产供水保障</div><h1>港区水务协同与能效</h1>
-        <p class="tg-biz-sub">跨系统资源闭环 → 自动供需核算 → 水源组合 → 电耗和成本模型比选</p></div>
-      <div class="tg-biz-actions"><span class="tg-datamode" :class="{sim:store.running}">{{store.autoEnabled?'SIM · 自动分析':store.running?'SIM · 人工分析':'现场数据未接入'}}</span>
+      <div class="tg-biz-actions"><span class="tg-datamode" :class="{sim:store.running}" data-testid="water-automatic-mode">{{store.autoEnabled?'SIM · 自动':store.running?'SIM · 分析':'数据未接入'}}</span>
         <el-button @click="router.push('/port/process/middle?facility=EQ-P-MID')">中压供水工艺</el-button></div>
     </div>
-    <div class="tg-biz-note"><b>数据说明：</b>当前为持续更新的Mock业务数据；业务模型按统一输入实时计算。设计工艺关系未经管线端点核实，水价、能耗和泵效尚未接入现场或合同。</div>
     <PortWaterOperationsPanel />
     <details class="tg-ops-advanced-supply">
       <summary>展开原有供水专项计算、终端分配及方案比选</summary>
@@ -100,4 +97,13 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
 .tg-ops-advanced-supply>summary{font-size:12px;font-weight:650;color:#557f96;
   cursor:pointer;padding:8px 0}
 .tg-ops-advanced-supply[open]>summary{margin-bottom:14px}
+</style>
+
+<style scoped>
+.tg-analysis-page>.tg-biz-head{align-items:center;margin-bottom:12px;padding:0}
+.tg-analysis-page>.tg-biz-head h1{font-size:20px;margin:0}
+</style>
+
+<style scoped>
+.tg-analysis-page>.tg-biz-head{justify-content:flex-end;min-height:0}
 </style>

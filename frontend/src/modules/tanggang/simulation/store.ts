@@ -6,6 +6,10 @@ import {assessSimMonitor} from './monitorEvidence'
 import {analyzeSimOperationalImpact} from './impactAnalysis'
 import {AUTO_FEED_VERSION,autoScenarioAt} from './autoWaterFeed'
 import {calculateWaterEconomics,calculateProcessImpacts} from './waterOperations'
+import {
+  emptyCaseState,evaluateOperatingCases,acknowledgeOperatingCase,
+  closeRecoveredOperatingCase,activeOperatingCases,
+} from './operationsCases'
 export type SimProcessState='running'|'available'|'attention'|'fault'
 export type SimProcessSystem='fog'|'middle'|'mineral'|'rain'|'pool'|'domestic'
 export interface SimProcessCheck {
@@ -42,6 +46,26 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     eventCount:number;dataMode:'SIM';feedVersion:typeof AUTO_FEED_VERSION
   }
   const autoHistory=ref<AutoSample[]>([])
+  const autoCaseState=ref(emptyCaseState())
+  const operatingCases=computed(()=>autoCaseState.value.cases)
+  const activeCases=computed(()=>activeOperatingCases(autoCaseState.value))
+  const newCaseCount=computed(()=>activeCases.value.filter(x=>x.status==='new').length)
+  const pendingCaseCount=computed(()=>activeCases.value.length)
+  function acknowledgeCase(id:string,note:string){
+    if(!running.value)throw Error('当前没有有效的Mock运行记录')
+    autoCaseState.value=acknowledgeOperatingCase(
+      autoCaseState.value,id,note,new Date().toISOString())
+  }
+  function closeRecoveredCase(id:string,note:string){
+    if(!autoEnabled.value)throw Error('自动数据流未运行，无法执行连续恢复复核')
+    autoCaseState.value=closeRecoveredOperatingCase(
+      autoCaseState.value,id,note,new Date().toISOString())
+  }
+  function updateOperatingCases(frame:number,scenario:ReturnType<typeof autoScenarioAt>){
+    autoCaseState.value=evaluateOperatingCases(
+      autoCaseState.value,calculateScenario(scenario),frame,new Date().toISOString(),
+    )
+  }
   const autoLastUpdated=ref('')
   function appendAutoSample(frame:number,scenario:ReturnType<typeof autoScenarioAt>){
     const snapshot=calculateScenario(scenario)
@@ -174,6 +198,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     runUid.value=crypto.randomUUID()
     startedAt.value=new Date().toISOString()
     appendAutoSample(0,scenario)
+    updateOperatingCases(0,scenario)
   }
   function advanceAuto(){
     if(!autoEnabled.value)return
@@ -193,6 +218,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
       startedAt.value=new Date().toISOString()
     }
     appendAutoSample(nextFrame,scenario)
+    updateOperatingCases(nextFrame,scenario)
     window.dispatchEvent(new CustomEvent('tanggang:scenario-visual',{
       detail:{scenarioId:scenario.id,frame:nextFrame,
         dataMode:'SIM',simulationOnly:true,automatic:true},
@@ -237,6 +263,9 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     activeInputs.value=null
     monitorReview.value=null
     processChecks.value=[]
+    autoCaseState.value=emptyCaseState()
+    autoHistory.value=[]
+    autoLastUpdated.value=''
     startedAt.value=''
     runUid.value=''
     window.dispatchEvent(new CustomEvent('tanggang:scenario-visual',{
@@ -250,5 +279,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     processChecks,recordProcessCheck,beginMonitorReview,recordMonitorReview,
     running,start,stop,startAuto,advanceAuto,autoEnabled,autoFrame,
     autoHistory,autoLastUpdated,waterEconomics,processImpacts,
+    operatingCases,activeCases,newCaseCount,pendingCaseCount,
+    acknowledgeCase,closeRecoveredCase,
     openConsole,closeConsole}
 })
