@@ -10,8 +10,9 @@ import {
 } from './processSpecialist'
 import {useProcessSpecialistStore} from './processSpecialistStore'
 import PortSpecialistExercise from './PortSpecialistExercise.vue'
-import PortProcessSchematic from './PortProcessSchematic.vue'
+import PortProcessEffect from './PortProcessEffect.vue'
 import PortFogDiagram from './PortFogDiagram.vue'
+import type {EditableProcessSystemId} from '@/api/tanggangProcessDiagrams'
 import PortObjectBindingDialog from './PortObjectBindingDialog.vue'
 import {usePermissions} from '@/utils/permissions'
 import {
@@ -26,6 +27,7 @@ const route=useRoute(),router=useRouter(),sim=useScenarioStore()
 const specialist=useProcessSpecialistStore()
 const {hasPerm}=usePermissions()
 const diagramEditing=ref(false)
+const viewMode=ref<'effect'|'diagram'>('diagram')
 const canBind=computed(()=>hasPerm('eq:update'))
 const catalog=ref<TanggangCatalog|null>(null)
 const error=ref('')
@@ -128,7 +130,7 @@ async function loadObjectLinks(id:string){
 }
 watch(sysId,id=>{void loadObjectLinks(id)},{immediate:true})
 // Vue Router reuses this view on /port/process/:systemId transitions.
-watch(sysId,()=>{diagramEditing.value=false})
+watch(sysId,()=>{diagramEditing.value=false;viewMode.value='diagram'})
 watch(()=>[selectedId.value,sim.runUid],()=>{
   nodeNote.value=selectedCheck.value?.note||''
   nodeReviewError.value=''
@@ -173,7 +175,7 @@ onMounted(async()=>{
 })
 function selectFacility(id:string){
   if(!unique.value.some(x=>x.id===id))return
-  void router.replace({path:route.path,query:{facility:id}}).then(async()=>{
+  void router.replace({path:route.path,query:{...route.query,facility:id}}).then(async()=>{
     if(window.innerWidth<=900){
       await nextTick()
       detailPanel.value?.scrollIntoView({behavior:'smooth',block:'start'})
@@ -190,14 +192,21 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
 
 <template>
   <main class="tg-biz tg-process-page page-fill">
-    <div class="tg-biz-head">
-      <div><h1>{{displayName}}</h1></div>
-      <div class="tg-biz-actions">
-        <span v-if="sim.running" class="tg-datamode sim">SIM · {{sim.activeScenario?.title}}</span>
-        <el-button v-if="workflow.primary" plain
-          @click="router.push(workflow.primary.path)">{{workflow.primary.label}}</el-button>
-        <el-button plain @click="router.push('/dashboard')">返回港区</el-button>
+    <div class="tg-process-view-switch" data-testid="process-view-switch"
+      aria-label="子系统显示模式">
+      <div class="tg-process-switch-buttons" role="group" aria-label="选择效果图或组态图">
+        <button type="button" :class="{active:viewMode==='effect'}"
+          :aria-pressed="viewMode==='effect'" :disabled="diagramEditing"
+          data-testid="process-view-effect"
+          @click="viewMode='effect'">效果图</button>
+        <button type="button" :class="{active:viewMode==='diagram'}"
+          :aria-pressed="viewMode==='diagram'"
+          data-testid="process-view-diagram"
+          @click="viewMode='diagram'">组态图</button>
       </div>
+      <span>{{viewMode==='effect'?'CAD设计设施效果示意 · 非现场影像':
+        diagramEditing?'当前正在编辑组态，保存或退出后可切换效果图':
+        '二维可编辑组态 · 草稿与运行发布版分离'}}</span>
     </div>
     <div v-if="error" class="tg-biz-empty">{{error}}</div>
     <div v-else-if="!catalog" class="tg-biz-empty">正在读取工程资料…</div>
@@ -215,7 +224,9 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
       </div>
       <div class="tg-process-grid" :class="{'is-diagram-editing':diagramEditing}">
         <div class="tg-process-main">
-          <PortFogDiagram v-if="sysId==='fog'"
+          <PortFogDiagram v-if="viewMode==='diagram'" :key="sysId"
+            :system-id="sysId as EditableProcessSystemId"
+            :system-name="displayName" :sections="schematic?.sections||[]"
             :facilities="unique"
             :selected-facility-id="selectedId"
             :mock-by-facility="mockByFacility"
@@ -223,16 +234,11 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
             :sim-running="sim.running"
             @select-facility="selectFacility"
             @editing-change="diagramEditing=$event"/>
-          <PortProcessSchematic v-else :sections="schematic?.sections||[]"
+          <PortProcessEffect v-else :sections="schematic?.sections||[]"
             :selected-facility-id="selectedId"
-            :linked-facility-ids="linkedFacilityIds"
-            :reviewed-facility-ids="reviewedFacilityIds"
             :mock-by-facility="mockByFacility"
-            :sim-running="sim.running"
             :source-layers="system.focusPipeLayers"
-            @select="selectFacility"
-            @focus-attention="focusNext('attention')"
-            @focus-reviewed="focusNext('reviewed')"/>
+            @select="selectFacility"/>
           <PortSpecialistExercise v-if="specialistSystem&&!diagramEditing"
             :system-id="specialistSystem"
             :global-sim-running="sim.running" @select-facility="selectFacility"/>
@@ -251,10 +257,10 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
             </div>
             <div v-if="selectedMock" class="tg-process-mock" data-testid="process-mock-detail">
               <div class="tg-biz-card-head">
-                <h3>模拟运行状态</h3>
+                <h3>演示运行状态</h3>
                 <span class="tg-biz-chip" :class="{warn:selectedMock.state==='fault'||selectedMock.state==='attention'}">
-                  {{specialistSelected?'专业Mock演练':
-                    selectedMock.context==='ACTIVE_SCENARIO'?'SIM情景':'Mock基线'}}
+                  {{specialistSelected?'模拟工况':
+                    selectedMock.context==='ACTIVE_SCENARIO'?'模拟情景':'演示基线'}}
                 </span>
               </div>
               <div class="tg-process-mock-state" :class="selectedMock.state">
@@ -285,11 +291,11 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
                 <span class="tg-mini-note">仅浏览器当前情景</span>
               </div>
               <div class="tg-process-stepbar">
-                <span>查看Mock状态</span><b>›</b><span>人工核查</span><b>›</b>
+                <span>查看模拟状态</span><b>›</b><span>人工核查</span><b>›</b>
                 <span>{{workflow.supportsDecision?'规则研判':'节点留痕'}}</span><b>›</b><span>模拟复盘</span>
               </div>
               <p v-if="!sim.running" class="tg-mini-note">
-                当前为静态Mock基线。启动统一情景后可登记本轮模拟核查意见。
+                当前为静态演示基线。启动统一情景后可登记本轮模拟核查意见。
               </p>
               <template v-else>
                 <el-input v-model="nodeNote" type="textarea" :rows="3"
@@ -397,6 +403,18 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
 </template>
 
 <style scoped>
+.tg-process-view-switch{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:9px 16px;margin-bottom:14px;min-width:0}
+.tg-process-switch-buttons{display:inline-flex;padding:3px;gap:2px;border:1px solid #d8e6ed;
+  border-radius:8px;background:rgba(236,245,250,.72)}
+.tg-process-switch-buttons button{border:0;background:transparent;cursor:pointer;
+  font:inherit;font-size:12px;font-weight:650;color:#6e90a2;min-width:92px;
+  padding:7px 18px;border-radius:5px}
+.tg-process-switch-buttons button.active{color:#326d8d;background:#fff;
+  box-shadow:0 1px 5px rgba(59,115,147,.14)}
+.tg-process-switch-buttons button:focus-visible{outline:2px solid #4d9bbf;outline-offset:2px}
+.tg-process-switch-buttons button:disabled{opacity:.43;cursor:not-allowed}
+.tg-process-view-switch>span{font-size:11px;color:#829baa}
 .tg-process-page{min-width:0}
 .tg-process-main{min-width:0;display:grid;gap:13px}
 .tg-process-grid{display:grid;grid-template-columns:minmax(0,1.92fr) minmax(310px,.88fr);

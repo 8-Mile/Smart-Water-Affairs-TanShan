@@ -28,8 +28,10 @@ export interface ProcessDiagramConnection {
   medium:'water'|'signal'
   verification:'illustrative'
 }
+export type EditableProcessSystemId='fog'|'middle'|'mineral'|'rain'|'pool'|'domestic'
+
 export interface ProcessDiagramDocument {
-  system_id:'fog'
+  system_id:EditableProcessSystemId
   name:string
   view_box:{width:number;height:number}
   background:'light-grid'
@@ -37,7 +39,7 @@ export interface ProcessDiagramDocument {
   connections:ProcessDiagramConnection[]
 }
 export interface ProcessDiagramRecord {
-  system_id:'fog'
+  system_id:EditableProcessSystemId
   name:string
   draft:ProcessDiagramDocument|null
   published:ProcessDiagramDocument|null
@@ -55,15 +57,28 @@ export interface ProcessDiagramRevision {
   created_at:string
   actor_id:number
 }
-const path='/tanggang/process-diagrams/fog'
+const path=(systemId:EditableProcessSystemId)=>'/tanggang/process-diagrams/'+systemId
 
-export const fetchFogProcessDiagram=()=>http.get<ApiResponse<ProcessDiagramRecord>>(path,{silent:true})
+export const fetchProcessDiagram=(systemId:EditableProcessSystemId)=>
+  http.get<ApiResponse<ProcessDiagramRecord>>(path(systemId),{silent:true})
+export const saveProcessDiagramDraft=(systemId:EditableProcessSystemId,
+  diagram:ProcessDiagramDocument,revision:number)=>
+  http.put<ApiResponse<ProcessDiagramRecord>>(path(systemId)+'/draft',
+    {diagram,revision},{silent:true})
+export const publishProcessDiagram=(systemId:EditableProcessSystemId,revision:number)=>
+  http.post<ApiResponse<ProcessDiagramRecord>>(path(systemId)+'/publish',{revision},{silent:true})
+export const fetchProcessDiagramHistory=(systemId:EditableProcessSystemId)=>
+  http.get<ApiResponse<ProcessDiagramRevision[]>>(path(systemId)+'/history',{silent:true})
+export const restoreProcessDiagram=(systemId:EditableProcessSystemId,
+  version:number,revision:number)=>
+  http.post<ApiResponse<ProcessDiagramRecord>>(path(systemId)+'/restore',
+    {version,revision},{silent:true})
+
+// Backward compatible entry points for the existing 5144-style fog editor.
+export const fetchFogProcessDiagram=()=>fetchProcessDiagram('fog')
 export const saveFogDiagramDraft=(diagram:ProcessDiagramDocument,revision:number)=>
-  http.put<ApiResponse<ProcessDiagramRecord>>(path+'/draft',{diagram,revision},{silent:true})
-export const publishFogDiagram=(revision:number)=>
-  http.post<ApiResponse<ProcessDiagramRecord>>(path+'/publish',{revision},{silent:true})
-export const fetchFogDiagramHistory=()=>http.get<ApiResponse<ProcessDiagramRevision[]>>(
-  path+'/history',{silent:true},
-)
+  saveProcessDiagramDraft('fog',diagram,revision)
+export const publishFogDiagram=(revision:number)=>publishProcessDiagram('fog',revision)
+export const fetchFogDiagramHistory=()=>fetchProcessDiagramHistory('fog')
 export const restoreFogDiagram=(version:number,revision:number)=>
-  http.post<ApiResponse<ProcessDiagramRecord>>(path+'/restore',{version,revision},{silent:true})
+  restoreProcessDiagram('fog',version,revision)

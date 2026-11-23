@@ -1,6 +1,11 @@
 import type {
   FogSymbolId,ProcessDiagramDocument,ProcessDiagramNode,ProcessDiagramConnection,
+  EditableProcessSystemId,
 } from '@/api/tanggangProcessDiagrams'
+import type {TanggangDevice} from '../mapping/tanggangCatalog'
+import type {ProcessSchematicSection} from './processSchematic'
+import {layoutProcessRegions} from './processDiagramLayout'
+import {processDeviceKind} from './processMock'
 
 export const FOG_SYMBOLS:Readonly<Record<FogSymbolId,{
   name:string;width:number;height:number;asset:string|null
@@ -66,25 +71,28 @@ export function defaultFogDiagram():ProcessDiagramDocument{
 }
 
 /** No arbitrary source paths, scripts or verified pipe claims. */
-export function validateFogDiagram(d:ProcessDiagramDocument):string[]{
+export function validateFogDiagram(d:ProcessDiagramDocument,
+  facilities:ReadonlyArray<Pick<TanggangDevice,'id'>>=[]):string[]{
   const errors:string[]=[]
-  if(d.system_id!=='fog')errors.push('只能编辑射雾系统')
+  const supported=['fog','middle','mineral','rain','pool','domestic']
+  if(!supported.includes(d.system_id))errors.push('不支持的工艺系统')
   if(d.nodes.length<1||d.nodes.length>60)errors.push('图元数量不合法')
   if(d.connections.length>60)errors.push('工艺连接超过上限')
   if(d.view_box.width<400||d.view_box.width>2200||
     d.view_box.height<300||d.view_box.height>1400){
     errors.push('画布尺寸不合法')
   }
-  const ids=new Set<string>(),facilities=new Set<string>()
+  const ids=new Set<string>(),boundIds=new Set<string>()
+  const allowed=new Set(facilities.length?facilities.map(x=>x.id):Object.keys(FOG_FACILITIES))
   for(const n of d.nodes){
     if(ids.has(n.id)||!/^[A-Za-z0-9_-]{2,60}$/.test(n.id))
       errors.push('图元ID重复或非法')
     ids.add(n.id)
     if(!(n.symbol_id in FOG_SYMBOLS))errors.push('未登记的图元素材')
     if(n.facility_id){
-      if(!(n.facility_id in FOG_FACILITIES))errors.push('未知的CAD设计设施')
-      if(facilities.has(n.facility_id))errors.push('同一设施不可重复绑定')
-      facilities.add(n.facility_id)
+      if(!allowed.has(n.facility_id))errors.push('未知的CAD设计设施')
+      if(boundIds.has(n.facility_id))errors.push('同一设施不可重复绑定')
+      boundIds.add(n.facility_id)
     }
     if(n.point_keys.length&& !n.facility_id)errors.push('未绑定设施不能配置测点')
     if(n.point_keys.length>10||n.point_keys.length!==new Set(n.point_keys).size)
@@ -186,4 +194,50 @@ export function fogTelemetryPlacement(
   const x=Math.min(canvas.width-width-12,Math.max(12,desiredX))
   const y=Math.min(canvas.height-76,Math.max(73,desiredY))
   return {x:x-node.position.x,y:y-node.position.y,width}
+}
+
+
+/**
+ * Reuse the fog editor's proven node/connection schema for the other five
+ * systems. Initial canvas positions are UI-only CAD region groupings.
+ * No pipe topology, device installations or telemetry are inferred.
+ */
+export function defaultProcessDiagram(
+  systemId:EditableProcessSystemId,systemName:string,
+  sections:ProcessSchematicSection[],
+):ProcessDiagramDocument{
+  if(systemId==='fog')return defaultFogDiagram()
+  const layout=layoutProcessRegions(sections)
+  const pickSymbol=(d:TanggangDevice):FogSymbolId=>{
+    const kind=processDeviceKind(d)
+    if(kind==='pump')return 'centrifugal_pump'
+    if(kind==='pool')return 'water_tank'
+    if(kind==='valve'||kind==='gate')return 'butterfly_valve'
+    if(kind==='meter')return 'flow_meter'
+    if(kind==='pipe')return 'pipe_straight'
+    if(kind==='treatment')return 'y_strainer'
+    return 'generic_equipment'
+  }
+  const width=layout.width
+  const height=Math.max(330,layout.height+24)
+  const nodes:ProcessDiagramNode[]=layout.regions.flatMap(region=>
+    region.nodes.map(({device,x,y},i)=>{
+      const symbol_id=pickSymbol(device)
+      const spec=FOG_SYMBOLS[symbol_id]
+      const w=Math.min(spec.width,154)
+      const h=Math.min(spec.height,88)
+      return {
+        id:'cad-'+device.id.replace(/[^A-Za-z0-9_-]/g,'-'),
+        symbol_id,facility_id:device.id,label:device.name,
+        position:{x:x+Math.max(0,(175-w)/2),y:y+6},
+        size:{width:w,height:h},point_keys:[],
+        visible:true,locked:false,
+      }
+    }),
+  )
+  return {
+    system_id:systemId,name:systemName+' · 工艺组态图',
+    view_box:{width,height},background:'light-grid',
+    nodes,connections:[],
+  }
 }

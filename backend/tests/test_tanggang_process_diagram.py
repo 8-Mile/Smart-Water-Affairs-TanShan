@@ -184,11 +184,51 @@ def test_reject_cross_version_and_untrusted_symbols_points_connections(env):
         assert db.query(Equipment).count()==0
 
 
-def test_only_supported_fog_editor_endpoint_is_exposed(env):
+def test_six_process_diagrams_have_isolated_drafts_and_published_versions(env):
+    from app.api.tanggang_process_diagram import CAD_FACILITIES,CAD_POINT_FIELDS,SYSTEMS
     client,current,Session=env
     current['name']='manager'
-    for sid in ['middle','mineral','rain','pool','domestic','../system']:
+    for sid in SYSTEMS:
+        endpoint='/api/v1/tanggang/process-diagrams/'+sid
+        first=client.get(endpoint)
+        assert first.status_code==200,first.text
+        assert first.json()['data']['system_id']==sid
+        facility=sorted(CAD_FACILITIES[sid])[0]
+        point=sorted(CAD_POINT_FIELDS[facility])[0]
+        diagram={
+            'system_id':sid,'name':SYSTEMS[sid]+'设计组态',
+            'view_box':{'width':1160,'height':500},'background':'light-grid',
+            'nodes':[{
+                'id':'cad-node-1','symbol_id':'generic_equipment',
+                'facility_id':facility,'label':'CAD设施',
+                'position':{'x':140,'y':160},
+                'size':{'width':130,'height':90},
+                'point_keys':[point],'visible':True,'locked':False,
+            }],
+            'connections':[],
+        }
+        saved=client.put(endpoint+'/draft',json={'revision':0,'diagram':diagram})
+        assert saved.status_code==200,saved.text
+        assert saved.json()['data']['published'] is None
+        published=client.post(endpoint+'/publish',json={'revision':1})
+        assert published.status_code==200,published.text
+        assert published.json()['data']['published']['system_id']==sid
+        assert published.json()['data']['published_version']==1
+        assert client.get(endpoint+'/history').json()['data'][0]['version']==1
+        for other in SYSTEMS:
+            if other==sid:continue
+            another=client.get('/api/v1/tanggang/process-diagrams/'+other).json()['data']
+            assert another['published_version']==(1 if list(SYSTEMS).index(other)<list(SYSTEMS).index(sid) else 0)
+    with Session() as db:
+        assert db.query(TanggangProcessDiagram).count()==6
+        assert db.query(Equipment).count()==0
+        assert db.query(AiAuditLog).count()==0
+
+
+def test_unknown_process_diagram_is_rejected(env):
+    client,current,Session=env
+    current['name']='manager'
+    for sid in ['not-a-system','../system']:
         from urllib.parse import quote
         r=client.get('/api/v1/tanggang/process-diagrams/'+quote(sid,safe=''))
         assert r.status_code in [404,400],(sid,r.status_code)
-    assert client.get(API).status_code==200

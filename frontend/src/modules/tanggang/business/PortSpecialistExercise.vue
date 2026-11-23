@@ -51,9 +51,9 @@ function finish(){
     formError.value=''
     store.finish(props.systemId,note.value)
     expanded.value=false
-    ElMessage.success('专业Mock演练已完成；仅保存在当前浏览器内存')
+    ElMessage.success('模拟工况已完成；仅保存在当前浏览器内存')
   }catch(e){
-    formError.value=e instanceof Error?e.message:'Mock演练记录失败'
+    formError.value=e instanceof Error?e.message:'模拟工况记录失败'
   }
 }
 function downloadRecord(){
@@ -61,13 +61,13 @@ function downloadRecord(){
   const file={
     kind:'TANGGANG_SPECIALIST_MOCK_EXERCISE',
     ...record.value,
-    declaration:'仅专业Mock操作演练，不构成真实工艺运行、现场核验、告警或维修工单',
+    declaration:'仅软件模拟工况演练，不构成真实工艺运行、现场核验、告警或维修工单',
   }
   const blob=new Blob([JSON.stringify(file,null,2)],{type:'application/json'})
   const url=URL.createObjectURL(blob)
   const a=document.createElement('a')
   a.href=url
-  a.download='唐港-'+props.systemId+'-专业Mock演练.json'
+  a.download='唐港-'+props.systemId+'-模拟工况.json'
   document.body.append(a);a.click();a.remove()
   window.setTimeout(()=>URL.revokeObjectURL(url),1600)
 }
@@ -76,7 +76,7 @@ function downloadRecord(){
 <template>
   <section class="tg-biz-card tg-specialist" data-testid="specialist-exercise">
     <div class="tg-biz-card-head">
-      <h2>专业Mock工艺演练</h2>
+      <h2>模拟工况 · 仅供演示</h2>
       <span class="tg-specialist-mode">软件演示 · 无设备控制</span>
     </div>
     <div class="tg-specialist-select">
@@ -84,8 +84,8 @@ function downloadRecord(){
       <el-select id="tg-specialist-mode"
         :model-value="store.selected[systemId]||''"
         :disabled="globalSimRunning"
-        clearable placeholder="选择本系统Mock工况"
-        aria-label="选择专业Mock演练工况"
+        clearable placeholder="选择模拟工况"
+        aria-label="选择模拟工况"
         @change="onSelect">
         <el-option v-for="option in caseOptions" :key="option.value"
           :label="option.label" :value="option.value"/>
@@ -95,13 +95,13 @@ function downloadRecord(){
         @click="store.reset(systemId)">重置</el-button>
     </div>
     <div v-if="globalSimRunning" class="tg-specialist-notice" role="status">
-      当前统一供水/雨水SIM正在运行。专业Mock演练暂时停用，避免两套独立模型混用。
+      当前统一供水/雨水SIM正在运行。模拟工况暂时停用，避免两套独立模型混用。
       可从统一情景控制台退出SIM后继续。
     </div>
     <template v-else-if="activeCase">
       <div class="tg-specialist-headline">
         <strong>{{activeCase.outcomeTitle}}</strong>
-        <span v-if="activeCase.outcome==='attention'">Mock提示</span>
+        <span v-if="activeCase.outcome==='attention'">模拟提示</span>
       </div>
       <p class="tg-specialist-rule">{{activeCase.rule}}</p>
       <div class="tg-specialist-compact">
@@ -109,14 +109,14 @@ function downloadRecord(){
         <el-button v-if="affectedIds.length" size="small" plain
           data-testid="specialist-focus"
           @click="emit('selectFacility',affectedIds[0]!)">
-          定位Mock关注节点（{{affectedIds.length}}）
+          定位模拟关注节点（{{affectedIds.length}}）
         </el-button>
         <el-button size="small" link type="primary" @click="expanded=!expanded">
           {{expanded?'收起演练操作':record?'查看演练过程':'展开演练操作'}}
         </el-button>
       </div>
       <div v-if="record&&!expanded" class="tg-specialist-summary">
-        <strong>本轮Mock已完成 · 无生产事件</strong>
+        <strong>本轮模拟已完成 · 无生产事件</strong>
         <span>{{record.operator_note}}</span>
         <el-button size="small" plain @click="downloadRecord">导出演练记录</el-button>
       </div>
@@ -137,7 +137,7 @@ function downloadRecord(){
               <el-button size="small" link type="primary"
                 @click="emit('selectFacility',step.facilityId)">定位设施</el-button>
               <el-checkbox :model-value="checked.includes(step.id)"
-                @change="toggleCheckpoint(step.id,$event)">已查看Mock</el-checkbox>
+                @change="toggleCheckpoint(step.id,$event)">已查看演示数据</el-checkbox>
             </div>
           </div>
         </div>
@@ -150,16 +150,16 @@ function downloadRecord(){
       <div class="tg-biz-actions tg-specialist-footer">
         <el-button v-if="!record" size="small" type="primary" plain
           data-testid="specialist-finish" :disabled="checked.length!==activeCase.checkpoints.length||note.trim().length<8"
-          @click="finish">完成专业Mock演练</el-button>
+          @click="finish">完成模拟工况</el-button>
         <template v-else>
-          <span class="tg-specialist-success">本轮Mock已完成 · 未产生生产事件</span>
+          <span class="tg-specialist-success">本轮模拟已完成 · 未产生生产事件</span>
           <el-button size="small" plain @click="downloadRecord">导出演练记录</el-button>
         </template>
       </div>
       </template>
     </template>
     <p v-else class="tg-specialist-empty">
-      根据CAD资料中的实际设施类别选择一项Mock工况，逐个定位设计节点并记录模拟检查。
+      根据CAD资料中的实际设施类别选择一项模拟工况，逐个定位设计节点并记录模拟检查。
       这与统一供水/雨水SIM相互独立，不生成正式告警、工单或PLC指令。
     </p>
   </section>

@@ -4,6 +4,7 @@ No arbitrary HTML/JS/SVG, network image URLs, control commands or telemetry
 writes. Illustrative connections are never certified physical water pipes.
 """
 import json
+from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
@@ -19,15 +20,21 @@ from app.models.tanggang_process_diagram import (
 
 router = APIRouter(prefix="/tanggang/process-diagrams", tags=["tanggang-process-diagrams"])
 
-# First implemented CAD-anchored sample. Six-system generalization is a separate
-# release; do not pretend the other five layouts have been migrated/published.
-SYSTEMS = {"fog": "射雾器除尘"}
-CAD_FACILITIES = {"fog": {"EQ-P-FOG", "EQ-Y-FOG", "EQ-P-PLC"}}
-CAD_POINT_FIELDS = {
-    "EQ-P-FOG": {"泵运行状态", "出口压力", "供水流量"},
-    "EQ-Y-FOG": {"启停状态", "故障", "温度", "压力"},
-    "EQ-P-PLC": {"控制方式", "通讯状态", "报警"},
+# Whitelist is derived from the project's versioned CAD equipment inventories.
+# This remains a *design* mapping, never a claim about field-installed devices.
+# The pinned manifest ships WITH the backend. Otherwise standalone backend
+# deployments would depend on a frontend source directory being mounted.
+_MANIFEST = Path(__file__).resolve().parents[1] / "resources" / "tanggang_process_facilities.json"
+with _MANIFEST.open(encoding="utf-8") as f:
+    _cad_manifest = json.load(f)
+SYSTEMS = {row["id"]: row["name"] for row in _cad_manifest["systems"]}
+CAD_FACILITIES = {
+    row["id"]: set(row["facility_ids"]) for row in _cad_manifest["systems"]
 }
+CAD_POINT_FIELDS = {
+    facility: set(fields) for facility, fields in _cad_manifest["fields"].items()
+}
+assert set(SYSTEMS) == {"fog", "middle", "mineral", "rain", "pool", "domestic"}
 SYMBOLS = {
     "fog_cannon", "water_tank", "centrifugal_pump", "pressure_gauge",
     "flow_meter", "butterfly_valve", "label", "generic_equipment",
@@ -91,7 +98,7 @@ class DiagramConnection(BaseModel):
 
 class DiagramDocument(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    system_id: Literal["fog"]
+    system_id: Literal["fog", "middle", "mineral", "rain", "pool", "domestic"]
     name: str = Field(min_length=2, max_length=80)
     view_box: DiagramCanvasSize
     background: Literal["light-grid"] = "light-grid"
@@ -170,10 +177,10 @@ def _entry(db, sid: str):
     ).first()
 
 
-def _response(row, can_edit: bool):
+def _response(row, can_edit: bool, system_id: str):
     return {
-        "system_id": row.system_id if row else "fog",
-        "name": "射雾器除尘",
+        "system_id": row.system_id if row else system_id,
+        "name": SYSTEMS[system_id],
         "draft": json.loads(row.draft_json) if row and row.draft_json and can_edit else None,
         "published": json.loads(row.published_json) if row and row.published_json else None,
         "revision": row.draft_revision if row else 0,
@@ -196,7 +203,7 @@ def _rev(db, row, action, actor):
 @router.get("/{system_id}")
 def fetch_diagram(system_id: str, db: DbSession, user: CurrentUser):
     row = _entry(db, system_id)
-    return ok(_response(row, _edit(db, user)))
+    return ok(_response(row, _edit(db, user), system_id))
 
 
 @router.put("/{system_id}/draft")
@@ -224,7 +231,7 @@ def save_draft(system_id: str, body: SaveDraftBody, db: DbSession, user: Current
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="并发组态编辑冲突") from None
-    return ok(_response(row, True))
+    return ok(_response(row, True, system_id))
 
 
 @router.post("/{system_id}/publish")
@@ -243,7 +250,7 @@ def publish(system_id: str, body: RevisionActionBody, db: DbSession, user: Curre
     row.updated_by = user.id
     _rev(db, row, "publish", user.id)
     db.commit()
-    return ok(_response(row, True))
+    return ok(_response(row, True, system_id))
 
 
 @router.get("/{system_id}/history")
@@ -281,4 +288,4 @@ def restore(system_id: str, body: RestoreBody, db: DbSession, user: CurrentUser)
     row.updated_by = user.id
     _rev(db, row, "restore", user.id)
     db.commit()
-    return ok(_response(row, True))
+    return ok(_response(row, True, system_id))

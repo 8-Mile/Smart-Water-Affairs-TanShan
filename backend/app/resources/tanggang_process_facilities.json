@@ -1,0 +1,291 @@
+{
+  "source_systems": "l1-v2_5/systems-v2.5.json",
+  "source_regions": "l1-v2_3/region-equipment-v2.3.json",
+  "systems": [
+    {
+      "id": "fog",
+      "name": "射雾器除尘",
+      "facility_ids": [
+        "EQ-Y-FOG",
+        "EQ-P-FOG",
+        "EQ-P-PLC"
+      ]
+    },
+    {
+      "id": "middle",
+      "name": "中压供水",
+      "facility_ids": [
+        "EQ-Y-DUST",
+        "EQ-Y-WATER",
+        "EQ-P-MID",
+        "EQ-P-METER",
+        "EQ-P-PLC",
+        "EQ-WASH-PUMP",
+        "EQ-BERTH-FLUSH"
+      ]
+    },
+    {
+      "id": "mineral",
+      "name": "含矿污水处理",
+      "facility_ids": [
+        "EQ-NPOOL-LIFT",
+        "EQ-NPOOL-LIFT2",
+        "EQ-NPOOL-GRID",
+        "EQ-NPOOL-RADAR",
+        "EQ-SPOOL-LIFT",
+        "EQ-SPOOL-LIFT2",
+        "EQ-SPOOL-SUCTION",
+        "EQ-WWT-PURIFIER",
+        "EQ-WWT-DOSING",
+        "EQ-WWT-SLUDGE",
+        "EQ-WWT-FILTER",
+        "EQ-WWT-CLEAN",
+        "EQ-WWT-WQ",
+        "EQ-WWT-PLC",
+        "EQ-ECO-PUMP",
+        "EQ-ECO-VALVE"
+      ]
+    },
+    {
+      "id": "rain",
+      "name": "雨水收集",
+      "facility_ids": [
+        "EQ-Y-DRAIN",
+        "EQ-NPOOL-POOL",
+        "EQ-NPOOL-LIFT",
+        "EQ-NPOOL-RADAR",
+        "EQ-NPOOL-GATE",
+        "EQ-SPOOL-POOL",
+        "EQ-SPOOL-LIFT",
+        "EQ-SPOOL-RADAR",
+        "EQ-SPOOL-GATE",
+        "EQ-BERTH-DRAIN"
+      ]
+    },
+    {
+      "id": "pool",
+      "name": "水池供水",
+      "facility_ids": [
+        "EQ-DP-TANK",
+        "EQ-DP-RADAR",
+        "EQ-DP-VALVE",
+        "EQ-DP-METER",
+        "EQ-P-FOG",
+        "EQ-P-MID",
+        "EQ-P-METER",
+        "EQ-WWT-CLEAN",
+        "EQ-ECO-PUMP",
+        "EQ-ECO-LEVEL",
+        "EQ-ECO-METER"
+      ]
+    },
+    {
+      "id": "domestic",
+      "name": "生活污水处理",
+      "facility_ids": [
+        "EQ-DOM-SEWAGE",
+        "EQ-DOM-LINK",
+        "EQ-DOM-METER"
+      ]
+    }
+  ],
+  "fields": {
+    "EQ-Y-FOG": [
+      "启停状态",
+      "故障",
+      "温度",
+      "压力"
+    ],
+    "EQ-Y-DUST": [
+      "总管压力",
+      "供水流量"
+    ],
+    "EQ-Y-FIRE": [
+      "消防管网压力"
+    ],
+    "EQ-Y-DRAIN": [
+      "闸门状态",
+      "积水液位"
+    ],
+    "EQ-Y-WATER": [
+      "加水量",
+      "远传水表读数"
+    ],
+    "EQ-P-FOG": [
+      "泵运行状态",
+      "出口压力",
+      "供水流量"
+    ],
+    "EQ-P-MID": [
+      "泵运行状态",
+      "出口流量",
+      "出口压力",
+      "故障"
+    ],
+    "EQ-P-FIREOUT": [
+      "泵状态",
+      "消防压力"
+    ],
+    "EQ-P-FIREIN": [
+      "泵状态",
+      "消防压力"
+    ],
+    "EQ-P-PLC": [
+      "控制方式",
+      "通讯状态",
+      "报警"
+    ],
+    "EQ-P-METER": [
+      "瞬时流量",
+      "累计流量",
+      "压力"
+    ],
+    "EQ-DP-TANK": [
+      "液位",
+      "可用水量",
+      "消防保留水量"
+    ],
+    "EQ-DP-RADAR": [
+      "实时液位",
+      "高/低/消防液位报警"
+    ],
+    "EQ-DP-VALVE": [
+      "电动阀开度",
+      "开关状态",
+      "故障"
+    ],
+    "EQ-DP-METER": [
+      "累计补水量",
+      "进水瞬时流量"
+    ],
+    "EQ-NPOOL-POOL": [
+      "液位",
+      "刮泥状态"
+    ],
+    "EQ-NPOOL-LIFT": [
+      "泵启停",
+      "提升井液位",
+      "泵运行时间"
+    ],
+    "EQ-NPOOL-GRID": [
+      "格栅运行状态"
+    ],
+    "EQ-NPOOL-RADAR": [
+      "液位",
+      "液位报警"
+    ],
+    "EQ-NPOOL-LIFT2": [
+      "二次提升流量",
+      "运行状态"
+    ],
+    "EQ-NPOOL-GATE": [
+      "闸门启闭",
+      "电控状态"
+    ],
+    "EQ-SPOOL-POOL": [
+      "各池液位"
+    ],
+    "EQ-SPOOL-SUCTION": [
+      "运行状态"
+    ],
+    "EQ-SPOOL-SCRAPER": [
+      "运行状态"
+    ],
+    "EQ-SPOOL-RADAR": [
+      "液位",
+      "报警"
+    ],
+    "EQ-SPOOL-LIFT": [
+      "启停",
+      "提升流量"
+    ],
+    "EQ-SPOOL-LIFT2": [
+      "泵运行状态",
+      "流量"
+    ],
+    "EQ-SPOOL-GATE": [
+      "开闭状态"
+    ],
+    "EQ-WWT-PURIFIER": [
+      "进口水量",
+      "出口SS",
+      "故障"
+    ],
+    "EQ-WWT-DOSING": [
+      "计量泵状态",
+      "药液液位"
+    ],
+    "EQ-WWT-SLUDGE": [
+      "污泥液位",
+      "污泥泵状态"
+    ],
+    "EQ-WWT-FILTER": [
+      "压滤运行状态",
+      "故障"
+    ],
+    "EQ-WWT-CLEAN": [
+      "清水池液位",
+      "回用流量"
+    ],
+    "EQ-WWT-WQ": [
+      "pH",
+      "SS",
+      "氯离子"
+    ],
+    "EQ-WWT-PLC": [
+      "PLC通讯状态",
+      "设备故障",
+      "报警"
+    ],
+    "EQ-WASH-SET": [
+      "启停",
+      "清洗次数",
+      "故障"
+    ],
+    "EQ-WASH-POND": [
+      "沉淀池液位"
+    ],
+    "EQ-WASH-PUMP": [
+      "供水流量",
+      "阀门状态"
+    ],
+    "EQ-ECO-PUMP": [
+      "泵状态",
+      "出水流量"
+    ],
+    "EQ-ECO-LEVEL": [
+      "液位",
+      "高低液位报警"
+    ],
+    "EQ-ECO-METER": [
+      "流量",
+      "累计量"
+    ],
+    "EQ-ECO-VALVE": [
+      "阀门状态"
+    ],
+    "EQ-DOM-SEWAGE": [
+      "污水处理量",
+      "运行状态"
+    ],
+    "EQ-DOM-LINK": [
+      "污水流量"
+    ],
+    "EQ-DOM-METER": [
+      "本日用水量",
+      "累计用水量"
+    ],
+    "EQ-BERTH-WATER": [
+      "供水量"
+    ],
+    "EQ-BERTH-FLUSH": [
+      "冲洗用水量"
+    ],
+    "EQ-BERTH-FIRE": [
+      "管网压力"
+    ],
+    "EQ-BERTH-DRAIN": [
+      "水位"
+    ]
+  }
+}

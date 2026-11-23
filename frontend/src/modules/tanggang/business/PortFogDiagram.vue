@@ -8,21 +8,27 @@ import {computed,onMounted,ref,watch} from 'vue'
 import {Icon} from '@iconify/vue'
 import {ElMessage,ElMessageBox} from 'element-plus'
 import {
-  fetchFogProcessDiagram,saveFogDiagramDraft,publishFogDiagram,
-  fetchFogDiagramHistory,restoreFogDiagram,
+  fetchProcessDiagram,saveProcessDiagramDraft,publishProcessDiagram,
+  fetchProcessDiagramHistory,restoreProcessDiagram,
+  type EditableProcessSystemId,
   type FogSymbolId,type ProcessDiagramDocument,type ProcessDiagramNode,
   type ProcessDiagramRecord,type ProcessDiagramRevision,type ProcessDiagramConnection,
 } from '@/api/tanggangProcessDiagrams'
 import {
-  FOG_SYMBOLS,FOG_FACILITIES,sourceImage,copyFogDiagram,
-  defaultFogDiagram,validateFogDiagram,schematicRoute,
+  FOG_SYMBOLS,sourceImage,copyFogDiagram,
+  defaultProcessDiagram,validateFogDiagram,schematicRoute,
   fogZones,fogTelemetryPlacement,
 } from './fogDiagram'
 import type {ProcessMockDevice} from './processMock'
 import type {TanggangDevice} from '../mapping/tanggangCatalog'
+import type {ProcessSchematicSection} from './processSchematic'
+import {layoutProcessRegions} from './processDiagramLayout'
 import {usePermissions} from '@/utils/permissions'
 
 const props=defineProps<{
+  systemId:EditableProcessSystemId
+  systemName:string
+  sections:ProcessSchematicSection[]
   selectedFacilityId:string|null
   facilities:TanggangDevice[]
   mockByFacility:ReadonlyMap<string,ProcessMockDevice>
@@ -46,7 +52,7 @@ const redoStack=ref<ProcessDiagramDocument[]>([])
 const symbolQuery=ref('')
 const showWater=ref(true)
 const showSignal=ref(true)
-const showTelemetry=ref(true)
+const showTelemetry=ref(props.systemId==='fog')
 const connectTarget=ref('')
 const history=ref<ProcessDiagramRevision[]>([])
 const historyVersion=ref<number|null>(null)
@@ -58,9 +64,13 @@ const root=ref<HTMLElement|null>(null)
 const symbols=computed(()=>Object.entries(FOG_SYMBOLS).filter(([,v])=>
   v.name.includes(symbolQuery.value.trim()),
 ) as Array<[FogSymbolId,(typeof FOG_SYMBOLS)[FogSymbolId]]>)
+const initialDiagram=computed(()=>defaultProcessDiagram(
+  props.systemId,props.systemName,props.sections))
 const stage=computed(()=>editing.value&&draft.value?draft.value:
-  remote.value?.published||defaultFogDiagram())
+  remote.value?.published||initialDiagram.value)
 const zones=computed(()=>fogZones(stage.value.view_box.width))
+const regionZones=computed(()=>props.systemId==='fog'?[]:
+  layoutProcessRegions(props.sections).regions)
 const visibleConnections=computed(()=>stage.value.connections.filter(c=>
   c.medium==='water'?showWater.value:showSignal.value,
 ))
@@ -100,7 +110,7 @@ function pointRowsHeight(node:ProcessDiagramNode):number{
 async function reload(){
   try{
     loadError.value=''
-    const response=await fetchFogProcessDiagram()
+    const response=await fetchProcessDiagram(props.systemId)
     remote.value=response.data.data
   }catch{
     loadError.value='组态服务暂不可用，显示只读演示模板；编辑与发布需连接后端'
@@ -118,7 +128,7 @@ function snapshot(){
 async function beginEdit(){
   if(!canEdit.value||!remote.value)return
   draft.value=copyFogDiagram(remote.value.draft||
-    remote.value.published||defaultFogDiagram())
+    remote.value.published||initialDiagram.value)
   selectedNodeId.value=''
   undoStack.value=[]
   redoStack.value=[]
@@ -126,7 +136,7 @@ async function beginEdit(){
   dirty.value=false
   editing.value=true
   try{
-    history.value=(await fetchFogDiagramHistory()).data.data
+    history.value=(await fetchProcessDiagramHistory(props.systemId)).data.data
   }catch{history.value=[]}
 }
 function cancelEdit(){
@@ -315,11 +325,12 @@ function focusNext(kind:'attention'|'reviewed'){
 }
 async function saveDraft(){
   if(!draft.value||!remote.value||busy.value)return
-  const errors=validateFogDiagram(draft.value)
+  const errors=validateFogDiagram(draft.value,props.facilities)
   if(errors.length){ElMessage.error(errors.join('；'));return}
   busy.value=true
   try{
-    remote.value=(await saveFogDiagramDraft(draft.value,remote.value.revision)).data.data
+    remote.value=(await saveProcessDiagramDraft(props.systemId,
+      draft.value,remote.value.revision)).data.data
     dirty.value=false
     ElMessage.success('组态草稿已保存到服务器，运行图尚未改变')
   }catch(e){
@@ -328,8 +339,27 @@ async function saveDraft(){
 }
 async function publish(){
   if(!canPublish.value||!remote.value||busy.value)return
-  if(dirty.value){ElMessage.warning('请先保存当前草稿，再发布');return}
-  if(!remote.value.draft){ElMessage.warning('请先保存组态草稿');return}
+  // Publishing is an explicit second step on the server. Save pending edits
+  // first, then publish the returned optimistic-lock revision.
+  if(dirty.value||!remote.value.draft){
+    if(!draft.value){
+      ElMessage.warning('请先进入编辑模式并保存草稿')
+      return
+    }
+    const errors=validateFogDiagram(draft.value,props.facilities)
+    if(errors.length){ElMessage.error(errors.join('；'));return}
+    busy.value=true
+    try{
+      remote.value=(await saveProcessDiagramDraft(props.systemId,
+        draft.value,remote.value.revision)).data.data
+      dirty.value=false
+    }catch{
+      ElMessage.error('草稿保存失败，无法发布；请检查版本冲突')
+      busy.value=false
+      return
+    }
+    busy.value=false
+  }
   try{
     await ElMessageBox.confirm(
       '发布后运行页面将使用这份组态，所有管线仍属于未经现场校核的设计示意。确定发布吗？',
@@ -338,7 +368,7 @@ async function publish(){
   }catch{return}
   busy.value=true
   try{
-    remote.value=(await publishFogDiagram(remote.value.revision)).data.data
+    remote.value=(await publishProcessDiagram(props.systemId,remote.value.revision)).data.data
     ElMessage.success('组态已发布到运行页面')
     cancelEdit()
   }catch{ElMessage.error('发布失败：无权限或服务端版本已更改')}
@@ -349,14 +379,16 @@ async function restoreHistory(){
   if(dirty.value){ElMessage.warning('请先保存或取消当前更改后，再恢复历史版本');return}
   busy.value=true
   try{
-    remote.value=(await restoreFogDiagram(historyVersion.value,remote.value.revision)).data.data
+    remote.value=(await restoreProcessDiagram(props.systemId,
+      historyVersion.value,remote.value.revision)).data.data
     draft.value=copyFogDiagram(remote.value.draft!)
     undoStack.value=[];redoStack.value=[];dirty.value=false
     ElMessage.success('历史版本已恢复为草稿；仍需人工发布')
   }catch{ElMessage.error('恢复失败：历史版本不可用或已发生编辑冲突')}
   finally{busy.value=false}
 }
-const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACILITIES]||id:'未绑定设计设施'
+const iconLabel=(id:string|null)=>id?
+  props.facilities.find(f=>f.id===id)?.name||id:'未绑定设计设施'
 </script>
 
 <template>
@@ -364,7 +396,7 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
     data-testid="fog-process-diagram">
     <div class="tg-biz-card-head tg-diagram-top">
       <div>
-        <h2>射雾除尘工艺组态图</h2>
+        <h2>{{systemName}} · 组态图</h2>
         <small>二维SCADA设计示意 · 已绑定图元点击查看右侧详情</small>
       </div>
       <div class="tg-diagram-toolbar">
@@ -373,6 +405,9 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
         </span>
         <el-button v-if="!editing&&canEdit&&remote" size="small" plain
           data-testid="fog-begin-edit" @click="beginEdit">编辑组态</el-button>
+        <el-button v-if="!editing&&canEdit&&remote?.draft" type="primary"
+          :disabled="busy||!canPublish" title="发布当前已保存的草稿"
+          data-testid="diagram-publish-saved" @click="publish">发布已存草稿</el-button>
         <template v-if="editing">
           <el-button size="small" :disabled="!undoStack.length||busy"
             @click="undo">撤销</el-button>
@@ -380,9 +415,10 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
             @click="redo">重做</el-button>
           <el-button size="small" :disabled="busy||!dirty&&!!remote?.draft"
             data-testid="fog-save-draft" @click="saveDraft">保存草稿</el-button>
-          <el-button v-if="canPublish" type="primary" plain size="small"
-            :disabled="busy||dirty||!remote?.draft"
-            data-testid="fog-publish" @click="publish">校验并发布</el-button>
+          <el-button type="primary" size="small"
+            :disabled="busy||!canPublish"
+            :title="!canPublish?'当前账号缺少组态发布权限（sys:menu:manage）':'保存当前改动并发布运行图'"
+            data-testid="fog-publish" @click="publish">保存并发布</el-button>
           <el-button size="small" text @click="cancelEdit">退出编辑</el-button>
         </template>
       </div>
@@ -428,7 +464,7 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
         <p class="tg-diagram-mobile-hint">横向滑动查看完整工艺图，点击设备查看详情</p>
         <svg ref="canvas" class="tg-diagram-svg"
           :viewBox="'0 0 '+stage.view_box.width+' '+stage.view_box.height"
-          role="img" aria-label="射雾除尘工艺组态图，点击图元查看设备，设计连接待现场核实"
+          role="img" :aria-label="systemName+'工艺组态图，点击图元查看设备，设计连接待现场核实'"
           @pointermove="pointerMove" @pointerup="pointerUp" @pointercancel="pointerUp">
           <defs>
             <pattern id="tg-fog-grid" width="29" height="29" patternUnits="userSpaceOnUse">
@@ -452,7 +488,7 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
             fill="url(#tg-fog-canvas-gradient)"/>
           <rect :width="stage.view_box.width" :height="stage.view_box.height"
             fill="url(#tg-fog-grid)"/>
-          <g pointer-events="none" data-testid="fog-diagram-zones">
+          <g v-if="systemId==='fog'" pointer-events="none" data-testid="fog-diagram-zones">
             <g v-for="zone in zones" :key="zone.key">
               <rect :x="zone.from" y="23" :width="zone.width"
                 :height="stage.view_box.height-89" rx="13"
@@ -473,6 +509,18 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
               height="28" rx="7" fill="#e3f1f9" stroke="#bad9e9"/>
             <text :x="stage.view_box.width-138" y="38" text-anchor="middle"
               font-size="12" fill="#557f95">结构参考 / 非实际管网拓扑</text>
+          </g>
+          <g v-else pointer-events="none" data-testid="process-diagram-regions">
+            <g v-for="(region,index) in regionZones" :key="region.id">
+              <rect x="16" :y="region.y" :width="stage.view_box.width-32"
+                :height="region.height" rx="12" fill="#fff" fill-opacity=".5"
+                stroke="#cedfe8" stroke-width="1.5" stroke-dasharray="6 8"/>
+              <text x="34" :y="region.y+29" font-size="15" fill="#39728c"
+                font-weight="650">{{String(index+1).padStart(2,'0')}} / {{region.title}}</text>
+            </g>
+            <text x="22" :y="stage.view_box.height-51" fill="#829baa" font-size="13">
+              CAD设计区域示意 · 图元可编辑 · 未核实水力连接
+            </text>
           </g>
           <g v-for="line in visibleConnections" :key="line.id"
             class="tg-diagram-pipe" pointer-events="none">
@@ -529,7 +577,7 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
               <path :d="'M18 48 H'+(node.size.width-18)"
                 stroke="#94b6c7" stroke-width="3" stroke-dasharray="8 6"/>
               <text x="50%" y="75%" text-anchor="middle" font-size="14"
-                fill="#49758c">PLC</text>
+                fill="#49758c">{{/PLC|控制柜|控制箱/.test(node.label)?'PLC':'设备'}}</text>
             </g>
             <rect v-if="node.symbol_id==='label'"
               :width="node.size.width" :height="node.size.height" rx="6"
@@ -687,6 +735,13 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
         </div>
       </aside>
     </div>
+    <div v-if="editing" class="tg-diagram-publish-footer" data-testid="diagram-publish-footer">
+      <span>{{dirty?'尚未保存的修改':'可保存或发布当前草稿'}}</span>
+      <span v-if="!canPublish" class="tg-diagram-permission">当前账号可编辑，但无发布权限，请联系管理员授权</span>
+      <el-button size="small" :disabled="busy" @click="saveDraft">保存草稿</el-button>
+      <el-button type="primary" size="small" :disabled="busy||!canPublish"
+        data-testid="diagram-publish-footer-button" @click="publish">保存并发布</el-button>
+    </div>
     <p class="tg-diagram-disclaimer">
       {{disabledNote}}。发布只更新本系统运行组态外观及CAD设施绑定，
       不会修改真实设备、测点、告警、工单或PLC控制数据。
@@ -783,5 +838,10 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
   .tg-diagram-properties{display:flex}
   .tg-diagram-layers-hint{width:100%;margin-left:0}
 }
+.tg-diagram-publish-footer{display:flex;align-items:center;justify-content:flex-end;
+  gap:8px;flex-wrap:wrap;border-top:1px solid #dceaf1;margin-top:10px;padding:12px 4px;
+  font-size:11px;color:#7b93a2}
+.tg-diagram-publish-footer>span:first-child{margin-right:auto}
+.tg-diagram-permission{color:#ad7546}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
