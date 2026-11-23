@@ -11,6 +11,7 @@ import {
 import {useProcessSpecialistStore} from './processSpecialistStore'
 import PortSpecialistExercise from './PortSpecialistExercise.vue'
 import PortProcessSchematic from './PortProcessSchematic.vue'
+import PortFogDiagram from './PortFogDiagram.vue'
 import PortObjectBindingDialog from './PortObjectBindingDialog.vue'
 import {usePermissions} from '@/utils/permissions'
 import {
@@ -24,6 +25,7 @@ import './scenario-pages.css'
 const route=useRoute(),router=useRouter(),sim=useScenarioStore()
 const specialist=useProcessSpecialistStore()
 const {hasPerm}=usePermissions()
+const diagramEditing=ref(false)
 const canBind=computed(()=>hasPerm('eq:update'))
 const catalog=ref<TanggangCatalog|null>(null)
 const error=ref('')
@@ -125,6 +127,8 @@ async function loadObjectLinks(id:string){
   }
 }
 watch(sysId,id=>{void loadObjectLinks(id)},{immediate:true})
+// Vue Router reuses this view on /port/process/:systemId transitions.
+watch(sysId,()=>{diagramEditing.value=false})
 watch(()=>[selectedId.value,sim.runUid],()=>{
   nodeNote.value=selectedCheck.value?.note||''
   nodeReviewError.value=''
@@ -209,11 +213,17 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
         {{workflow.simNoEvidence}}
         <el-button link @click="sim.openConsole()">查看统一情景</el-button>
       </div>
-      <div class="tg-process-grid">
+      <div class="tg-process-grid" :class="{'is-diagram-editing':diagramEditing}">
         <div class="tg-process-main">
-          <PortSpecialistExercise v-if="specialistSystem" :system-id="specialistSystem"
-            :global-sim-running="sim.running" @select-facility="selectFacility"/>
-          <PortProcessSchematic :sections="schematic?.sections||[]"
+          <PortFogDiagram v-if="sysId==='fog'"
+            :facilities="unique"
+            :selected-facility-id="selectedId"
+            :mock-by-facility="mockByFacility"
+            :reviewed-facility-ids="reviewedFacilityIds"
+            :sim-running="sim.running"
+            @select-facility="selectFacility"
+            @editing-change="diagramEditing=$event"/>
+          <PortProcessSchematic v-else :sections="schematic?.sections||[]"
             :selected-facility-id="selectedId"
             :linked-facility-ids="linkedFacilityIds"
             :reviewed-facility-ids="reviewedFacilityIds"
@@ -223,9 +233,13 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
             @select="selectFacility"
             @focus-attention="focusNext('attention')"
             @focus-reviewed="focusNext('reviewed')"/>
+          <PortSpecialistExercise v-if="specialistSystem&&!diagramEditing"
+            :system-id="specialistSystem"
+            :global-sim-running="sim.running" @select-facility="selectFacility"/>
         </div>
 
-        <section ref="detailPanel" class="tg-biz-card tg-process-detail" aria-label="当前选中设施">
+        <section v-if="!diagramEditing" ref="detailPanel"
+          class="tg-biz-card tg-process-detail" aria-label="当前选中设施">
           <template v-if="selectedDevice">
             <div class="tg-process-detail-head">
               <h2>{{selectedDevice.name}}</h2>
@@ -387,6 +401,7 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
 .tg-process-main{min-width:0;display:grid;gap:13px}
 .tg-process-grid{display:grid;grid-template-columns:minmax(0,1.92fr) minmax(310px,.88fr);
   gap:14px;align-items:start}
+.tg-process-grid.is-diagram-editing{grid-template-columns:minmax(0,1fr)}
 .tg-process-detail{position:sticky;top:14px;display:grid;gap:14px}
 .tg-process-detail-head{display:flex;align-items:start;justify-content:space-between;gap:8px}
 .tg-process-detail-head h2{margin-bottom:0;font-size:17px}

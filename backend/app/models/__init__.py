@@ -38,6 +38,7 @@ from app.models.tanggang import (
 from app.models.tanggang_provenance import TanggangPointReview, TanggangPointReviewRevision
 from app.models.tanggang_board import TanggangBoard, TanggangBoardRevision
 from app.models.tanggang_equipment_draft import TanggangDemoEquipment
+from app.models.tanggang_process_diagram import TanggangProcessDiagram, TanggangProcessDiagramRevision
 from app.models.tanggang_mock_ai import (
     TanggangMockAiSession, TanggangMockAiMessage, TanggangMockAiAction, TanggangMockAiDecision, TanggangMockAiEvidenceNote,
 )
@@ -84,6 +85,8 @@ __all__ = [
     "ArchiveCategory",
     "ArchiveFavorite",
     "TanggangDemoEquipment",
+    "TanggangProcessDiagram",
+    "TanggangProcessDiagramRevision",
     "TanggangBoard",
     "TanggangBoardRevision",
     "TanggangPointReview",
