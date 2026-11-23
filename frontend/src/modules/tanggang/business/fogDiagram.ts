@@ -5,14 +5,14 @@ import type {
 export const FOG_SYMBOLS:Readonly<Record<FogSymbolId,{
   name:string;width:number;height:number;asset:string|null
 }>>={
-  fog_cannon:{name:'室内射雾器',width:98,height:105,asset:'fog_cannon'},
-  water_tank:{name:'水池',width:135,height:125,asset:'water_tank'},
-  centrifugal_pump:{name:'供水泵',width:96,height:94,asset:'centrifugal_pump'},
-  pressure_gauge:{name:'压力表',width:60,height:89,asset:'pressure_gauge'},
+  fog_cannon:{name:'室内射雾器',width:172,height:165,asset:'fog_cannon'},
+  water_tank:{name:'水池',width:180,height:164,asset:'water_tank'},
+  centrifugal_pump:{name:'供水泵',width:172,height:132,asset:'centrifugal_pump'},
+  pressure_gauge:{name:'压力表',width:72,height:104,asset:'pressure_gauge'},
   flow_meter:{name:'流量计',width:62,height:62,asset:'flow_meter'},
-  butterfly_valve:{name:'蝶阀',width:58,height:72,asset:'butterfly_valve'},
+  butterfly_valve:{name:'蝶阀',width:94,height:104,asset:'butterfly_valve'},
   label:{name:'说明标签',width:148,height:36,asset:null},
-  generic_equipment:{name:'控制柜 / 设备',width:118,height:100,asset:null},
+  generic_equipment:{name:'控制柜 / 设备',width:132,height:102,asset:null},
   pipe_straight:{name:'直管段',width:125,height:60,asset:'pipe_straight'},
   pipe_elbow:{name:'弯管',width:65,height:65,asset:'pipe_elbow'},
   pipe_tee:{name:'三通管',width:70,height:63,asset:'pipe_tee'},
@@ -43,14 +43,14 @@ export function defaultFogDiagram():ProcessDiagramDocument{
   })
   return {
     system_id:'fog',name:'射雾器除尘 · 工艺组态图',
-    view_box:{width:1200,height:530},background:'light-grid',
+    view_box:{width:1200,height:640},background:'light-grid',
     nodes:[
-      make('source-tank','water_tank','水源示意 · 待核实',48,180),
-      make('supply-pump','centrifugal_pump','射雾供水泵组',292,182,'EQ-P-FOG'),
-      make('valve-demo','butterfly_valve','示意阀门 · 未绑定',562,195),
-      make('fog-unit','fog_cannon','室内射雾设施',852,178,'EQ-Y-FOG'),
-      make('plc-cabinet','generic_equipment','泵房PLC/控制柜',620,365,'EQ-P-PLC'),
-      make('pressure-demo','pressure_gauge','测点示意 · 未绑定',692,70),
+      make('source-tank','water_tank','水源参考 · 待核实',62,246),
+      make('supply-pump','centrifugal_pump','射雾供水泵组',324,260,'EQ-P-FOG'),
+      make('valve-demo','butterfly_valve','阀门示意 · 未绑定',608,279),
+      make('fog-unit','fog_cannon','室内射雾设施',936,234,'EQ-Y-FOG'),
+      make('plc-cabinet','generic_equipment','泵房PLC/控制柜',664,425,'EQ-P-PLC'),
+      make('pressure-demo','pressure_gauge','压力表示意 · 未绑定',640,113),
     ],
     connections:[
       {id:'water-a',source_node_id:'source-tank',target_node_id:'supply-pump',
@@ -107,11 +107,83 @@ export function validateFogDiagram(d:ProcessDiagramDocument):string[]{
 export function midpoint(node:ProcessDiagramNode):{x:number;y:number}{
   return {x:node.position.x+node.size.width/2,y:node.position.y+node.size.height/2}
 }
+/**
+ * Draw *illustrative* pipes at asset edges instead of through PNG sprite bodies.
+ * Water: horizontal right-to-left connector with two orthogonal bends when
+ * endpoints differ in elevation. Signal: separate bottom/top control channel.
+ * Paths are purely graphical; do not represent verified hydraulic connectivity.
+ */
 export function schematicRoute(line:ProcessDiagramConnection,diagram:ProcessDiagramDocument):string{
   const from=diagram.nodes.find(x=>x.id===line.source_node_id)
   const to=diagram.nodes.find(x=>x.id===line.target_node_id)
   if(!from||!to)return ''
-  const a=midpoint(from),b=midpoint(to)
-  const mid=(a.x+b.x)/2
-  return 'M'+a.x+','+a.y+' H'+mid+' V'+b.y+' H'+b.x
+  if(line.medium==='signal'){
+    const src=from.position, dst=to.position
+    const targetX=Math.round(dst.x+to.size.width/2)
+    const targetY=Math.round(dst.y+to.size.height)
+    if(src.x>dst.x+to.size.width+12){
+      // Equipment cabinet is to the lower right: route from its left edge,
+      // around the water-valve label rather than behind the valve sprite.
+      const fromX=Math.round(src.x)
+      const fromY=Math.round(src.y+from.size.height/2)
+      const bendX=Math.round((src.x+dst.x+to.size.width)/2)
+      const bendY=targetY+22
+      return 'M'+fromX+','+fromY+' H'+bendX+' V'+bendY+
+        ' H'+targetX+' V'+targetY
+    }
+    const fromX=Math.round(src.x+from.size.width/2)
+    const fromY=Math.round(src.y)
+    const y=(fromY+targetY)/2
+    return 'M'+fromX+','+fromY+' V'+y+' H'+targetX+' V'+targetY
+  }
+  const right=from.position.x+from.size.width
+  const left=to.position.x
+  const fromY=from.position.y+from.size.height/2
+  const toY=to.position.y+to.size.height/2
+  if(left>right+12){
+    const mid=(right+left)/2
+    return 'M'+right+','+fromY+' H'+mid+' V'+toY+' H'+left
+  }
+  // A wrapped illustrative link for a user-rearranged layout, never
+  // forcing a diagonal stroke through the source or target devices.
+  const source=midpoint(from), target=midpoint(to)
+  const bend=Math.max(source.x,target.x)+38
+  return 'M'+right+','+fromY+' H'+bend+' V'+toY+' H'+left
+}
+
+export interface FogZone {
+  key:'source'|'pumping'|'terminal'
+  index:string
+  title:string
+  subtitle:string
+  from:number
+  width:number
+  tone:'neutral'|'blue'
+}
+/** Group headings are visual guide rails only; not a hydraulic topology. */
+export function fogZones(canvasWidth:number):FogZone[]{
+  return [
+    {key:'source',index:'01',title:'水源参考',
+      subtitle:'设施与储量待核实',from:20,width:canvasWidth*.225,tone:'neutral'},
+    {key:'pumping',index:'02',title:'加压与控制',
+      subtitle:'CAD设施绑定 + Mock监视',
+      from:canvasWidth*.245,width:canvasWidth*.475,tone:'blue'},
+    {key:'terminal',index:'03',title:'室内射雾',
+      subtitle:'固定式射雾器参考',
+      from:canvasWidth*.74,width:canvasWidth*.24,tone:'neutral'},
+  ]
+}
+
+export function fogTelemetryPlacement(
+  node:ProcessDiagramNode, canvas:{width:number;height:number},
+):{x:number;y:number;width:number}{
+  const width=node.facility_id==='EQ-P-FOG'?210:186
+  // Pump/fog measured labels above assets, PLC to the right.
+  const toRight=node.facility_id==='EQ-P-PLC'
+  const desiredX=node.position.x+(toRight?node.size.width+17:
+    node.size.width/2-width/2)
+  const desiredY=node.position.y+(toRight?14:-86)
+  const x=Math.min(canvas.width-width-12,Math.max(12,desiredX))
+  const y=Math.min(canvas.height-76,Math.max(73,desiredY))
+  return {x:x-node.position.x,y:y-node.position.y,width}
 }

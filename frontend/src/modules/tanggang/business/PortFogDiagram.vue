@@ -16,6 +16,7 @@ import {
 import {
   FOG_SYMBOLS,FOG_FACILITIES,sourceImage,copyFogDiagram,
   defaultFogDiagram,validateFogDiagram,schematicRoute,
+  fogZones,fogTelemetryPlacement,
 } from './fogDiagram'
 import type {ProcessMockDevice} from './processMock'
 import type {TanggangDevice} from '../mapping/tanggangCatalog'
@@ -43,17 +44,29 @@ const selectedNodeId=ref('')
 const undoStack=ref<ProcessDiagramDocument[]>([])
 const redoStack=ref<ProcessDiagramDocument[]>([])
 const symbolQuery=ref('')
+const showWater=ref(true)
+const showSignal=ref(true)
+const showTelemetry=ref(true)
 const connectTarget=ref('')
 const history=ref<ProcessDiagramRevision[]>([])
 const historyVersion=ref<number|null>(null)
 const canvas=ref<SVGSVGElement|null>(null)
-const drag=ref<{id:string;dx:number;dy:number;pointerId:number}|null>(null)
+const drag=ref<{
+  id:string;dx:number;dy:number;pointerId:number;moved:boolean
+}|null>(null)
 const root=ref<HTMLElement|null>(null)
 const symbols=computed(()=>Object.entries(FOG_SYMBOLS).filter(([,v])=>
   v.name.includes(symbolQuery.value.trim()),
 ) as Array<[FogSymbolId,(typeof FOG_SYMBOLS)[FogSymbolId]]>)
 const stage=computed(()=>editing.value&&draft.value?draft.value:
   remote.value?.published||defaultFogDiagram())
+const zones=computed(()=>fogZones(stage.value.view_box.width))
+const visibleConnections=computed(()=>stage.value.connections.filter(c=>
+  c.medium==='water'?showWater.value:showSignal.value,
+))
+function telemetryPlacement(node:ProcessDiagramNode){
+  return fogTelemetryPlacement(node,stage.value.view_box)
+}
 const selectedNode=computed(()=>draft.value?.nodes.find(n=>n.id===selectedNodeId.value)||null)
 const selectedDesignDevice=computed(()=>props.facilities.find(f=>
   f.id===selectedNode.value?.facility_id)||null)
@@ -81,7 +94,7 @@ function displayPointRows(node:ProcessDiagramNode):Array<{key:string;value:strin
   return selected.slice(0,3).map(row=>({key:row.key,value:row.value}))
 }
 function pointRowsHeight(node:ProcessDiagramNode):number{
-  return 22+Math.max(displayPointRows(node).length,1)*16
+  return 31+Math.max(displayPointRows(node).length,1)*18
 }
 
 async function reload(){
@@ -257,27 +270,36 @@ function coords(event:PointerEvent){
   return {x:point.x,y:point.y}
 }
 function pointerDown(event:PointerEvent,node:ProcessDiagramNode){
-  if(!editing.value||!draft.value||node.locked||!canChange.value)return
+  if(!editing.value||!draft.value||node.locked||!canChange.value||
+    (event.pointerType==='mouse'&&event.button!==0))return
   const point=coords(event)
   if(!point)return
   selectedNodeId.value=node.id
-  snapshot()
+  // Selecting without moving is not an editor change.
   drag.value={
     id:node.id,dx:point.x-node.position.x,dy:point.y-node.position.y,
-    pointerId:event.pointerId,
+    pointerId:event.pointerId,moved:false,
   }
   canvas.value?.setPointerCapture(event.pointerId)
 }
 function pointerMove(event:PointerEvent){
-  if(!drag.value||!draft.value||!canChange.value)return
+  if(!drag.value||!draft.value||!canChange.value||
+    event.pointerId!==drag.value.pointerId)return
   const point=coords(event)
   if(!point)return
   const node=draft.value.nodes.find(x=>x.id===drag.value?.id)
   if(!node)return
-  node.position.x=Math.max(0,Math.min(draft.value.view_box.width-node.size.width,
+  const x=Math.max(0,Math.min(draft.value.view_box.width-node.size.width,
     Math.round(point.x-drag.value.dx)))
-  node.position.y=Math.max(0,Math.min(draft.value.view_box.height-node.size.height,
+  const y=Math.max(0,Math.min(draft.value.view_box.height-node.size.height,
     Math.round(point.y-drag.value.dy)))
+  if(!drag.value.moved){
+    if(Math.abs(x-node.position.x)<2&&Math.abs(y-node.position.y)<2)return
+    snapshot()
+    drag.value.moved=true
+  }
+  node.position.x=x
+  node.position.y=y
 }
 function pointerUp(){drag.value=null}
 function focusNext(kind:'attention'|'reviewed'){
@@ -343,7 +365,7 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
     <div class="tg-biz-card-head tg-diagram-top">
       <div>
         <h2>射雾除尘工艺组态图</h2>
-        <small>旧版组态图元与编辑能力 · 5190运行Mock</small>
+        <small>二维SCADA设计示意 · 已绑定图元点击查看右侧详情</small>
       </div>
       <div class="tg-diagram-toolbar">
         <span class="tg-diagram-version">
@@ -369,7 +391,8 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
     <div v-if="loadError" class="tg-diagram-error" role="status">{{loadError}}</div>
     <div v-else-if="!loaded" class="tg-diagram-helper">正在读取组态版本…</div>
     <div class="tg-diagram-quickbar">
-      <span>{{editing?'编辑草稿 · 已发布版本不会同步变动':'图元可点击 · 右侧显示设备运行信息'}}</span>
+      <span>{{editing?(dirty?'已修改 · 请保存草稿':'编辑模式 · 当前无未保存修改'):
+        'CAD设施与Mock状态叠加 · 非现场实测'}}</span>
       <template v-if="!editing">
         <el-button text size="small" :disabled="!activeCount" @click="focusNext('attention')">
           定位SIM关注/异常（{{activeCount}}）
@@ -378,6 +401,14 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
           定位本轮已核查（{{checkedCount}}）
         </el-button>
       </template>
+    </div>
+    <div class="tg-diagram-layers" data-testid="fog-diagram-layers"
+      aria-label="工艺图显示图层">
+      <span>图层显示</span>
+      <el-checkbox v-model="showWater" size="small" label="水路示意"/>
+      <el-checkbox v-model="showSignal" size="small" label="控制信号"/>
+      <el-checkbox v-model="showTelemetry" size="small" label="Mock数据"/>
+      <span class="tg-diagram-layers-hint">图层开关只影响显示，不改变已保存组态</span>
     </div>
     <div class="tg-diagram-workspace" :class="{'is-editing':editing}">
       <div v-if="editing" class="tg-diagram-symbols">
@@ -394,29 +425,67 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
       </div>
 
       <div class="tg-diagram-viewport">
+        <p class="tg-diagram-mobile-hint">横向滑动查看完整工艺图，点击设备查看详情</p>
         <svg ref="canvas" class="tg-diagram-svg"
           :viewBox="'0 0 '+stage.view_box.width+' '+stage.view_box.height"
           role="img" aria-label="射雾除尘工艺组态图，点击图元查看设备，设计连接待现场核实"
           @pointermove="pointerMove" @pointerup="pointerUp" @pointercancel="pointerUp">
           <defs>
-            <pattern id="tg-fog-grid" width="27" height="27" patternUnits="userSpaceOnUse">
-              <path d="M 27 0 L 0 0 0 27" fill="none" stroke="#b7d2e2"
-                stroke-opacity=".26" stroke-width="1"/>
+            <pattern id="tg-fog-grid" width="29" height="29" patternUnits="userSpaceOnUse">
+              <path d="M 29 0 L 0 0 0 29" fill="none" stroke="#a9c7d8"
+                stroke-opacity=".20" stroke-width="1"/>
             </pattern>
-            <linearGradient id="tg-fog-canvas-gradient" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#fbfdff"/>
-              <stop offset="1" stop-color="#eef7fb"/>
+            <linearGradient id="tg-fog-canvas-gradient" x1="0" y1="0" x2=".5" y2="1">
+              <stop offset="0" stop-color="#f8fbff"/>
+              <stop offset="1" stop-color="#eff6fb"/>
             </linearGradient>
+            <linearGradient id="tg-fog-zone-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f3faff" stop-opacity=".94"/>
+              <stop offset="1" stop-color="#eaf5fa" stop-opacity=".60"/>
+            </linearGradient>
+            <marker id="tg-fog-water-arrow" viewBox="0 0 10 10"
+              refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M 1 1 L 9 5 L 1 9 Z" fill="#6ea6c8"/>
+            </marker>
           </defs>
           <rect :width="stage.view_box.width" :height="stage.view_box.height"
             fill="url(#tg-fog-canvas-gradient)"/>
           <rect :width="stage.view_box.width" :height="stage.view_box.height"
             fill="url(#tg-fog-grid)"/>
-          <g v-for="line in stage.connections" :key="line.id">
+          <g pointer-events="none" data-testid="fog-diagram-zones">
+            <g v-for="zone in zones" :key="zone.key">
+              <rect :x="zone.from" y="23" :width="zone.width"
+                :height="stage.view_box.height-89" rx="13"
+                :fill="zone.tone==='blue'?'url(#tg-fog-zone-fill)':'#ffffff'"
+                :fill-opacity="zone.tone==='blue'?1:.57"
+                stroke="#cedfe8" stroke-width="1.3"
+                stroke-dasharray="6 8"/>
+              <rect :x="zone.from+16" y="45" width="38" height="29" rx="7"
+                fill="#dfedf6"/>
+              <text :x="zone.from+35" y="65" font-size="15"
+                fill="#4b91b8" font-weight="700" text-anchor="middle">{{zone.index}}</text>
+              <text :x="zone.from+65" y="64" font-size="17"
+                fill="#355f76" font-weight="650">{{zone.title}}</text>
+              <text :x="zone.from+18" y="95" font-size="12"
+                fill="#8aa3b1">{{zone.subtitle}}</text>
+            </g>
+            <rect :x="stage.view_box.width-249" y="19" width="223"
+              height="28" rx="7" fill="#e3f1f9" stroke="#bad9e9"/>
+            <text :x="stage.view_box.width-138" y="38" text-anchor="middle"
+              font-size="12" fill="#557f95">结构参考 / 非实际管网拓扑</text>
+          </g>
+          <g v-for="line in visibleConnections" :key="line.id"
+            class="tg-diagram-pipe" pointer-events="none">
             <path :d="schematicRoute(line,stage)" fill="none"
-              :stroke="line.medium==='signal'?'#94a7b8':'#7cb5d1'"
-              :stroke-width="line.medium==='signal'?3:5" stroke-linecap="round"
-              stroke-dasharray="12 9" opacity=".85"/>
+              stroke="#fff" :stroke-width="line.medium==='water'?12:7"
+              stroke-linecap="round" stroke-linejoin="round" opacity=".94"/>
+            <path :d="schematicRoute(line,stage)" fill="none"
+              :stroke="line.medium==='signal'?'#9aafbf':'#73b5dc'"
+              :stroke-width="line.medium==='signal'?3.2:7" stroke-linecap="round"
+              stroke-linejoin="round"
+              :stroke-dasharray="line.medium==='signal'?'6 9':'13 9'"
+              :marker-end="line.medium==='water'?'url(#tg-fog-water-arrow)':undefined"
+              opacity=".97"/>
           </g>
           <g v-for="node in stage.nodes" :key="node.id"
             v-show="node.visible||editing"
@@ -439,10 +508,14 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
             <rect class="tg-diagram-node-hit" x="-8" y="-6"
               :width="node.size.width+16" :height="node.size.height+36"
               rx="9" fill="transparent"/>
-            <rect class="tg-diagram-node-frame" x="-5" y="-4"
-              :width="node.size.width+10" :height="node.size.height+10"
-              rx="7" fill="#fff" fill-opacity=".06"
-              stroke="#4e9cbf" stroke-opacity=".08" stroke-width="2"/>
+            <ellipse v-if="node.symbol_id!=='label'&&node.symbol_id!=='pipe_straight'"
+              :cx="node.size.width/2" :cy="node.size.height-6"
+              :rx="node.size.width*.38" ry="9"
+              fill="#7ca9bc" opacity=".12"/>
+            <rect class="tg-diagram-node-frame" x="-7" y="-6"
+              :width="node.size.width+14" :height="node.size.height+12"
+              rx="9" fill="#fff" fill-opacity=".07"
+              stroke="#4e9cbf" stroke-opacity=".10" stroke-width="2"/>
             <image v-if="sourceImage(node.symbol_id)"
               :href="sourceImage(node.symbol_id)!"
               :width="node.size.width" :height="node.size.height"
@@ -466,35 +539,53 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
               text-anchor="middle" font-size="13" fill="#426a80">
               {{node.label.slice(0,14)}}
             </text>
-            <rect v-if="node.facility_id"
-              x="-6" :y="node.size.height+11"
-              :width="node.size.width+12" height="20" rx="5" fill="#f0f8fc"
-              stroke="#c5deeb" stroke-width="1"/>
-            <text class="tg-diagram-node-label" :x="node.size.width/2"
-              :y="node.size.height+25" text-anchor="middle" font-size="12"
-              fill="#315c73" font-weight="600">{{node.label.slice(0,13)}}</text>
+            <rect v-if="node.facility_id" x="-12" :y="node.size.height+9"
+              :width="node.size.width+24" height="27" rx="7" fill="#f6fbfe"
+              stroke="#c3dce9" stroke-width="1.3"/>
+            <text v-if="node.facility_id" class="tg-diagram-node-label"
+              :x="node.size.width/2" :y="node.size.height+27"
+              text-anchor="middle" font-size="15"
+              fill="#315c73" font-weight="650">{{node.label.slice(0,13)}}</text>
+            <rect v-if="!node.facility_id&&node.symbol_id!=='label'"
+              x="-8" :y="node.size.height+10" :width="node.size.width+16"
+              height="25" rx="6" fill="#f6f9fb" stroke="#d1e1e8"/>
             <text v-if="!node.facility_id&&node.symbol_id!=='label'"
-              :x="node.size.width/2" :y="node.size.height+24"
-              text-anchor="middle" font-size="11" fill="#829cad">
-              {{node.label.slice(0,15)}}
+              :x="node.size.width/2" :y="node.size.height+27"
+              text-anchor="middle" font-size="13" fill="#778f9e">
+              {{node.label.slice(0,14)}}
             </text>
-            <g v-if="node.facility_id&&displayMock(node.facility_id)" class="tg-diagram-telemetry">
-              <rect :x="node.size.width+5" y="3" width="142"
+            <g v-if="node.facility_id&&reviewedFacilityIds.has(node.facility_id)&&simRunning">
+              <rect x="-7" y="-18" width="100" height="22" rx="6"
+                fill="#dff0f7" stroke="#a8d0e1"/>
+              <text x="43" y="-3" font-size="11" fill="#4c88a6" text-anchor="middle">
+                本轮SIM已核查
+              </text>
+            </g>
+            <g v-if="node.facility_id&&displayMock(node.facility_id)&&showTelemetry"
+              class="tg-diagram-telemetry" pointer-events="none"
+              :transform="'translate('+telemetryPlacement(node).x+','+
+                telemetryPlacement(node).y+')'">
+              <rect x="0" y="0" :width="telemetryPlacement(node).width"
                 :height="pointRowsHeight(node)"
-                rx="6" fill="#fff" stroke="#c8e1ec"/>
-              <circle :cx="node.size.width+18" cy="13" r="4"
+                rx="8" fill="#fff" fill-opacity=".98" stroke="#bbd9e8"
+                stroke-width="1.4"/>
+              <rect x="0" y="0" :width="telemetryPlacement(node).width"
+                height="24" rx="8" fill="#e9f4fa"/>
+              <circle cx="14" cy="12" r="4.3"
                 :fill="displayMock(node.facility_id)?.state==='fault'?'#c87362':
                   displayMock(node.facility_id)?.state==='attention'?'#d5a45a':'#5da896'"/>
-              <text :x="node.size.width+27" y="16" fill="#627f91" font-size="10">
-                {{displayMock(node.facility_id)?.stateLabel?.slice(0,8)}} · Mock
+              <text x="25" y="16" fill="#557b91" font-size="12" font-weight="650">
+                {{displayMock(node.facility_id)?.stateLabel?.slice(0,8)}}
               </text>
+              <text :x="telemetryPlacement(node).width-13" y="16"
+                text-anchor="end" fill="#8da7b5" font-size="10">MOCK</text>
               <text v-for="(reading,i) in displayPointRows(node)" :key="reading.key"
-                :x="node.size.width+14" :y="33+i*16" fill="#3d718d"
-                font-size="11" font-weight="600">
-                {{reading.key.slice(0,5)}}：{{reading.value.slice(0,13)}}
+                x="12" :y="42+i*18" fill="#376c88"
+                font-size="13" font-weight="650">
+                {{reading.key.slice(0,6)}}：{{reading.value.slice(0,14)}}
               </text>
               <text v-if="!displayPointRows(node).length"
-                :x="node.size.width+14" y="33" fill="#849aa7" font-size="10">
+                x="12" y="42" fill="#849aa7" font-size="12">
                 暂无Mock测点
               </text>
             </g>
@@ -503,10 +594,22 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
                 r="5" fill="#4e9dbb" stroke="#fff" stroke-width="2"/>
             </g>
           </g>
-          <rect x="12" :y="stage.view_box.height-34" width="382" height="24"
-            rx="5" fill="#f5f9fc" stroke="#d4e4ec"/>
-          <text x="22" :y="stage.view_box.height-18" font-size="12"
-            fill="#7793a5">工艺参考示意 · 所有连接线未经现场水力校核</text>
+          <rect x="16" :y="stage.view_box.height-42"
+            :width="stage.view_box.width-32" height="28"
+            rx="7" fill="#f6fbfe" stroke="#d6e7ef"/>
+          <circle cx="37" :cy="stage.view_box.height-28" r="4" fill="#74b3d8"/>
+          <text x="49" :y="stage.view_box.height-23" font-size="12" fill="#6f8fa1">
+            蓝色虚线：水路设计示意
+          </text>
+          <path d="M 277,569 H 307" stroke="#98aebd" stroke-width="3"
+            stroke-dasharray="5 5"/>
+          <text x="319" :y="stage.view_box.height-23" font-size="12" fill="#6f8fa1">
+            灰色虚线：控制信号示意
+          </text>
+          <text :x="stage.view_box.width-20" :y="stage.view_box.height-23"
+            text-anchor="end" font-size="12" fill="#8b9eaa">
+            CAD设计设施 / 非实测管网
+          </text>
         </svg>
         <div class="tg-diagram-foot">
           <span>设计设施：{{focusableNodes.length}} · 图元：{{stage.nodes.length}} · 示意连线：{{stage.connections.length}}</span>
@@ -611,11 +714,13 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
 .tg-diagram-workspace.is-editing{grid-template-columns:145px minmax(0,1fr) 225px}
 .tg-diagram-viewport{min-width:0;border:1px solid #d9e8ee;border-radius:8px;
   overflow:hidden;background:#f4fafc}
-.tg-diagram-svg{display:block;width:100%;height:auto;aspect-ratio:1200/530}
+.tg-diagram-mobile-hint{display:none;font-size:11px;color:#7191a5;
+  padding:9px 11px 0;margin:0}
+.tg-diagram-svg{display:block;width:100%;height:auto}
 .tg-diagram-node{cursor:pointer;outline:none}
 .tg-diagram-node:focus-visible .tg-diagram-node-frame,
 .tg-diagram-node.is-selected .tg-diagram-node-frame{
-  stroke:#3d93b7;stroke-width:3;stroke-opacity:1;fill:#d9eff8;fill-opacity:.45}
+  stroke:#3d93b7;stroke-width:3.5;stroke-opacity:1;fill:#d9eff8;fill-opacity:.42}
 .tg-diagram-node.is-attention .tg-diagram-node-frame{
   stroke:#d5a45a;stroke-width:3;stroke-opacity:.88}
 .tg-diagram-node.is-fault .tg-diagram-node-frame{
@@ -625,6 +730,14 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
 .tg-diagram-node-hit{cursor:inherit}
 .is-editing .tg-diagram-node{cursor:grab;touch-action:none}
 .tg-diagram-node.is-locked{cursor:default}
+.tg-diagram-layers{display:flex;align-items:center;gap:5px 16px;flex-wrap:wrap;
+  padding:9px 1px 12px;color:#758c9c}
+.tg-diagram-layers>span:first-child{font-size:11px;font-weight:650;color:#608399}
+.tg-diagram-layers :deep(.el-checkbox){margin-right:0;height:24px}
+.tg-diagram-layers :deep(.el-checkbox__label){font-size:11px;color:#6e899b}
+.tg-diagram-layers-hint{margin-left:auto;font-size:10px;color:#91a5b0}
+.tg-diagram-pipe{vector-effect:non-scaling-stroke}
+.tg-diagram-telemetry{pointer-events:none}
 .tg-diagram-foot{display:flex;flex-wrap:wrap;justify-content:space-between;
   gap:6px 16px;border-top:1px solid #e0edf3;padding:9px 12px;
   color:#819bab;font-size:10px}
@@ -663,7 +776,12 @@ const iconLabel=(id:string|null)=>id?FOG_FACILITIES[id as keyof typeof FOG_FACIL
   .tg-diagram-symbol-button{flex:0 0 118px}
   .tg-diagram-properties{grid-column:auto}
 }
-@media(max-width:700px){.tg-diagram-svg{min-height:250px}
-  .tg-diagram-properties{display:flex}}
+@media(max-width:700px){
+  .tg-diagram-viewport{overflow-x:auto}
+  .tg-diagram-mobile-hint{display:block}
+  .tg-diagram-svg{min-width:690px;min-height:0}
+  .tg-diagram-properties{display:flex}
+  .tg-diagram-layers-hint{width:100%;margin-left:0}
+}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>

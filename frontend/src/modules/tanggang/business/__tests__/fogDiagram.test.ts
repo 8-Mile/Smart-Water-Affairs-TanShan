@@ -2,6 +2,7 @@ import {describe,it,expect} from 'vitest'
 import {
   FOG_SYMBOLS,FOG_FACILITIES,sourceImage,defaultFogDiagram,
   copyFogDiagram,validateFogDiagram,schematicRoute,
+  fogZones,fogTelemetryPlacement,
 } from '../fogDiagram'
 import type {ProcessDiagramDocument} from '@/api/tanggangProcessDiagrams'
 
@@ -11,7 +12,7 @@ describe('M14 5144-era diagram compatibility and safe 5190 fallback',()=>{
     const diagram=defaultFogDiagram()
     expect(validateFogDiagram(diagram)).toEqual([])
     expect(diagram.system_id).toBe('fog')
-    expect(diagram.view_box).toEqual({width:1200,height:530})
+    expect(diagram.view_box).toEqual({width:1200,height:640})
     expect(diagram.nodes.length).toBeGreaterThanOrEqual(5)
     const bound=diagram.nodes.filter(x=>x.facility_id)
     expect(new Set(bound.map(n=>n.facility_id))).toEqual(new Set([
@@ -36,7 +37,7 @@ describe('M14 5144-era diagram compatibility and safe 5190 fallback',()=>{
     draft.nodes[1]!.label='设备测试调整'
     expect(validateFogDiagram(draft)).toEqual([])
     expect(published.nodes[1]?.label).not.toBe(draft.nodes[1]?.label)
-    expect(published.nodes[1]?.position.x).toBe(292)
+    expect(published.nodes[1]?.position.x).toBe(324)
     expect(schematicRoute(published.connections[0]!,published)).toMatch(/^M\d/)
     expect(schematicRoute({
       id:'line-missing',source_node_id:'not-found',target_node_id:'fog-unit',
@@ -53,6 +54,52 @@ describe('M14 5144-era diagram compatibility and safe 5190 fallback',()=>{
     const verified=copy(basic);verified.connections[0]!.verification='field_verified' as never;bad.push(verified)
     const noBound=copy(basic);noBound.nodes[0]!.point_keys=['实测压力'];bad.push(noBound)
     for(const d of bad)expect(validateFogDiagram(d)).not.toEqual([])
+  })
+  it('three visual process zones reflect the reference composition, not certified pipe topology',()=>{
+    const diagram=defaultFogDiagram()
+    const sections=fogZones(diagram.view_box.width)
+    expect(sections.map(x=>x.key)).toEqual(['source','pumping','terminal'])
+    expect(sections.map(x=>x.index)).toEqual(['01','02','03'])
+    expect(sections.every(z=>z.width>100)).toBe(true)
+    expect(sections.every(z=>z.from+z.width<diagram.view_box.width)).toBe(true)
+    expect(sections[0]!.title).toContain('水源')
+    expect(sections[2]!.title).toContain('室内射雾')
+    expect(diagram.nodes.find(x=>x.id==='fog-unit')?.facility_id).toBe('EQ-Y-FOG')
+  })
+  it('edge-routed illustrative water lines do not begin inside the sprite bodies',()=>{
+    const diagram=defaultFogDiagram()
+    const tank=diagram.nodes.find(x=>x.id==='source-tank')!
+    const pump=diagram.nodes.find(x=>x.id==='supply-pump')!
+    const water=diagram.connections.find(x=>x.id==='water-a')!
+    const path=schematicRoute(water,diagram)
+    expect(path).toMatch(new RegExp('^M'+(tank.position.x+tank.size.width)+','))
+    expect(path).toContain('H'+pump.position.x)
+    expect(path).not.toContain('L')
+    const signal=diagram.connections.find(x=>x.id==='signal-a')!
+    const control=diagram.nodes.find(x=>x.id==='plc-cabinet')!
+    expect(schematicRoute(signal,diagram)).toMatch(
+      new RegExp('^M'+control.position.x+','),
+    )
+  })
+  it('Mock data cards position above equipment and stay inside 1200x600 canvas',()=>{
+    const d=defaultFogDiagram()
+    for(const node of d.nodes.filter(x=>x.facility_id)){
+      const label=fogTelemetryPlacement(node,d.view_box)
+      const x=node.position.x+label.x
+      const y=node.position.y+label.y
+      expect(x).toBeGreaterThanOrEqual(12)
+      expect(x+label.width).toBeLessThanOrEqual(d.view_box.width-12)
+      expect(y).toBeGreaterThanOrEqual(73)
+      expect(y+76).toBeLessThanOrEqual(d.view_box.height)
+    }
+  })
+  it('visual template changes never overwrite preexisting server-published documents',()=>{
+    // An older published 1200x530 layout remains a valid data document.
+    const legacy=copy(defaultFogDiagram())
+    legacy.view_box.height=530
+    legacy.nodes.find(x=>x.id==='plc-cabinet')!.position.y=360
+    expect(validateFogDiagram(legacy)).toEqual([])
+    expect(copy(legacy)).toEqual(legacy)
   })
   it('existing six-system businesses do not have new implicit process connections',()=>{
     const doc=defaultFogDiagram()
