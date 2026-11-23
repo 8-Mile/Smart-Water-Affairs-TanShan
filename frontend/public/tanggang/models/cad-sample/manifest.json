@@ -1,0 +1,519 @@
+{
+  "schema": "tanggang-cad-sample-v2",
+  "source": {
+    "v7": "/Users/8-mile/Desktop/唐港CAD解析/03_解析结果/V7_场区平面原始图元底图.json",
+    "v5": "/Users/8-mile/Desktop/唐港CAD解析/03_解析结果/V5_每个图元分类与证据.json",
+    "transform": {
+      "originCADXY": [
+        448800000.0,
+        4545350000.0
+      ],
+      "rotationDeg": -35.000106,
+      "cadPerSceneUnit": 10000.0
+    }
+  },
+  "bboxSceneXZ": [
+    -6.0,
+    34.0,
+    24.0,
+    48.0
+  ],
+  "unit": {
+    "scene_unit_m": 10.0
+  },
+  "assumed": {
+    "building_217737_height_m": 9.0,
+    "building_FAC64_height_m": 12.0,
+    "road_width_m": 12.0,
+    "road_thickness_m": 0.3,
+    "pool_depth_m": 5.0,
+    "pool_wall_thickness_m": 0.8,
+    "pool_rim_height_m": 9.0,
+    "water_level_m": 5.5,
+    "pipe_display_radius_m": 0.6,
+    "pipe_display_elevation_m": 1.2
+  },
+  "facade": {
+    "source_handles": [
+      "217737",
+      "FAC64"
+    ],
+    "source": "assumed",
+    "note": "立面仅沿 CAD 平面轮廓边线生成；窗带按建筑表现高度取 0.44–0.70，勒脚、檐口、门窗与竖梃间距为表现推定值",
+    "rules": {
+      "plinth_height": 0.09,
+      "plinth_depth": 0.05,
+      "window_sill_ratio": 0.44,
+      "window_head_ratio": 0.7,
+      "glass_depth": 0.02,
+      "glass_inset": 0.01,
+      "rail_depth": 0.055,
+      "rail_height": 0.035,
+      "mullion_spacing_m": 3.0,
+      "mullion_width": 0.055,
+      "corner_width": 0.09,
+      "corner_depth": 0.045,
+      "cornice_depth": 0.11,
+      "cornice_height": 0.07,
+      "door_width_m": 2.6,
+      "door_height": 0.32,
+      "door_depth": 0.07,
+      "door_top_rail": 0.05,
+      "canopy_depth_m": 1.5,
+      "canopy_z0": 0.345,
+      "canopy_z1": 0.385,
+      "canopy_pad_m": 1.2,
+      "window_min_edge": 0.6
+    }
+  },
+  "roof_details": {
+    "source_handles": [
+      "217737",
+      "FAC64"
+    ],
+    "source": "assumed",
+    "note": "女儿墙、压顶与屋面机组数量/尺寸为表现推定值，平面轮廓来自 CAD",
+    "rules": {
+      "parapet_height": 0.1,
+      "parapet_thickness": 0.05,
+      "cap_height": 0.03,
+      "cap_overhang": 0.02,
+      "unit_size": [
+        0.3,
+        0.22,
+        0.14
+      ],
+      "unit_offsets": [
+        -0.18,
+        0.18
+      ]
+    }
+  },
+  "pool_details": {
+    "source_handle": "2E14C4",
+    "source": "assumed",
+    "note": "压顶、栏杆、爬梯与池壁分缝沿 CAD 池体轮廓附着，构造尺寸为表现推定值",
+    "rules": {
+      "coping_overhang": 0.06,
+      "coping_inner": 0.05,
+      "coping_height": 0.035,
+      "rail_height": 0.11,
+      "rail_post_spacing_m": 2.0,
+      "rail_bar": 0.014,
+      "rail_inset": 0.022,
+      "ladder_width_m": 0.5,
+      "ladder_rung_spacing_m": 0.3,
+      "joint_spacing_m": 6.0,
+      "joint_width": 0.018
+    }
+  },
+  "objects": [
+    {
+      "name": "ground_s",
+      "kind": "ground",
+      "handle": "",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "ground_n",
+      "kind": "ground",
+      "handle": "",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "ground_w",
+      "kind": "ground",
+      "handle": "",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "ground_e",
+      "kind": "ground",
+      "handle": "",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "building_217737",
+      "kind": "building",
+      "handle": "217737",
+      "layer": "$pm单体",
+      "v5_status": ""
+    },
+    {
+      "name": "roof_217737",
+      "kind": "roof",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_217737_plinth",
+      "kind": "facade_plinth",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_217737_glass",
+      "kind": "facade_glass",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_217737_frame",
+      "kind": "facade_frame",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_217737_door",
+      "kind": "facade_door",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_217737_canopy",
+      "kind": "facade_canopy",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_217737_step",
+      "kind": "facade_step",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "roof_217737_parapet",
+      "kind": "roof_parapet",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "roof_217737_cap",
+      "kind": "roof_parapet",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "roof_217737_units",
+      "kind": "roof_unit",
+      "handle": "217737",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "building_FAC64",
+      "kind": "building",
+      "handle": "FAC64",
+      "layer": "$pm单体",
+      "v5_status": ""
+    },
+    {
+      "name": "roof_FAC64",
+      "kind": "roof",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_FAC64_plinth",
+      "kind": "facade_plinth",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_FAC64_glass",
+      "kind": "facade_glass",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_FAC64_frame",
+      "kind": "facade_frame",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_FAC64_door",
+      "kind": "facade_door",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_FAC64_canopy",
+      "kind": "facade_canopy",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "facade_FAC64_step",
+      "kind": "facade_step",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "roof_FAC64_parapet",
+      "kind": "roof_parapet",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "roof_FAC64_cap",
+      "kind": "roof_parapet",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "roof_FAC64_units",
+      "kind": "roof_unit",
+      "handle": "FAC64",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_wall_s",
+      "kind": "pool_wall",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_wall_n",
+      "kind": "pool_wall",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_wall_w",
+      "kind": "pool_wall",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_wall_e",
+      "kind": "pool_wall",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_floor",
+      "kind": "pool_floor",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_water",
+      "kind": "water",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_2E14C4_coping",
+      "kind": "pool_coping",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_2E14C4_rail",
+      "kind": "pool_rail",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_2E14C4_ladder",
+      "kind": "pool_rail",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pool_2E14C4_joints",
+      "kind": "pool_joint",
+      "handle": "2E14C4",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "road_CF248_0_0",
+      "kind": "road",
+      "handle": "CF248",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "road_109442_0_0",
+      "kind": "road",
+      "handle": "109442",
+      "layer": "",
+      "v5_status": ""
+    },
+    {
+      "name": "pipe_139728_0_0",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_1",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_2",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_3",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_4",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_5",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_6",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_8",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_9",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_10",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_0_11",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_139728_1_0",
+      "kind": "pipe",
+      "handle": "139728",
+      "layer": "$管综-室内消防",
+      "v5_status": "pipe_candidate_strong"
+    },
+    {
+      "name": "pipe_337658_0_0",
+      "kind": "pipe",
+      "handle": "337658",
+      "layer": "$管综-雨水",
+      "v5_status": "pipe_candidate_medium"
+    },
+    {
+      "name": "pipe_1AFB8C_0_0",
+      "kind": "pipe",
+      "handle": "1AFB8C",
+      "layer": "$管综-雨水",
+      "v5_status": "pipe_candidate_medium"
+    }
+  ],
+  "validation": {
+    "pool_centroid_scene": [
+      8.637,
+      40.293
+    ],
+    "building_217737_centroid_scene": [
+      -0.553,
+      40.538
+    ],
+    "facade_faces": {
+      "facade_217737_plinth": 24,
+      "facade_217737_glass": 24,
+      "facade_217737_frame": 474,
+      "facade_217737_door": 6,
+      "facade_217737_canopy": 6,
+      "facade_217737_step": 12,
+      "facade_FAC64_plinth": 24,
+      "facade_FAC64_glass": 24,
+      "facade_FAC64_frame": 450,
+      "facade_FAC64_door": 6,
+      "facade_FAC64_canopy": 6,
+      "facade_FAC64_step": 12
+    },
+    "pool_detail_faces": {
+      "pool_2E14C4_coping": 24,
+      "pool_2E14C4_rail": 576,
+      "pool_2E14C4_ladder": 282,
+      "pool_2E14C4_joints": 156
+    },
+    "roof_detail_faces": {
+      "roof_217737_parapet": 24,
+      "roof_217737_cap": 24,
+      "roof_217737_units": 12,
+      "roof_FAC64_parapet": 24,
+      "roof_FAC64_cap": 24,
+      "roof_FAC64_units": 12
+    },
+    "pipes": {
+      "139728": "pipe_candidate_strong",
+      "337658": "pipe_candidate_medium",
+      "1AFB8C": "pipe_candidate_medium"
+    }
+  }
+}

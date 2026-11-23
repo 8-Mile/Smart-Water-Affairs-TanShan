@@ -2,7 +2,7 @@
  * 唐港三维场景 CAD / 系统清单 / 审计数据契约。
  * 从 5188 L1WaterScene.vue 抽出的纯类型定义，无运行时代码。
  */
-import type { BufferAttribute, Mesh } from 'three'
+import type { BufferAttribute, Mesh, Object3D } from 'three'
 
 export type Pt2 = [number, number]
 
@@ -126,6 +126,8 @@ export type PipeBatch = {
   edges: CadLine[]
   layer: string
   system: string
+  /** 与管身同批生成的接头/法兰，随图层显隐一起切换，避免留下漂浮阀件 */
+  fittings?: Object3D[]
   /** 沿路径累计弧长的流带属性（顶点里程） */
   flowAttr?: BufferAttribute
   /** 按顶点控制流带开关；停流时置 0，管身保持可见 */

@@ -34,14 +34,14 @@ export const useProcessSpecialistStore=defineStore('tg-process-specialist-mock',
   const activeCount=computed(()=>Object.values(selected).filter(Boolean).length)
   function select(systemId:SpecialistSystem,profileId:SpecialistProfileId|null){
     if(profileId!==null&&!SPECIALIST_SYSTEM_IDS[systemId].includes(profileId))
-      throw Error('专业Mock工况与当前工艺系统不匹配')
+      throw Error('专业模拟工况与当前工艺系统不匹配')
     selected[systemId]=profileId
     reviewed[systemId]=[]
     records[systemId]=null
   }
   function mark(systemId:SpecialistSystem,checkpointId:string,checked:boolean){
     const current=getSpecialistCase(selected[systemId],systemId)
-    if(!current)throw Error('尚未选择专业Mock工况')
+    if(!current)throw Error('尚未选择专业模拟工况')
     if(!current.checkpoints.some(point=>point.id===checkpointId))
       throw Error('演练检查节点不属于当前工况')
     reviewed[systemId]=checked
@@ -51,7 +51,7 @@ export const useProcessSpecialistStore=defineStore('tg-process-specialist-mock',
   }
   function finish(systemId:SpecialistSystem,note:string):SpecialistExerciseRecord{
     const current=getSpecialistCase(selected[systemId],systemId)
-    if(!current)throw Error('尚未选择专业Mock工况')
+    if(!current)throw Error('尚未选择专业模拟工况')
     if(!current.checkpoints.every(x=>reviewed[systemId].includes(x.id)))
       throw Error('请先逐项完成所有Mock节点查看')
     const clean=note.trim()

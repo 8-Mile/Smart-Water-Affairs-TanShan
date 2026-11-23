@@ -14,6 +14,8 @@ import DashboardStage from './components/DashboardStage.vue'
 import DashboardHeader from './components/DashboardHeader.vue'
 import L1WaterScene from '../scene/L1WaterScene.vue'
 import OverviewCards from './components/OverviewCards.vue'
+import ProjectInfoCard from './components/ProjectInfoCard.vue'
+import ProjectKpiStrip from './components/ProjectKpiStrip.vue'
 import RegisterView from './components/RegisterView.vue'
 import DisplaySettings from './components/DisplaySettings.vue'
 import Icon from './components/Icon.vue'
@@ -205,7 +207,18 @@ onBeforeUnmount(() => {
         v-if="page === 'overview'"
         :image="image"
         :show-markers="markers"
-      />
+      >
+        <template #overlay="{ systems, active, choose, processRoute, openProcess }">
+          <ProjectInfoCard
+            :systems="systems"
+            :active="active"
+            :process-route="processRoute"
+            @select="choose"
+            @process="openProcess"
+          />
+          <ProjectKpiStrip />
+        </template>
+      </L1WaterScene>
       <main v-if="page === 'overview'" class="overview">
         <OverviewCards
           :snapshot="snap"

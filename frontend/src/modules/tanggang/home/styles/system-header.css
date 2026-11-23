@@ -214,6 +214,74 @@
   outline:2px solid #318ebc;
   outline-offset:-3px;
 }
+.tanggang-home .port-header.tg-system-header .tg-system-weather {
+  position:relative;
+  flex:none;
+  display:flex;
+  align-items:center;
+  height:100%;
+}
+.tanggang-home .port-header.tg-system-header .tg-weather-trigger {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  height:clamp(34px,1.4vw,44px);
+  padding:0 clamp(7px,.45vw,13px);
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:#4a6a7f;
+  cursor:pointer;
+  transition:background-color .2s,color .2s;
+}
+.tanggang-home .port-header.tg-system-header .tg-weather-trigger:hover,
+.tanggang-home .port-header.tg-system-header .tg-system-weather.open .tg-weather-trigger {
+  background:rgba(103,173,211,.12);
+  color:#287aab;
+}
+.tanggang-home .port-header.tg-system-header .tg-weather-main {
+  font-size:clamp(12px,.62vw,16px);
+  color:#5b7688;
+  white-space:nowrap;
+}
+.tanggang-home .port-header.tg-system-header .tg-weather-main b {
+  margin-left:2px;
+  font-size:clamp(14px,.78vw,19px);
+  font-weight:750;
+  color:#2f607c;
+}
+.tanggang-home .port-header.tg-system-header .tg-weather-pop {
+  position:absolute;
+  top:calc(100% + 10px);
+  right:0;
+  z-index:60;
+  width:224px;
+  padding:12px 13px 11px;
+  border:1px solid #dce9f0;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 14px 34px rgba(33,78,108,.15);
+  color:#4c687b;
+}
+.tg-weather-pop-head {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding-bottom:9px;
+  border-bottom:1px solid #e6f0f5;
+}
+.tg-weather-pop-head>div {display:flex;flex-direction:column;gap:2px;min-width:0}
+.tg-weather-pop-head strong {font-size:14px;font-weight:700;color:#2d5b76}
+.tg-weather-pop-head span {font-size:10px;color:#93a8b5}
+.tg-weather-pop-head>b {margin-left:auto;font-size:19px;font-weight:750;color:#2f7c99;font-variant-numeric:tabular-nums}
+.tg-weather-rows {display:flex;flex-direction:column;gap:5px;margin:9px 0 0}
+.tg-weather-rows>div {display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.tg-weather-rows dt {font-size:11px;color:#8299a8}
+.tg-weather-rows dd {margin:0;font-size:11.5px;font-weight:600;color:#3d6278}
+.tg-weather-note {margin:9px 0 0;padding-top:8px;border-top:1px dashed #e2edf3;font-size:9.5px;line-height:1.5;color:#98adb9}
+@media(max-width:1400px) {
+  .tanggang-home .port-header.tg-system-header .tg-weather-main {display:none}
+}
 .tg-top-menu.el-popper,.tg-system-user-dropdown.el-popper {
   border:1px solid #dce9f0;
   border-radius:10px;
@@ -271,4 +339,13 @@
     border-top:1px solid rgba(147,184,220,.18)!important;
   }
   .tanggang-home .port-header.tg-system-header .tg-top-nav .tg-top-trigger {font-size:12px;padding:0 11px}
+}
+
+/* 场景加载期间隐藏全局情景推演入口，避免在浅色加载遮罩之上出现悬浮按钮 */
+body:has(.l1-loading) .tg-sim-global {
+  opacity: 0;
+  pointer-events: none;
+}
+.tg-sim-global {
+  transition: opacity 0.2s ease;
 }

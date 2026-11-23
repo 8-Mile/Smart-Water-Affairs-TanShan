@@ -4,8 +4,8 @@
  */
 export const pipeLegend = [
   { name: '中压除尘', layer: '$管综-中压除尘', color: '#286BDD' },
-  { name: '雨水', layer: '$管综-雨水', color: '#00A7B5' },
-  { name: '市政中水', layer: '$管综-市政中水', color: '#24965C' },
+  { name: '雨水', layer: '$管综-雨水', color: '#00A3CE' },
+  { name: '市政中水', layer: '$管综-市政中水', color: '#3E7FC1' },
   { name: '生活给水', layer: '$管综-市政自来水 生活给水', color: '#DBB12E' },
   { name: '生活污水', layer: '$管综-生活污水', color: '#8854BF' },
   { name: '污泥', layer: '$管综-污泥管', color: '#C77832' },

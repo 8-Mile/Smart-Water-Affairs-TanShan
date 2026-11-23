@@ -9,9 +9,11 @@ import {usePermissions} from '@/utils/permissions'
 import {fetchUnreadCount} from '@/api/notification'
 import logoImg from '@/assets/img/DALOGO.webp'
 import {tanggangGroupForPath} from '../../business/menu'
-import ProjectDataStage from '../../business/ProjectDataStage.vue'
+import PortIcon from './PortIcon.vue'
+import {fetchPortWeather,weatherAccessMode} from '../data/portWeather'
+import type {PortWeather} from '../data/portWeather'
 
-/** 首页使用与运管平台相同的用户身份和菜单权限，替换旧5188的演示身份、天气和空消息面板。 */
+/** 首页使用与运管平台相同的用户身份和菜单权限；顶部保留天气、时间与消息通知。 */
 const router=useRouter()
 const route=useRoute()
 const {user,onLogout}=useAppChrome()
@@ -41,16 +43,43 @@ async function refreshUnread(){
   try{const {data}=await fetchUnreadCount();unreadCount.value=Math.max(0,Number(data?.data?.unread??0))}
   catch{unreadCount.value=0}
 }
+// 顶部天气：仅作港区近似坐标预览，不表示 51/52 泊位现场气象站实测。
+const weather=ref<PortWeather|null>(null)
+const weatherError=ref('')
+const weatherOpen=ref(false)
+const weatherLoading=ref(false)
+const weatherModeLabel=weatherAccessMode==='configured'?'已授权气象接口':'开发预览数据'
+let weatherTimer:number|undefined
+let weatherAbort:AbortController|undefined
+async function loadWeather(){
+  weatherAbort?.abort()
+  weatherAbort=new AbortController()
+  weatherLoading.value=true
+  try{
+    weather.value=await fetchPortWeather(weatherAbort.signal)
+    weatherError.value=''
+  }catch(err){
+    if((err as Error).name!=='AbortError')weatherError.value=(err as Error).message||'气象服务暂不可用'
+  }finally{weatherLoading.value=false}
+}
+const weatherObserved=computed(()=>{
+  const raw=weather.value?.observedAt||''
+  return raw.length>=16?raw.slice(11,16):'--:--'
+})
 onMounted(()=>{
   clockTimer=window.setInterval(()=>{now.value=new Date()},1000)
   if(hasPerm('alarm:realtime')){
     void refreshUnread()
     noticeTimer=window.setInterval(()=>{void refreshUnread()},60_000)
   }
+  void loadWeather()
+  weatherTimer=window.setInterval(()=>{void loadWeather()},600_000)
 })
 onBeforeUnmount(()=>{
   if(clockTimer!==undefined)window.clearInterval(clockTimer)
   if(noticeTimer!==undefined)window.clearInterval(noticeTimer)
+  if(weatherTimer!==undefined)window.clearInterval(weatherTimer)
+  weatherAbort?.abort()
 })
 </script>
 
@@ -84,7 +113,35 @@ onBeforeUnmount(()=>{
     </nav>
 
     <div class="tg-system-tools">
-      <ProjectDataStage/>
+      <div class="tg-system-weather" :class="{open:weatherOpen}">
+        <button type="button" class="tg-weather-trigger" :aria-expanded="weatherOpen"
+          :title="weather?`${weather.description} ${Math.round(weather.temperature)}°C`:'港区天气'"
+          @click="weatherOpen=!weatherOpen">
+          <PortIcon v-if="weather" :name="weather.icon" :size="20"/>
+          <span class="tg-weather-main">
+            <template v-if="weather">{{weather.description}} <b>{{Math.round(weather.temperature)}}°</b></template>
+            <template v-else>{{weatherLoading?'天气获取中':'天气'}}</template>
+          </span>
+        </button>
+        <div v-if="weatherOpen" class="tg-weather-pop" role="dialog" aria-label="港区天气详情">
+          <div class="tg-weather-pop-head">
+            <PortIcon v-if="weather" :name="weather.icon" :size="26"/>
+            <div>
+              <strong>{{weather?weather.description:'天气暂不可用'}}</strong>
+              <span v-if="weather">{{weatherObserved}} 观测</span>
+              <span v-else>{{weatherError||'等待气象数据'}}</span>
+            </div>
+            <b v-if="weather">{{Math.round(weather.temperature)}}°C</b>
+          </div>
+          <dl v-if="weather" class="tg-weather-rows">
+            <div><dt>相对湿度</dt><dd>{{weather.humidity}}%</dd></div>
+            <div><dt>风速</dt><dd>{{weather.windSpeed}} km/h</dd></div>
+            <div><dt>昼夜</dt><dd>{{weather.isDay?'白天':'夜间'}}</dd></div>
+            <div><dt>数据来源</dt><dd>{{weatherModeLabel}}</dd></div>
+          </dl>
+          <p class="tg-weather-note">近似港区坐标 39.21°N / 119.02°E，非 51/52 泊位气象站实测。</p>
+        </div>
+      </div>
       <time class="tg-system-clock" aria-label="北京时间">
         <strong>{{displayClock}}</strong>
         <small>{{displayDate}}</small>

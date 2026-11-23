@@ -129,8 +129,9 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const sea=new T.ShaderMaterial({
     uniforms:{
       uTime:{value:0},
-      // 与场景主光一致：DirectionalLight position (64,104,-44)，阴影朝屏幕右下。
-      uSunDir:{value:new T.Vector3(64,104,-44).normalize()},
+      // 与场景主光一致：DirectionalLight position (88,70,-48)，约 35° 高度，
+      // 水面高光与阴影方向都跟着低太阳走。
+      uSunDir:{value:new T.Vector3(88,70,-48).normalize()},
       uDeepColor:{value:new T.Color('#0e5f72')},
       uShallowColor:{value:new T.Color('#46a9ba')},
       uSkyZenith:{value:new T.Color('#4c8cba')},
@@ -1180,6 +1181,11 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     if(rng()<.26)continue
     pushTree(x+(rng()-.5)*2.2,z+(rng()-.5)*1.8,.85+rng()*.78)
   }
+  // 稀疏高大乔木：在连续冠线里插几株更高的树，打破背景林带的平直上缘。
+  for(let x=xmin-6;x<xmax+8;x+=11.5){
+    if(rng()<.35)continue
+    pushTree(x+(rng()-.5)*3.4,zmax+7.2+(rng()-.5)*2.6,1.3+rng()*.55)
+  }
   let internalTrees=0
   // Street trees along the open north band and the east/west service roads.
   for(let x=-62;x<58;){
@@ -1271,8 +1277,13 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     const trunk=new T.InstancedMesh(trunkGeo,trunkMat,simpleSites.length)
     crown.name='林带树冠';crown2.name='林带树冠二层';crown3.name='林带树冠三层';trunk.name='林带树干'
     const tones=['#3f5033','#45593a','#35462d','#4c5c3f','#2e3f29','#566644'].map(c=>new T.Color(c))
+    // 空气透视：越靠北（越远）的林带越向天光灰绿靠拢，避免背景是一整片同色绿墙。
+    const haze=new T.Color('#9fb4ad')
     const m=new T.Matrix4(),q=new T.Quaternion(),Y=new T.Vector3(0,1,0)
     simpleSites.forEach((t,i)=>{
+      // 以北侧林带自身的进深做归一化：前缘轻、后排重，形成由近及远的颜色过渡。
+      const depth=Math.min(1,Math.max(0,(t.z-(zmax+2))/12))
+      const lift=.04+.16*depth
       const trunkH=t.h*1.2
       // Per-tree rotation and lobe offsets break the repeated identical clump silhouette.
       q.setFromAxisAngle(Y,(t.tone*1.31+i*.53)%(Math.PI*2))
@@ -1284,17 +1295,17 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       const rx=t.r*(.78+.44*((i*11+t.tone*2)%7)/7)
       m.compose(new T.Vector3(t.x,trunkH+t.r*.72*sy,-t.z),q,new T.Vector3(rx,t.r*.92*sy,rx))
       crown.setMatrixAt(i,m)
-      crown.setColorAt(i,tones[t.tone%tones.length])
+      crown.setColorAt(i,tones[t.tone%tones.length].clone().lerp(haze,lift))
       // Second, smaller crown lobe fills the silhouette instead of a single spike.
       const j1=.18+.10*((i*7+t.tone)%8)/8, j2=.26+.12*((i*5+t.tone*3)%7)/7
       m.compose(new T.Vector3(t.x+t.r*j1,trunkH+t.r*1.06*sy,-t.z-t.r*j1*.82),q,
         new T.Vector3(rx*.66,rx*.60*sy,rx*.66))
       crown2.setMatrixAt(i,m)
-      crown2.setColorAt(i,tones[(t.tone+1)%tones.length])
+      crown2.setColorAt(i,tones[(t.tone+1)%tones.length].clone().lerp(haze,lift*.85))
       m.compose(new T.Vector3(t.x-t.r*j2,trunkH+t.r*.86*sy,-t.z+t.r*j2*.66),q,
         new T.Vector3(rx*.52,rx*.48*sy,rx*.52))
       crown3.setMatrixAt(i,m)
-      crown3.setColorAt(i,tones[(t.tone+2)%tones.length])
+      crown3.setColorAt(i,tones[(t.tone+2)%tones.length].clone().lerp(haze,lift*.7))
     })
     crown.instanceMatrix.needsUpdate=true;trunk.instanceMatrix.needsUpdate=true
     crown2.instanceMatrix.needsUpdate=true;crown3.instanceMatrix.needsUpdate=true
@@ -1341,6 +1352,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     const mass=new T.InstancedMesh(blobGeo,blobMat,blobSites.length)
     mass.name='远景林冠体块'
     const massTones=['#3c5a3c','#446345','#35503a','#4d7050','#2f4732','#537a55'].map(c=>new T.Color(c))
+    // 与近景林带同一套空气透视：最外圈冠体向天光灰绿过渡，和雾色衔接。
+    const massHaze=new T.Color('#a9bdb7')
     blobSites.forEach(([x,z],i)=>{
       const r=1.32+rng()*.86
       // Deeper (north, higher z) crowns read darker, giving the far woodland a shaded rear edge.
@@ -1348,7 +1361,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       const tone=Math.min(massTones.length-1,Math.max(0,Math.floor(i%4+depth*2)))
       m.compose(new T.Vector3(x,1.05+r*.32,-z),q,new T.Vector3(r,.72+r*.18,r))
       mass.setMatrixAt(i,m)
-      mass.setColorAt(i,massTones[tone])
+      mass.setColorAt(i,massTones[tone].clone().lerp(massHaze,.06+.20*depth))
     })
     mass.receiveShadow=true;mass.castShadow=true
     mass.instanceMatrix.needsUpdate=true
@@ -1433,7 +1446,7 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         // 两处同名“生态蓄水池”文字点：只保留来源记录与低矮自然水面，不表示两座已建水池。
         pond(x,z,width,depth,token)
       }else{
-        basin(x,z,width,depth,.65)
+        if(f.handle!=='2E14C4')basin(x,z,width,depth,.65)
         // 池体本身可拾取；水面与池壁随池体一起选中，不额外生成重复标牌面。
         const hitGeo=new T.BoxGeometry(width+.2,1.25,depth+.2).translate(x,.62,-z)
         interactive(hitGeo,poolPick,token)
@@ -1770,7 +1783,7 @@ roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
     const defs:[string,number,number,number,string,string,string][]=[
       ['pumphouse.glb',-0.55,40.55,0,'除尘泵房 · 轮廓内表现建筑','TG-CAD-12','217737'],
       ['treatmenthouse.glb',-18.05,40.6,Math.PI/2,'污水处理场 · 轮廓内表现建筑','TG-CAD-11','2E23D7']
-    ]
+    ].filter(d=>d[6]!=='217737') as [string,number,number,number,string,string,string][]
     const models=await Promise.all(defs.map(d=>loader.loadAsync(base+d[0])))
     if(disposed)return false
     models.forEach((m,i)=>{
@@ -1793,6 +1806,103 @@ roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
       // 精修 GLB 已包含基座、檐口、门廊与屋面设备；不再叠加程序化外壳，避免重墙与闪烁。
     })
     return !disposed
+  }
+  // CAD 样区正式资产：modeling/cad/build_north_pool_sample.py → cad-sample/north-pool-sample.glb。
+  // 仅接管除尘泵房（217737）与北部集水池（2E14C4）；道路与管网继续由既有系统负责。
+  // 建筑高度、池沿与水位为场景表现推定值，平面轮廓与坐标来自 CAD。
+  // GLB 里是纯色材质且没有 UV；按法线主导轴生成世界尺度 UV，
+  // 让混凝土/金属贴图在任何朝向的墙面上都按同样真实尺寸平铺，不出现拉伸。
+  function boxUv(g:T.BufferGeometry,tile:number){
+    const pos=g.getAttribute('position')
+    if(!pos)return
+    if(!g.getAttribute('normal'))g.computeVertexNormals()
+    const nor=g.getAttribute('normal')
+    if(!nor)return
+    const uv=new Float32Array(pos.count*2)
+    for(let i=0;i<pos.count;i++){
+      const nx=Math.abs(nor.getX(i)),ny=Math.abs(nor.getY(i)),nz=Math.abs(nor.getZ(i))
+      const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i)
+      if(ny>=nx&&ny>=nz){uv[i*2]=x/tile;uv[i*2+1]=z/tile}
+      else if(nx>=nz){uv[i*2]=z/tile;uv[i*2+1]=y/tile}
+      else{uv[i*2]=x/tile;uv[i*2+1]=y/tile}
+    }
+    g.setAttribute('uv',new T.BufferAttribute(uv,2))
+  }
+  async function loadCadSample(){
+    const gltf=await new GLTFLoader().loadAsync(
+      import.meta.env.BASE_URL+'tanggang/models/cad-sample/north-pool-sample.glb?v=7')
+    if(disposed)return false
+    const root=gltf.scene
+    root.name='CAD 样区 · 北部集水池'
+    root.position.y=.06
+    // 立面/池体的混凝土、金属屋面挂 PBR 贴图：贴图颗粒、法线起伏和粗糙度差异
+    // 才能把近景从"一块色板"拉回"有年代感的材料"。
+    const wallC=mineralMap('pbr/concrete/color.jpg',true)
+    const wallN=mineralMap('pbr/concrete/normal.jpg')
+    const wallR=mineralMap('pbr/concrete/rough.jpg')
+    const metalC=mineralMap('pbr/metal/color.jpg',true)
+    const metalN=mineralMap('pbr/metal/normal.jpg')
+    const metalR=mineralMap('pbr/metal/rough.jpg')
+    const wall=new T.MeshStandardMaterial({color:0xd2d6d1,roughness:.86,metalness:.02,
+      map:wallC,normalMap:wallN,roughnessMap:wallR,envMapIntensity:.55})
+    wall.normalScale.set(.7,.7)
+    const roof=new T.MeshStandardMaterial({color:0x99a1a6,roughness:.56,metalness:.36,
+      map:metalC,normalMap:metalN,roughnessMap:metalR,envMapIntensity:.85})
+    const poolWall=new T.MeshStandardMaterial({color:0xc2c6c0,roughness:.9,metalness:0,
+      map:wallC,normalMap:wallN,roughnessMap:wallR,envMapIntensity:.5})
+    poolWall.normalScale.set(.6,.6)
+    // 池水与人工湖同一色系，避免样区水面比湖面更亮更饱和。
+    const water=new T.MeshStandardMaterial({color:0x2f8fa3,roughness:.12,metalness:.02,transparent:true,opacity:.92})
+    // 立面分层：勒脚、玻璃、框料、门扇与墙面区分，避免整栋读成一块白模。
+    const plinth=new T.MeshStandardMaterial({color:0x707774,roughness:.94,metalness:.02,
+      map:wallC,normalMap:wallN,roughnessMap:wallR,envMapIntensity:.45})
+    // 玻璃提高环境反射，远看是反射天光的窗带而不是一块黑带；框料保持金属暗色。
+    const glass=new T.MeshStandardMaterial({color:0x4f7380,roughness:.12,metalness:.3,
+      envMapIntensity:1.25})
+    const frame=new T.MeshStandardMaterial({color:0x353d3f,roughness:.52,metalness:.5,
+      envMapIntensity:.9})
+    const door=new T.MeshStandardMaterial({color:0x4c5c60,roughness:.62,metalness:.28})
+    // 池体细部：压顶浅混凝土、栏杆镀锌钢、分缝压暗。
+    const coping=new T.MeshStandardMaterial({color:0xc4c9c3,roughness:.84,metalness:.02,
+      map:wallC,normalMap:wallN,roughnessMap:wallR,envMapIntensity:.5})
+    const rail=new T.MeshStandardMaterial({color:0x99a2a5,roughness:.4,metalness:.55})
+    const joint=new T.MeshStandardMaterial({color:0x777d77,roughness:.94,metalness:0})
+    for(const m of [wall,roof,poolWall,water,plinth,glass,frame,door,coping,rail,joint])portResources.add(m)
+    const cadMaterial=(kind:string)=>{
+      if(kind==='water')return water
+      if(kind==='roof'||kind==='facade_canopy')return roof
+      if(kind==='pool_wall'||kind==='pool_floor')return poolWall
+      if(kind==='facade_plinth')return plinth
+      if(kind==='facade_glass')return glass
+      if(kind==='facade_frame')return frame
+      if(kind==='facade_door')return door
+      if(kind==='facade_step'||kind==='roof_parapet')return coping
+      if(kind==='roof_unit')return frame
+      if(kind==='pool_coping')return coping
+      if(kind==='pool_rail')return rail
+      if(kind==='pool_joint')return joint
+      return wall
+    }
+    // 贴图平铺尺寸按构件真实尺度：墙面约 24 m 一个循环、屋面 28 m、压顶与踏步 16 m。
+    const cadTile:Record<string,number>={building:2.4,roof:2.8,facade_canopy:2.4,pool_wall:2.6,
+      pool_floor:2.6,pool_coping:1.6,facade_step:1.6,roof_parapet:1.6,facade_plinth:1.6}
+    root.traverse(o=>{
+      if(!(o instanceof T.Mesh))return
+      const kind=String(o.userData?.kind||'')
+      if(kind==='ground'||kind==='road'||kind==='pipe'){o.visible=false;return}
+      o.material=cadMaterial(kind)
+      const tile=cadTile[kind]
+      if(tile)boxUv(o.geometry,tile)
+      o.castShadow=true;o.receiveShadow=true
+      assignGray(o)
+      portResources.add(o.geometry)
+      if(o.userData?.source_handle==='217737'){
+        o.userData={...o.userData,pick:'reliefPoint',pointId:'TG-CAD-12',sourceHandle:'217737'}
+        picks.push(o)
+      }
+    })
+    group.add(root)
+    return true
   }
   // 洗车台样件：modeling/harbor/build_wash_station.py → wash-station-l1.glb。
   // 位置沿用 CAD 文字点 TG-CAD-13 / FAE1D；模型平面包络约 8.6×12.4 显示单位。
@@ -2047,7 +2157,7 @@ roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
     group.removeFromParent()
     geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose())
   }
-  return {group,picks,dispose,setGray,loadStockpiles,loadPortAssets,loadBuildings,loadTrees,loadProcessBuildings,loadWashStation,loadTrucks,update,
+  return {group,picks,dispose,setGray,loadStockpiles,loadPortAssets,loadBuildings,loadTrees,loadProcessBuildings,loadCadSample,loadWashStation,loadTrucks,update,
     seaMaterial:sea,waterMeshes,waterLevel:.055,
     // 验收复算用：生成树心的最终坐标与可绘制道路中心折线（非 CAD 资产 ID）。
     treeSites,roadSegments,roadHalfWidth:ROAD_HALF_WIDTH}

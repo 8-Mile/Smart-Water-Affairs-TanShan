@@ -38,20 +38,20 @@
   z-index: 1;
 }
 
-.tanggang-scene .l1-hud { top: 15px; left: 16px; right: 16px; min-width: 0; }
+.tanggang-scene .l1-hud { top: 15px; left: 16px; right: 104px; min-width: 0; }
 .tanggang-scene .l1-hud > div:first-child { min-width: 0; }
 .tanggang-scene .l1-hud h2 { font-size: clamp(15px, 1.25vw, 20px); }
 .tanggang-scene .l1-actions { max-width: 57%; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
 .tanggang-scene .l1-actions :is(a, button) { font-size: 10px; padding: 6px 8px; min-height: 28px; }
-.tanggang-scene .l1-filters { top: 91px; left: 15px; right: 15px; min-height: 29px; }
+.tanggang-scene .l1-filters { top: 83px; left: 15px; right: 104px; min-height: 29px; }
 .tanggang-scene .l1-filter { flex: none; }
 .tanggang-scene .l1-boundarybar { left: 15px; right: 15px; bottom: 40px; }
 .tanggang-scene .l1-footer { left: 15px; right: 15px; bottom: 10px; gap: 8px; font-size: 9px; }
 .tanggang-scene .l1-footer span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tanggang-scene .l1-footer span:last-child { flex: none; }
-.tanggang-scene .l1-selection { top: 133px; right: 12px; max-height: calc(100% - 196px); overflow: auto; }
-.tanggang-scene .region-overlay .region-nav { top: 132px; left: 12px; max-height: calc(100% - 188px); }
-.tanggang-scene .region-overlay .region-card { top: 132px; right: 12px; max-height: calc(100% - 188px); }
+.tanggang-scene .l1-selection { top: 140px; right: 12px; max-height: calc(100% - 203px); overflow: auto; }
+.tanggang-scene .region-overlay .region-nav { top: 140px; left: 12px; max-height: calc(100% - 196px); }
+.tanggang-scene .region-overlay .region-card { top: 140px; right: 12px; max-height: calc(100% - 196px); }
 
 @media (max-width: 1379px) {
   .tanggang-scene .region-overlay .region-nav { width: 185px; }

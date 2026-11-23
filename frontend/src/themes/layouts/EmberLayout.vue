@@ -91,7 +91,7 @@
           <ArtSvgIcon icon="ri:menu-2-fill" :style="{ fontSize: '20px' }" />
         </div>
         <!-- 顶栏：仅页面名 -->
-        <div class="head-title">
+        <div v-if="pageTitle" class="head-title">
           <span class="page-name">{{ pageTitle === '工作台' ? '唐港综合总览' : pageTitle }}</span>
         </div>
         <div class="h-spacer" />

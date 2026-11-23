@@ -220,7 +220,7 @@
       "id": "pool",
       "name": "水池供水",
       "subtitle": "除尘水池 / 市政补水 / 回用",
-      "accent": "#28ad96",
+      "accent": "#3b78d8",
       "focusPipeLayers": [
         "$管综-市政中水",
         "$管综-市政自来水 生活给水"

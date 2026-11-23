@@ -58,7 +58,7 @@ const router = createRouter({
         {
           path:'port/process/:systemId',name:'port-process',
           component:()=>import('@/modules/tanggang/business/PortProcessView.vue'),
-          meta:{title:'唐港专业工艺详情'},
+          meta:{title:'唐港专业工艺详情',hideHeaderTitle:true},
         },
         {path:'port/water',redirect:'/port/water/supply'},
         {path:'port/operations',redirect:'/port/operations/monitor'},

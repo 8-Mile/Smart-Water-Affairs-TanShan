@@ -53,7 +53,7 @@ function readingFor(id:string){
       <span class="tg-scada-board-count">{{totalNodes}} 处设计设施 · {{sections.length}} 个 CAD 区域</span>
     </div>
     <div class="tg-scada-quickbar" data-testid="process-focus-bar">
-      <span>{{simRunning?'SIM节点快速定位':'Mock基线 · 可启动情景'}}</span>
+      <span>{{simRunning?'SIM节点快速定位':'演示基线 · 可启动情景'}}</span>
       <el-button size="small" text :disabled="!attentionCount"
         @click="emit('focusAttention')">定位SIM关注/异常（{{attentionCount}}）</el-button>
       <el-button size="small" text :disabled="!reviewedCount"

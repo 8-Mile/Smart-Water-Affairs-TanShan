@@ -62,7 +62,7 @@ export const SPECIALIST_CASES:Readonly<Record<SpecialistProfileId,SpecialistCase
     scope:'室内射雾设备及供水泵组，供水管线尚未核实',
     rule:'示例出口压力0.62 MPa、室内设备压力0.59 MPa；无真实运行点表',
     outcome:'reference',outcomeTitle:'模拟基准工况',
-    suggestedAction:'按供水泵组—室内射雾—控制柜依次检查Mock指标',
+    suggestedAction:'按供水泵组—室内射雾—控制柜依次检查模拟指标',
     checkpoints:fogCheckpoints,
   },
   'fog-low-pressure':{
@@ -216,7 +216,7 @@ export function applySpecialistCase(
     row.highlight
   return {...row,
     state:override.state||row.state,
-    stateLabel:override.state==='attention'?'专业Mock关注':(
+    stateLabel:override.state==='attention'?'专业模拟关注':(
       systemId==='domestic'?'方案Mock运行':row.stateLabel),
     readings,highlight,
     // Distinct from the independently running global supply/rainfall SIM.

@@ -17,7 +17,7 @@ export function useAppMenus() {
   const loading = ref(false)
 
   const active = computed(() => route.path)
-  const pageTitle = computed(() => (route.meta.title as string) || '工作台')
+  const pageTitle = computed(() => route.meta.hideHeaderTitle ? '' : (route.meta.title as string) || '工作台')
 
   const grantedPaths = computed(() => {
     const paths = new Set<string>()

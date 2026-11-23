@@ -48,3 +48,7 @@ backend/**/*.db
 *.db.bak*
 *.db.bak-*
 dogfood-output/
+
+# Blender / CAD 建模中间产物
+frontend/modeling/**/__pycache__/
+frontend/modeling/**/*.blend1

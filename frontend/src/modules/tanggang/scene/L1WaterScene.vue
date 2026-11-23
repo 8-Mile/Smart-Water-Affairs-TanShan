@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { defineAsyncComponent, computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import RegionEquipmentOverlay from './RegionEquipmentOverlay.vue'
 import type { SiteRegion, RegionPayload } from './types/regions'
 import * as THREE from 'three'
@@ -7,6 +7,10 @@ import { landmarks, landmarksSource, lakeDisplayOffset } from './harborLandmarks
 import { buildHarborRelief } from './harborRelief'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 
 /**
  * 与 5175 唐港首页集成用的受控接口：
@@ -304,6 +308,9 @@ watch(detail, (entry) => {
 })
 const markersVisible = ref(true)
 const labelItems = ref<Label[]>([])
+// 办公楼生活用水量单独挂牌：演示口径固定值，未接入现场水表。
+const OFFICE_DOMESTIC_DEMO = { value: '12.6', unit: 'm³/d' } as const
+const officeWaterTag = ref<{ x: number; y: number } | null>(null)
 const sourceStats = ref({ sources: 0, pipePieces: 0, pipeHandles: 0, anchors: 0, yards: 0 })
 const help = ref(false)
 const reliefEnabled = ref(true)
@@ -314,6 +321,10 @@ const sampleMode=ref(stageParam==='sample'||stageParam==='gallery')
 const studyOpen=ref(stageParam==='gallery')
 const galleryReady=ref(false)
 const allLabels = ref(false)
+// 管网图例默认收起，点击标题展开；避免长期占据场景左下角。
+const legendOpen = ref(false)
+// 图例展开/收起后重新计算标牌避让区域。
+watch(legendOpen,()=>{void nextTick(()=>createScreenLabels())})
 // Default view keeps the scene clear; audit and system tools stay behind one entry.
 const toolsOpen = ref(false)
 const solidMode = computed(()=>reliefEnabled.value && !continuityOpen.value && !auditOpen.value)
@@ -321,6 +332,10 @@ let relief: ReturnType<typeof buildHarborRelief> | null = null
 let groundGrid: THREE.GridHelper | null = null
 let groundPlane: THREE.Mesh | null = null
 let shadowSun: THREE.DirectionalLight | null = null
+// 后处理链：GTAO 接地阴影是"模型像被贴在图上"与"物体真正落地"的分水岭。
+// 只用 RenderPass → GTAO → OutputPass，色调映射只在 OutputPass 做一次。
+let composer: EffectComposer | null = null
+let gtaoPass: GTAOPass | null = null
 function changeView(){
   closeContinuity()
   auditOpen.value=false
@@ -668,6 +683,8 @@ function refresh() {
       :enabled?((focus||fire)?1:(reference?0.55:1)):0
     batch.mesh.visible = enabled
     batch.mesh.userData.selectable = enabled
+    // 接头/法兰与管身同进同退：否则切换子系统后只剩漂浮的弯头与法兰，看似管道残缺。
+    batch.fittings?.forEach((fitting) => { fitting.visible = enabled })
     const material=batch.mesh.material as THREE.MeshStandardMaterial
     material.transparent=opacity<1
     material.opacity=opacity
@@ -1042,6 +1059,17 @@ function createScreenLabels() {
     m.kind==='poolGroup'?0:m.kind==='yardCandidate'?1:m.kind==='poolContour'?2:3
   const used:{x:number;y:number;width:number;height:number}[]=[]
   const placed:Label[]=[]
+  // 左侧信息卡与管网图例是固定浮层，先把它们的占位加入避让区，避免标牌压在上面。
+  {
+    const host=root.value.getBoundingClientRect()
+    for(const selector of ['.tg-project-card','.home-pipe-legend']){
+      const el=root.value.parentElement?.querySelector<HTMLElement>(selector)
+      if(!el)continue
+      const r=el.getBoundingClientRect()
+      if(r.width<1||r.height<1)continue
+      used.push({x:r.left-host.left-6,y:r.top-host.top-6,width:r.width+12,height:r.height+12})
+    }
+  }
   // A 4K browser reports full CSS-pixel dimensions at 100% OS scaling.
   // Mirror large-screen label sizing and reserve the taller toolbar+legend area.
   const large=w>=2100 && window.innerWidth>=2200
@@ -1108,6 +1136,21 @@ function createScreenLabels() {
       note:mark.note,status:mark.status})
   }
   labelItems.value=placed
+  // 办公楼单独显示生活用水量：仅在选中子系统时出现，紧贴办公楼标牌下方。
+  const officeLabel=sourceMode.value?placed.find(item=>item.name.startsWith('办公楼')):undefined
+  if(officeLabel){
+    officeWaterTag.value={x:Math.max(100,Math.min(w-100,officeLabel.x)),y:officeLabel.y+7}
+  }else{
+    const office=sourceMode.value?floatingMarks.value.find(m=>m.name.startsWith('办公楼')):undefined
+    if(office&&camera){
+      const clip=at(office.labelX??office.x,office.labelZ??office.z,6).project(camera)
+      if(clip.z<=1&&clip.z>=-1){
+        const ox=(clip.x+1)*w*.5,oy=(1-clip.y)*h*.5
+        officeWaterTag.value=ox>100&&ox<w-100&&oy>clearance+26&&oy<h-70
+          ?{x:ox,y:oy+14}:null
+      }else officeWaterTag.value=null
+    }else officeWaterTag.value=null
+  }
 }
 function updateCompass(){
   if(!camera||!orbit)return
@@ -1375,6 +1418,7 @@ function build(data: CadScene) {
     mesh.userData.baseColor=tint.clone()
     scene.add(mesh);pickObjects.push(mesh)
     const fittingParent = firePipeLayers.includes(batch.layer) ? fireAccessories : scene
+    const fittings: THREE.Object3D[] = []
     const jointMesh=joints.length?new THREE.InstancedMesh(jointGeo,jointMat,joints.length):null
     if(jointMesh){
       joints.forEach((p,i)=>{
@@ -1386,6 +1430,7 @@ function build(data: CadScene) {
       if(jointMesh.instanceColor)jointMesh.instanceColor.needsUpdate=true
       jointMesh.computeBoundingSphere();jointMesh.castShadow=true;jointMesh.receiveShadow=true
       fittingParent.add(jointMesh)
+      fittings.push(jointMesh)
     }
     const flangeMesh=flanges.length?new THREE.InstancedMesh(flangeGeo,flangeMat,flanges.length):null
     if(flangeMesh){
@@ -1398,8 +1443,9 @@ function build(data: CadScene) {
       if(flangeMesh.instanceColor)flangeMesh.instanceColor.needsUpdate=true
       flangeMesh.computeBoundingSphere();flangeMesh.castShadow=false
       fittingParent.add(flangeMesh)
+      fittings.push(flangeMesh)
     }
-    batches.push({mesh,edges:batch.edges,layer:batch.layer,system:batch.system,
+    batches.push({mesh,edges:batch.edges,layer:batch.layer,system:batch.system,fittings,
       flowAttr:geo.getAttribute('aFlow') as THREE.BufferAttribute,
       onAttr:geo.getAttribute('aFlowOn') as THREE.BufferAttribute,
       flowBase:new Float32Array(onValues),
@@ -1646,8 +1692,24 @@ function setup() {
   renderer.shadowMap.enabled=true
   renderer.shadowMap.type=THREE.PCFSoftShadowMap
   renderer.info.autoReset=false
-  // 直接渲染到画布：走渲染器自带 MSAA，避免后处理链在部分显卡/浏览器上
-  // 产生二次色调映射，导致整屏发白、发虚。
+  // 后处理链：RenderPass → GTAO → OutputPass。旧版后处理发白是因为把色调映射做了两次；
+  // 渲染到目标时 three 不做材质侧映射，这里只在 OutputPass 统一映射一次，
+  // 并保留 4×MSAA，接地阴影（墙脚、堆脚、设备底座）让物体不再像贴在场坪上。
+  composer=new EffectComposer(renderer)
+  composer.renderTarget1.samples=4
+  composer.renderTarget2.samples=4
+  composer.addPass(new RenderPass(scene,camera))
+  gtaoPass=new GTAOPass(scene,camera,initialW,initialH)
+  gtaoPass.output=GTAOPass.OUTPUT.Default
+  gtaoPass.blendIntensity=.80
+  // 半径 1.6 场景单位 ≈ 16 m：近景墙脚、堆脚与设备底座有明显的接触暗部，
+  // 又不至于把整片场坪压成灰雾。
+  gtaoPass.updateGtaoMaterial({radius:1.6,distanceExponent:1.4,thickness:1.0,scale:1.0,samples:16})
+  gtaoPass.updatePdMaterial({lumaPhi:10,depthPhi:2.5,normalPhi:3,radius:4,rings:2})
+  composer.addPass(gtaoPass)
+  composer.addPass(new OutputPass())
+  composer.setPixelRatio(renderer.getPixelRatio())
+  composer.setSize(initialW,initialH)
   // Daylight sky: equirectangular canvas used as both background and IBL source.
   // It describes atmosphere only; it is not survey or meteorological data.
   const sky=document.createElement('canvas')
@@ -1665,8 +1727,9 @@ function setup() {
     const seaGrad=ctx.createLinearGradient(0,hz,0,H)
     seaGrad.addColorStop(0,'#cbdcd8');seaGrad.addColorStop(.35,'#8fa9a8');seaGrad.addColorStop(1,'#557580')
     ctx.fillStyle=seaGrad;ctx.fillRect(0,hz,W,H-hz)
-    // 太阳与大气光晕：方向与主光 (64,104,44) 对齐。
-    const sunX=.596*W,sunY=(1-.793)*H
+    // 太阳与大气光晕：方向与主光 (88,70,-48) 对齐；太阳高度降到约 35°，
+    // 建筑与门机投影拉长，画面不再像正午平光下的平面贴图。
+    const sunX=.421*W,sunY=(1-.694)*H
     const halo=ctx.createRadialGradient(sunX,sunY,0,sunX,sunY,300)
     halo.addColorStop(0,'rgba(255,252,238,.98)');halo.addColorStop(.10,'rgba(255,247,220,.80)')
     halo.addColorStop(.32,'rgba(255,240,206,.30)');halo.addColorStop(1,'rgba(255,236,206,0)')
@@ -1722,8 +1785,9 @@ function setup() {
   skyTexture.colorSpace=THREE.SRGBColorSpace
   environmentTextures.push(skyTexture)
   scene.background=skyTexture
-  // 总览不使用距离雾，避免浅蓝灰雾色覆盖模型、降低材质对比度。
-  scene.fog=null
+  // 极轻指数雾：默认机位（约 150–180 单位）几乎不受影响，
+  // 只让远海、远景林带与地平线之间出现空气透视，避免远处直接切成硬边。
+  scene.fog=new THREE.FogExp2(0xcfdfe4,.0006)
   try{
     const pmrem=new THREE.PMREMGenerator(renderer)
     const env=pmrem.fromEquirectangular(skyTexture)
@@ -1766,17 +1830,34 @@ function setup() {
   orbit.zoomToCursor=true
   orbit.maxPolarAngle=Math.PI*.485
   resetCameraPosition()
-  scene.add(new THREE.HemisphereLight(0xdfeef8,0x6d855a,.60))
-  const sun=new THREE.DirectionalLight(0xfff0d8,1.7)
-  sun.position.set(64,104,-44);sun.castShadow=true;shadowSun=sun
+  // 天光压暗一档：环境光越强，明暗交界越糊，模型越像平涂；低太阳本身已提供足够体积。
+  scene.add(new THREE.HemisphereLight(0xdfeef8,0x6d855a,.42))
+  const sun=new THREE.DirectionalLight(0xffe0b4,2.15)
+  sun.position.set(88,70,-48);sun.castShadow=true;shadowSun=sun
   Object.assign(sun.shadow.camera,{left:-92,right:92,top:96,bottom:-96,near:1,far:285})
   sun.shadow.camera.updateProjectionMatrix()
-  sun.shadow.mapSize.set(2048,2048);sun.shadow.normalBias=.16;sun.shadow.bias=-.0008;sun.shadow.radius=3.5
+  // 3072 阴影贴图在 184 单位投影范围内约 16.7 texel/单位，建筑体量边缘更干净；
+  // 仍保持 autoUpdate=false，只在资产/机位变化时重算，不增加逐帧开销。
+  // normalBias 从 .16 收到 .07：原值相当于 1.6 m 偏移，低太阳下墙脚投影会脱离墙体。
+  sun.shadow.mapSize.set(3072,3072);sun.shadow.normalBias=.07;sun.shadow.bias=-.0006;sun.shadow.radius=3
   sun.shadow.autoUpdate=false;sun.shadow.needsUpdate=true
   scene.add(sun)
-  const edge=new THREE.DirectionalLight(0xc4ebf5,.20);edge.position.set(-66,48,-42);scene.add(edge)
+  const edge=new THREE.DirectionalLight(0xc4ebf5,.26);edge.position.set(-66,48,-42);scene.add(edge)
+  // 南向天光补光：主光来自东北，默认机位看到的南立面原本只吃半球光而偏平；
+  // 低强度冷色补光只做体积，不投影，避免和主光形成第二套阴影。
+  const southFill=new THREE.DirectionalLight(0xdbe7f2,.26);southFill.position.set(-16,54,120);scene.add(southFill)
   const planeGeo=new THREE.PlaneGeometry(840,840)
-  const planeMat=new THREE.MeshStandardMaterial({color:'#6d8a5e',roughness:1,metalness:0})
+  const planeMat=new THREE.MeshStandardMaterial({color:'#8ba178',roughness:1,metalness:0})
+  // 远处场坪铺草地 PBR：纯色平面在斜俯视下是一整块死绿，纹理与法线给远景一点颗粒与起伏。
+  const groundColor=new THREE.TextureLoader().load(import.meta.env.BASE_URL+'tanggang/textures/harbor/pbr/grass/color.jpg')
+  const groundNormal=new THREE.TextureLoader().load(import.meta.env.BASE_URL+'tanggang/textures/harbor/pbr/grass/normal.jpg')
+  const groundRough=new THREE.TextureLoader().load(import.meta.env.BASE_URL+'tanggang/textures/harbor/pbr/grass/rough.jpg')
+  for(const t of [groundColor,groundNormal,groundRough]){
+    t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(96,96);t.anisotropy=8
+  }
+  groundColor.colorSpace=THREE.SRGBColorSpace
+  planeMat.map=groundColor;planeMat.normalMap=groundNormal;planeMat.roughnessMap=groundRough
+  planeMat.normalScale.set(.55,.55)
   geometriesToDispose.push(planeGeo);materialsToDispose.push(planeMat)
   const plane=new THREE.Mesh(planeGeo,planeMat);plane.rotation.x=-Math.PI/2;plane.position.y=-.08;plane.receiveShadow=true;groundPlane=plane;scene.add(plane)
   const grid=new THREE.GridHelper(160,48,0xb9d6e5,0xd0e2ea)
@@ -1796,6 +1877,8 @@ function setup() {
     camera.updateProjectionMatrix()
     renderer.setPixelRatio(displayPixelRatio(w,h))
     renderer.setSize(w,h,false)
+    composer?.setPixelRatio(renderer.getPixelRatio())
+    composer?.setSize(w,h)
     resizeWaterReflection()
     if(reframe)resetCameraPosition()
   }
@@ -1842,7 +1925,8 @@ function setup() {
     if(sig!==labelSig||++n%30===0){labelSig=sig;updateCompass();createScreenLabels()}
     maybeUpdateWaterReflection(cam)
     renderer?.info.reset()
-    renderer?.render(scene!,cam)
+    if(composer)composer.render()
+    else renderer?.render(scene!,cam)
   }
   tick()
 }
@@ -1972,6 +2056,10 @@ onMounted(async()=>{
       built.loadProcessBuildings().then(loaded=>{
         if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
       }).catch(()=>{if(active)regionLoadError.value='工艺建筑模型加载失败'})
+      // CAD 样区正式资产：接管除尘泵房与北部集水池，加载失败时保留既有程序化资产。
+      built.loadCadSample().then(loaded=>{
+        if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
+      }).catch(()=>{})
       built.loadWashStation().then(loaded=>{
         if(active&&relief===built&&loaded&&shadowSun){shadowSun.shadow.needsUpdate=true;reflectionFrames=0}
       }).catch(()=>{if(active)regionLoadError.value='洗车台样件加载失败'})
@@ -2014,6 +2102,8 @@ onBeforeUnmount(()=>{
   if(canvas){canvas.removeEventListener('pointerdown',onDown);canvas.removeEventListener('pointerup',onUp)}
   orbit?.dispose()
   relief?.dispose()
+  composer?.dispose();composer=null
+  gtaoPass?.dispose();gtaoPass=null
   reflectionRT?.dispose();reflectionRT=null;reflectionCamera=null
   shadowSun?.shadow.map?.dispose()
   disposeHighlights()
@@ -2056,35 +2146,16 @@ defineExpose({
         </span>
         <span class="l1-compass-caption">图纸北向</span>
       </button>
-      <header class="l1-hud">
-        <div>
-          <div class="l1-eyebrow"><i></i> CAD DESIGN SOURCE <span>51 / 52</span></div>
-          <h2>港区水务总览</h2>
-        </div>
-        <div class="l1-actions">
-          <button v-if="!busy && !failure" type="button" class="l1-fire-switch" data-overlay="fire"
-            role="switch" :aria-checked="showFireOverlay" @click="toggleFireLayer">
-            消防管网<i aria-hidden="true"></i>
-          </button>
-          <button class="l1-tool-toggle" :class="{active:toolsOpen}" @click="toolsOpen=!toolsOpen"
-            :aria-expanded="toolsOpen">
-            {{toolsOpen?'收起工具':'工具 / 系统核查'}}
-          </button>
-          <template v-if="toolsOpen">
-          <button data-continuity-toggle="true" :class="{active:continuityOpen}"
-            @click="toggleContinuity" :aria-expanded="continuityOpen">
-            断点核查<span v-if="continuityData"> {{continuityData.summary.countOfCandidateLocations}}</span>
-          </button>
-          <button @click="toggleAudit"
-            :aria-expanded="auditOpen">管网核验</button>
-          <button @click="pointIndexOpen=!pointIndexOpen;auditOpen=false" :aria-expanded="pointIndexOpen">点位索引</button>
-          <button @click="toggleRegionPanel" :disabled="busy">{{showRegionPanel?'关闭设备清单':'区域设备'}}</button>
-          <a href="/tanggang/audit/cad-review/v2/index.html" target="_blank" rel="noopener">核查CAD</a>
-          <button @click="help=!help" title="交互说明">?</button>
-          </template>
-        </div>
-      </header>
-      <!-- 顶栏下就近的单行入口：全场总览 + 六工艺；不遮挡场景时也能直接切换。 -->
+      <!-- 右上角 CAD 图入口：新窗口打开 CAD 总控梳理图，可与立体场景对照切换 -->
+      <a v-if="!busy&&!failure" class="l1-cad-toggle"
+        href="/tanggang/audit/cad-review/v2/index.html" target="_blank" rel="noopener"
+        title="在新窗口打开 CAD 总控梳理图，可与立体场景对照">
+        CAD 图查看
+      </a>
+      <!-- 顶部与底部轻量压暗，收拢场景边界，让顶栏、悬浮卡与三维画布连成完整页面。 -->
+      <div class="l1-scrim l1-scrim-top" aria-hidden="true"></div>
+      <div class="l1-scrim l1-scrim-bottom" aria-hidden="true"></div>
+      <!-- 桌面端系统入口已移入左侧「项目建设与运维」卡片；此处仅保留窄屏兜底。 -->
       <div class="l1-filters l1-system-row" v-if="!busy&&!failure&&showFilters"
         aria-label="全场总览与六个业务子系统">
         <button class="l1-filter l1-system-tab" data-system="all" :class="{chosen:systemModeId==='all'}"
@@ -2097,19 +2168,6 @@ defineExpose({
         </button>
         <button v-if="processRoute" class="l1-filter l1-process-link" @click="openProcess">
           进入{{sourceMode?.name}}工艺页 →
-        </button>
-      </div>
-      <div v-if="!busy&&!failure" class="l1-site-legend">
-        <span>A侧8位 · B侧8位 <b>边线推算</b></span>
-        <span>北池设计2座 / 南池设计5座 <b>轮廓待核</b></span>
-        <button class="l1-flow-chip" data-flow-demo :class="{live:flowToggle&&demoLayerFocused}" :aria-pressed="flowToggle"
-          title="中压供水源Handle 139320 折线流带演示；非实时数据，不表示水力方向"
-          @click="toggleFlow">
-          <i></i>{{sourceMode?sourceMode.name+' · 中压演示段':'流动演示 · 中压供水'}} <b>{{flowStatusText}}</b>
-        </button>
-        <button v-if="chainMarkerData?.markers.length" class="l1-chain-shortcut"
-          data-cad-shortcut="chain-bucket" @click="openFloatingMark('TG-CHAIN-1058D8')">
-          链斗冲洗池 <b>CAD文字已定位</b>
         </button>
       </div>
       <div v-if="continuityOpen&&continuityData" class="l1-continuity-panel"
@@ -2179,34 +2237,64 @@ defineExpose({
         <p class="l1-pipe-audit-warning">设计规格书要求中压管网整体环状布置，但当前未核实三通、阀门、泵房接口和实际闭环路径。雨水、污水管也不应强行按环网理解。</p>
         <a href="/tanggang/cad/l1-v2_7/V2.7_管线图层覆盖统计.csv" target="_blank" rel="noopener">查看源CAD图层覆盖统计</a>
       </div>
-      <div v-if="!busy && !failure" class="relief-controls" aria-label="场景显示">
-        <button type="button" @click="changeView" :aria-pressed="solidMode" :disabled="continuityOpen||auditOpen">{{solidMode?'立体场景':'CAD 线稿'}} ⇄</button>
-        <button type="button" @click="allLabels=!allLabels" v-if="solidMode" :aria-pressed="allLabels">{{allLabels?'全部标注':'主要标注'}}</button>
-        <button v-if="solidMode" type="button" data-home-gray :aria-pressed="grayMode" @click="switchMaterial">全场灰模</button>
-        <button v-if="solidMode" type="button" data-home-sample :data-model-loaded="galleryReady" :aria-pressed="sampleMode" @click="toggleSample">{{sampleMode?'返回全场':'局部样板'}}</button>
-        <button v-if="sampleMode&&solidMode" type="button" data-open-gallery @click="studyOpen=true">廊架构造</button>
-      </div>
       <GalleryStudy v-if="studyOpen && !busy && !failure" @close="studyOpen=false"/>
-      <div v-if="solidMode && !busy && !failure" class="home-pipe-legend" role="group"
+      <!-- 管网图例：左下角竖排，默认收起，点击展开图例内容 -->
+      <div v-if="solidMode && !busy && !failure" class="home-pipe-legend" :class="{open:legendOpen}" role="group"
         aria-label="七类管网用途图例，可多选显示、单类独显与恢复默认">
-        <div class="l1-legend-head">
+        <button class="l1-legend-trigger" type="button" :aria-expanded="legendOpen" @click="legendOpen=!legendOpen">
           <strong>管网图例</strong>
-          <button class="l1-legend-reset" type="button" @click="resetLegend">恢复默认</button>
-        </div>
-        <div class="l1-legend-items">
-          <span v-for="p in pipeLegend" :key="p.layer" class="l1-legend-item"
-            :class="{muted:!legendOn(p.layer),soloed:isSoloLayer(p.layer)}">
-            <button type="button" class="l1-legend-toggle" :aria-pressed="legendOn(p.layer)"
-              :title="'显示或隐藏：'+p.name" @click="toggleLayer(p.layer)">
-              <i :style="{background:p.color}"></i>{{p.name}}
-            </button>
-            <button type="button" class="l1-legend-solo" :aria-pressed="isSoloLayer(p.layer)"
-              :aria-label="'仅看'+p.name" :title="'仅看'+p.name" @click="soloLegend(p.layer)">独</button>
+          <span class="l1-legend-count">{{pipeLegend.length}} 类</span>
+          <span class="l1-legend-caret" aria-hidden="true"></span>
+        </button>
+        <template v-if="legendOpen">
+          <div class="l1-legend-head">
+            <button class="l1-legend-reset" type="button" @click="resetLegend">恢复默认</button>
+          </div>
+          <div class="l1-legend-items">
+            <span v-for="p in pipeLegend" :key="p.layer" class="l1-legend-item"
+              :class="{muted:!legendOn(p.layer),soloed:isSoloLayer(p.layer)}">
+              <button type="button" class="l1-legend-toggle" :aria-pressed="legendOn(p.layer)"
+                :title="'显示或隐藏：'+p.name" @click="toggleLayer(p.layer)">
+                <i :style="{background:p.color}"></i>{{p.name}}
+              </button>
+              <button type="button" class="l1-legend-solo" :aria-pressed="isSoloLayer(p.layer)"
+                :aria-label="'仅看'+p.name" :title="'仅看'+p.name" @click="soloLegend(p.layer)">独</button>
+            </span>
+          </div>
+          <small class="l1-legend-status">{{legendStatus}}</small>
+        </template>
+      </div>
+      <!-- 场景加载态：浅色科技风粒子与光流，覆盖画布避免绿色底图闪现 -->
+      <div v-if="busy" class="l1-loading" role="status" aria-live="polite">
+        <div class="l1-loading-stage" aria-hidden="true">
+          <span class="l1-loading-ring a"></span>
+          <span class="l1-loading-ring b"></span>
+          <span class="l1-loading-beam"></span>
+          <span class="l1-loading-core">
+            <svg viewBox="0 0 64 64">
+              <defs>
+                <linearGradient id="l1Drop" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#0e7ff0" />
+                  <stop offset="1" stop-color="#06b6d4" />
+                </linearGradient>
+              </defs>
+              <path d="M32 8c-8.4 11.6-16.6 21-16.6 29.3A16.6 16.6 0 0 0 48.6 37.3C48.6 29 40.4 19.6 32 8z" fill="url(#l1Drop)" />
+            </svg>
+          </span>
+          <span class="l1-loading-particles">
+            <i v-for="n in 12" :key="n" :style="{
+              left: (((n * 9) % 76) + 12) + '%',
+              animationDelay: (n * 0.42) + 's',
+              animationDuration: (5.4 + (n % 4) * 0.9) + 's',
+              width: (n % 3 === 0 ? 4.5 : 3) + 'px',
+              height: (n % 3 === 0 ? 4.5 : 3) + 'px',
+            }"></i>
           </span>
         </div>
-        <small class="l1-legend-status">{{legendStatus}}</small>
+        <p class="l1-loading-title">正在构建港区三维场景</p>
+        <p class="l1-loading-sub">载入 CAD 工程图 · 专业管网 · 模型资源</p>
+        <div class="l1-loading-bar" aria-hidden="true"><span></span></div>
       </div>
-      <div v-if="busy" class="l1-message">正在加载原始 CAD 三维审查数据…</div>
       <div v-if="failure" class="l1-message l1-error">{{failure}}</div>
       <div v-if="help" class="l1-help">
         <p>立体场景按CAD位置显示料堆示意、候选水池、构筑物和作业通道。高度、外饰与料形仅供辨识。51、52泊位旁的船型是示意模型，不表示有船在泊。近看或选择全部标注可查看细项。</p>
@@ -2220,7 +2308,7 @@ defineExpose({
         <p>集水池蓝色轮廓来自原CAD“水池”图层的分段线拓扑构造，不可把轮廓数量当成设计池座数。</p>
         <p>指南针表示原CAD显示坐标所对应的北向参考，投影及实地真北待核。</p>
       </div>
-      <div v-if="$props.showMarkers && markersVisible&&!busy&&!failure" class="l1-label-layer">
+      <div v-if="$props.showMarkers && systemModeId!=='all' && markersVisible&&!busy&&!failure" class="l1-label-layer">
         <svg class="l1-float-stems" aria-hidden="true">
           <line v-for="label in labelItems" :key="label.id"
             :x1="label.pointX" :y1="label.pointY"
@@ -2235,6 +2323,12 @@ defineExpose({
           :title="item.note" :data-point-id="item.id" @click="openFloatingMark(item.id)">
           <span class="l1-label-pulse"></span>{{item.name}}
         </button>
+        <div v-if="officeWaterTag" class="l1-office-water"
+          :style="{left:officeWaterTag.x+'px',top:officeWaterTag.y+'px'}">
+          <span>办公楼 · 生活用水量</span>
+          <b>{{ OFFICE_DOMESTIC_DEMO.value }}<small>{{ OFFICE_DOMESTIC_DEMO.unit }}</small></b>
+          <em>演示</em>
+        </div>
       </div>
       <div v-if="floatingDetail" class="l1-point-popover"
         :style="{left:Math.max(160,Math.min(floatingPopupPosition.x,root?.clientWidth ?root.clientWidth-160:1500))+'px',
@@ -2348,6 +2442,9 @@ defineExpose({
         </div>
       </div>
       <div v-if="regionLoadError&&!busy" class="l1-region-load-error">{{regionLoadError}}</div>
+      <!-- 场景内左侧悬浮插槽：首页「项目建设与运维」信息卡（携带系统入口状态） -->
+      <slot name="overlay" :systems="businessSystems" :active="systemModeId"
+        :choose="chooseSystem" :process-route="processRoute" :open-process="openProcess" />
 
     </section>
   </div>
@@ -2362,7 +2459,7 @@ defineExpose({
 .l1-zone {background:radial-gradient(ellipse 75% 83% at 52% 45%,#fafeff 5%,#e3f1fa 85%); pointer-events:auto}
 .l1-view,.l1-webgl {position:absolute;inset:0;width:100%;height:100%}
 .l1-view {z-index:0}
-.l1-hud {position:absolute;z-index:4;top:44px;left:20px;right:20px;display:flex;align-items:start;justify-content:space-between;gap:12px;pointer-events:none}
+.l1-hud {position:absolute;z-index:4;top:44px;left:20px;right:20px;display:flex;align-items:start;justify-content:flex-end;gap:12px;pointer-events:none}
 .l1-hud h2 {font-size:20px;color:#2a5671;margin:6px 0 3px;font-weight:760}
 .l1-hud p {font-size:10px;color:#7594a8;line-height:1.5}
 .l1-eyebrow {display:flex;align-items:center;gap:8px;font-size:10px;font-weight:750;letter-spacing:1.05px;color:#448b9d}
@@ -2378,7 +2475,18 @@ defineExpose({
 .l1-filter:focus-visible,.l1-legend-toggle:focus-visible,.l1-legend-solo:focus-visible,.l1-legend-reset:focus-visible{outline:2px solid #1b7396;outline-offset:1px}
 .l1-process-link{margin-left:auto;color:#1d7d96;border-color:#8fcadd;background:#e9f9fd}
 .l1-count {margin-left:auto;font-size:10px;color:#809baa;white-space:nowrap;background:#ffffffca;padding:6px 9px;border-radius:12px}
+.l1-scrim{position:absolute;left:0;right:0;z-index:1;pointer-events:none}
+.l1-scrim-top{top:0;height:96px;background:linear-gradient(180deg,rgba(238,246,250,.55),rgba(238,246,250,0))}
+.l1-scrim-bottom{bottom:0;height:72px;background:linear-gradient(0deg,rgba(23,53,68,.16),rgba(23,53,68,0))}
 .l1-label-layer {position:absolute;inset:0;z-index:2;pointer-events:none}
+/* 办公楼生活用水量独立挂牌：与浮标同层，按场景投影定位。 */
+.l1-office-water{position:absolute;transform:translate(-50%,0);display:flex;align-items:center;gap:6px;
+ padding:4px 8px;border-radius:8px;background:#fffffff2;border:1px solid #a9d8e5;border-left:3px solid #2f9bb8;
+ box-shadow:0 6px 16px #245c7a26;color:#37657b;font-size:10px;white-space:nowrap;pointer-events:none}
+.l1-office-water span{color:#7a93a3}
+.l1-office-water b{font-size:13px;font-weight:700;color:#1f7f9c;font-variant-numeric:tabular-nums}
+.l1-office-water b small{margin-left:2px;font-size:9px;font-weight:600;color:#7a93a3}
+.l1-office-water em{font-style:normal;font-size:8px;padding:0 4px;border-radius:4px;background:#eef7fb;color:#8aa5b3}
 .l1-label {position:absolute;pointer-events:auto;transform:translate(-50%,-130%);padding:4px 7px;font-size:10px;font-weight:660;white-space:nowrap;background:#ffffffed;border:1px solid #d8e9f1;border-left:3px solid #3a9cbc;color:#4a6b7e;box-shadow:0 4px 12px #5591a423;border-radius:6px}
 .l1-label.yard {border-left-color:#d8a656;color:#916e36;background:#fffaf2f0}
 .l1-label:hover {background:#fff;border-color:#4dacc8;z-index:4}
@@ -2407,6 +2515,45 @@ defineExpose({
 .l1-selection a {display:inline-block;font-size:10px;padding:6px 9px;background:#e5f5fc;border:1px solid #add9e7;border-radius:6px;color:#3285a0}
 .l1-message {position:absolute;z-index:5;top:50%;left:50%;transform:translate(-50%,-50%);padding:12px 20px;border-radius:11px;background:#ffffffdc;color:#5a8095;font-size:12px}
 .l1-error {color:#ac5d62}
+/* 浅色科技风加载态：网格 + 双环光点 + 光流 + 粒子，纯 transform/opacity 动画 */
+.l1-loading{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ background:radial-gradient(120% 90% at 50% 32%,#ffffff 0%,#f4fafe 48%,#e9f2fa 100%);background-color:#f4fafe}
+.l1-loading::before{content:'';position:absolute;inset:-8%;pointer-events:none;
+ background-image:linear-gradient(rgba(31,130,190,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(31,130,190,.05) 1px,transparent 1px);
+ background-size:44px 44px;animation:l1-grid 20s linear infinite;
+ -webkit-mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 62%);mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 62%)}
+.l1-loading-stage{position:relative;width:190px;height:190px;display:grid;place-items:center}
+.l1-loading-ring{position:absolute;border-radius:50%;border:1px solid rgba(23,137,195,.16);animation:l1-spin linear infinite}
+.l1-loading-ring::after{content:'';position:absolute;top:-3px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;
+ background:#28a7dd;box-shadow:0 0 9px rgba(40,167,221,.75),0 0 20px rgba(40,167,221,.3)}
+.l1-loading-ring.a{width:112px;height:112px;animation-duration:6.5s}
+.l1-loading-ring.b{width:158px;height:158px;border-color:rgba(23,137,195,.1);animation-duration:11s;animation-direction:reverse}
+.l1-loading-ring.b::after{top:auto;bottom:-2.5px;width:5px;height:5px;margin-left:-2.5px;background:#7fcbe9}
+.l1-loading-beam{position:absolute;width:158px;height:158px;border-radius:50%;
+ background:conic-gradient(from 0deg,rgba(14,127,240,0) 0deg 258deg,rgba(38,166,219,.42) 322deg,rgba(14,127,240,0) 360deg);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1px));
+ mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1px));
+ animation:l1-spin 3.2s linear infinite}
+.l1-loading-core{position:relative;display:grid;place-items:center;width:66px;height:66px;border-radius:50%;
+ background:radial-gradient(circle at 38% 30%,#fff 0%,#eaf6fd 56%,#dceef9 100%);border:1px solid rgba(150,205,230,.7);
+ box-shadow:0 8px 22px rgba(33,92,128,.16),inset 0 1px 0 #fff,0 0 0 9px rgba(255,255,255,.5),0 0 34px rgba(58,160,210,.2);
+ animation:l1-breathe 3s ease-in-out infinite}
+.l1-loading-core svg{width:28px;height:28px}
+.l1-loading-particles{position:absolute;inset:0;pointer-events:none}
+.l1-loading-particles i{position:absolute;bottom:16%;border-radius:50%;background:rgba(32,142,198,.8);box-shadow:0 0 8px rgba(38,150,200,.55);opacity:0;animation:l1-float linear infinite}
+.l1-loading-title{margin:16px 0 0;font-size:15px;font-weight:650;letter-spacing:4px;color:#2b5a72;text-indent:4px}
+.l1-loading-sub{margin:7px 0 0;font-size:11px;letter-spacing:1.5px;color:#7c98aa}
+.l1-loading-bar{position:relative;width:188px;height:3px;margin-top:15px;overflow:hidden;border-radius:3px;background:rgba(43,122,163,.14)}
+.l1-loading-bar span{position:absolute;top:0;left:0;width:42%;height:100%;border-radius:3px;
+ background:linear-gradient(90deg,rgba(14,127,240,0),#1c9fd6 55%,rgba(14,127,240,0));animation:l1-sweep 1.5s cubic-bezier(.45,0,.25,1) infinite}
+@keyframes l1-spin{to{transform:rotate(360deg)}}
+@keyframes l1-breathe{0%,100%{box-shadow:0 8px 22px rgba(33,92,128,.16),inset 0 1px 0 #fff,0 0 0 9px rgba(255,255,255,.5),0 0 28px rgba(58,160,210,.16)}50%{box-shadow:0 8px 22px rgba(33,92,128,.18),inset 0 1px 0 #fff,0 0 0 13px rgba(255,255,255,.3),0 0 44px rgba(58,160,210,.28)}}
+@keyframes l1-sweep{0%{transform:translateX(-110%)}100%{transform:translateX(340%)}}
+@keyframes l1-float{0%{transform:translate3d(0,0,0) scale(.6);opacity:0}18%{opacity:.85}100%{transform:translate3d(12px,-120px,0) scale(1.1);opacity:0}}
+@keyframes l1-grid{to{transform:translate3d(44px,44px,0)}}
+@media(prefers-reduced-motion:reduce){
+ .l1-loading::before,.l1-loading-ring,.l1-loading-beam,.l1-loading-core,.l1-loading-particles i,.l1-loading-bar span{animation:none}
+}
 .l1-help {position:absolute;z-index:6;top:62px;right:19px;font-size:10px;line-height:1.9;padding:12px;border-radius:11px;background:#fffc;border:1px solid #d2e9f1;color:#587d91;box-shadow:0 7px 19px #5288a020}
 .l1-footer {position:absolute;z-index:4;bottom:11px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:center;gap:16px;pointer-events:none;font-size:10px;color:#668da4}
 .l1-footer b {color:#169cb7;letter-spacing:1px}
@@ -2467,7 +2614,7 @@ defineExpose({
 .l1-eyebrow{font-size:9px}
 .l1-actions{gap:5px;flex-wrap:wrap;max-width:42%;justify-content:flex-end}
 .l1-filters{top:92px}
-.l1-compass{position:absolute;z-index:9;top:13px;right:14px;width:82px;height:89px;
+.l1-compass{position:absolute;z-index:9;top:16px;right:16px;width:82px;height:89px;
  border:1px solid #cfe7ef;border-radius:16px;background:linear-gradient(145deg,#fffefaee,#eaf9fdf5);
  box-shadow:0 5px 18px #6c9eb630;display:flex;align-items:center;justify-content:center;flex-direction:column;
  color:#377b93;cursor:pointer;backdrop-filter:blur(12px)}
@@ -2478,6 +2625,14 @@ defineExpose({
 .l1-compass-arrow{position:absolute;top:17px;color:#e08e71;font-size:17px;line-height:1}
 .l1-compass-s{position:absolute;bottom:2px;font-size:9px;font-weight:650;color:#7796a4}
 .l1-compass-caption{font-size:9px;margin-top:5px;color:#7b99a9}
+/* 右上角 CAD 图入口：与指南针同材质，位于其左侧，新窗口打开静态 CAD 页 */
+.l1-cad-toggle{position:absolute;z-index:9;top:40px;right:calc(clamp(82px,4.9vw,132px) + 36px);
+ display:inline-flex;align-items:center;height:34px;padding:0 13px;border:1px solid #cfe7ef;border-radius:10px;
+ background:linear-gradient(145deg,#fffefaee,#eaf9fdf5);box-shadow:0 5px 18px #6c9eb630;
+ color:#377b93;font-size:11px;font-weight:650;white-space:nowrap;cursor:pointer;text-decoration:none;
+ pointer-events:auto;transition:background .15s,color .15s,border-color .15s}
+.l1-cad-toggle:hover{background:#fff;border-color:#97cbdd;color:#246c84}
+@media(max-width:600px){.l1-cad-toggle{top:26px;right:calc(66px + 18px);height:30px;padding:0 9px;font-size:10px}}
 .l1-site-legend{position:absolute;top:122px;left:17px;z-index:4;display:flex;align-items:center;gap:8px;
  max-width:calc(100% - 35px);white-space:nowrap;overflow-x:auto;scrollbar-width:none;pointer-events:none}
 .l1-site-legend>span{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--tg-glass-border);background:var(--tg-glass-surface);
@@ -2647,16 +2802,28 @@ defineExpose({
 </style>
 
 <style scoped>
-.home-pipe-legend{position:absolute;z-index:6;left:50%;bottom:14px;transform:translateX(-50%);
- display:flex;flex-direction:column;gap:5px;padding:8px 11px;border-radius:12px;
+.l1-zone {--tg-left-card-w:320px}
+.home-pipe-legend{position:absolute;z-index:6;left:16px;bottom:16px;
+ display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:12px;width:max-content;
  background:var(--tg-glass-surface);border:1px solid var(--tg-glass-border);
  -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
  color:#29465b;font-size:11px;box-shadow:var(--tg-glass-shadow);
- max-width:min(760px,calc(100% - 40px))}
-.l1-legend-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.l1-legend-head strong{font-size:11px;letter-spacing:.5px;color:#356c84}
-.l1-legend-items{display:flex;flex-wrap:wrap;gap:4px 6px}
-.l1-legend-item{display:inline-flex;align-items:center;border:1px solid #d9e8ef;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.72)}
+ max-width:calc(100% - 32px)}
+.home-pipe-legend.open{width:196px}
+/* 左侧信息卡已占满高度，图例整体让位到卡片右侧，仍贴场景左下角。 */
+@media(min-width:950px){
+ .l1-zone .home-pipe-legend{left:calc(var(--tg-left-card-w) + 34px)}
+}
+@media(min-width:950px) and (max-width:1199px){.l1-zone{--tg-left-card-w:264px}}
+@media(min-width:2200px){.l1-zone{--tg-left-card-w:clamp(330px,15vw,480px)}}
+.l1-legend-trigger{display:flex;align-items:center;gap:7px;width:100%;padding:1px 2px;color:#356c84;text-align:left}
+.l1-legend-trigger strong{font-size:11px;font-weight:700;letter-spacing:.5px}
+.l1-legend-count{margin-left:auto;font-size:9px;font-weight:600;color:#7d98a8;background:#eef7fb;border-radius:6px;padding:1px 5px}
+.l1-legend-caret{flex:none;width:6px;height:6px;border-right:1.5px solid #6d90a2;border-bottom:1.5px solid #6d90a2;transform:rotate(45deg);transition:transform .18s}
+.home-pipe-legend.open .l1-legend-caret{transform:rotate(-135deg)}
+.l1-legend-head{display:flex;justify-content:flex-end;align-items:center;gap:12px}
+.l1-legend-items{display:flex;flex-direction:column;gap:4px}
+.l1-legend-item{display:flex;align-items:center;justify-content:space-between;border:1px solid #d9e8ef;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.72)}
 .l1-legend-item.muted{opacity:.45}
 .l1-legend-item.soloed{border-color:#2b9fb8;box-shadow:0 0 0 2px #2b9fb82e}
 .l1-legend-toggle{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;font-size:10px;color:#2f5568;background:transparent;white-space:nowrap}
@@ -2669,8 +2836,10 @@ defineExpose({
 @media(prefers-reduced-transparency:reduce){
  .home-pipe-legend,.l1-filter,.l1-site-legend>span,.l1-selection,.l1-point-popover{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(250,253,255,.96)}
 }
-@media(max-width:950px){.home-pipe-legend{max-width:calc(100% - 40px);gap:3px 8px;font-size:10px}}
-@media(max-width:640px){.home-pipe-legend{bottom:49px;left:8px;right:auto;transform:none;max-width:calc(100% - 16px);padding:5px 7px}.l1-legend-toggle i{width:11px}}
+@media(max-width:950px){.home-pipe-legend{max-width:calc(100% - 24px);font-size:10px}}
+@media(max-width:640px){.home-pipe-legend{bottom:10px;left:8px;max-width:calc(100% - 16px);padding:6px 8px}.l1-legend-toggle i{width:11px}}
+/* 桌面端系统入口已移入左侧卡片，场景顶部不再重复展示该系统条。 */
+@media(min-width:950px){.l1-zone .l1-filters.l1-system-row{display:none!important}}
 .relief-controls button[aria-pressed="true"]{background:#245978;color:white}
 </style>
 
