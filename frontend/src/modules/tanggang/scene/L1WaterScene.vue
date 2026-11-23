@@ -830,7 +830,8 @@ function resetCameraPosition(){
     const dir=new THREE.Vector3(0,Math.sin(pitch),Math.cos(pitch))
     const centre=new THREE.Vector3(-1.2,3,Number.isFinite(cam[3])?cam[3]:8)
     setFieldOfView(Number.isFinite(cam[2])?cam[2]:36)
-    const distance=(Number.isFinite(cam[1])?cam[1]:150)*Math.max(1,(1672/941)/aspect)
+    // 窄屏只做温和后退（0.86 系数），让场地尽量撑满宽度，同时给东西两侧设施留余量。
+    const distance=(Number.isFinite(cam[1])?cam[1]:150)*Math.max(1,(1672/941)/aspect*.86)
     orbit.target.copy(centre);camera.position.copy(centre).addScaledVector(dir,distance)
     orbit.update();return
   }
@@ -2680,33 +2681,55 @@ defineExpose({
 <style src="./styles/scene-shell.css"></style>
 
 <style>
-/* 三维场坪不再叠加白色蒙层，场景上方所有玻璃面板取消毛玻璃：
-   避免整屏发白、发虚，也让 WebGL 画布保持原始对比度。 */
-.tanggang-scene .cad-zone::after{display:none!important}
-.tanggang-scene .cad-zone{background:#dfe9ec!important}
-.tanggang-scene :is(.l1-filter,.l1-site-legend>span,.l1-selection,.l1-float-label,
+/* 注意：本页场景实际挂载在 .screen-stage>.scene-layer 下，并不存在 .tanggang-scene 祖先，
+   所以这里统一按真实结构写选择器（原 scene-shell.css 的 .tanggang-scene 前缀在本页不生效）。 */
+
+/* 三维场坪不再叠加白色蒙层，场景内所有玻璃面板取消毛玻璃，避免整屏发白、发虚。 */
+.tanggang-home .screen-stage .cad-zone::after{display:none!important}
+.tanggang-home .screen-stage .cad-zone{background:#dfe9ec!important}
+.l1-zone :is(.l1-filter,.l1-site-legend>span,.l1-selection,.l1-float-label,.l1-label,
   .home-pipe-legend,.l1-compass,.l1-point-popover,.relief-controls,.l1-chain-shortcut,
   .l1-message,.l1-help,.l1-continuity-panel,.l1-pipe-audit){
   -webkit-backdrop-filter:none!important;
   backdrop-filter:none!important;
 }
-</style>
+.tanggang-home .tg-sim-launch{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 
-<style>
-/* 1600–2199 大屏：三维总览 HUD 按视口轻度放大，1920 下与顶栏字号保持一致；
-   ≥2200 由 scene-shell 的大屏规则接管，≤1599 保持原有紧凑尺寸。 */
+/* 窄窗口（≤949）：场景铺满视口高度，去掉下方那块浅蓝色空档。 */
+@media (max-width:949px){
+  .tanggang-home .screen-stage>.scene-layer.l1-scene{--scene-view-height:max(520px,calc(100dvh - 80px))}
+  .tanggang-home .screen-stage .region-overlay{background:none!important;border-top:0!important}
+}
+
+/* 1600–2199 大屏：三维总览 HUD 按视口轻度放大，与顶栏字号保持一致。 */
 @media (min-width:1600px) and (max-width:2199px) {
-  .tanggang-scene .l1-hud h2 {font-size:clamp(20px,1.15vw,26px)}
-  .tanggang-scene .l1-hud p {font-size:clamp(10px,.56vw,13px)}
-  .tanggang-scene .l1-eyebrow {font-size:clamp(10px,.52vw,12px)}
-  .tanggang-scene .l1-eyebrow span {font-size:clamp(9px,.48vw,11px)}
-  .tanggang-scene .l1-actions :is(button,a) {font-size:clamp(10px,.56vw,13px);min-height:clamp(28px,1.65vw,36px);padding:6px clamp(8px,.5vw,12px)}
-  .tanggang-scene .l1-filter {height:clamp(28px,1.7vw,36px);font-size:clamp(10px,.56vw,13px);padding:0 clamp(10px,.62vw,14px)}
-  .tanggang-scene .l1-filters {top:clamp(83px,4.8vw,104px)}
-  .tanggang-scene .l1-site-legend>span {font-size:clamp(9px,.48vw,11px);padding:4px clamp(7px,.42vw,10px)}
-  .tanggang-scene .l1-float-label {font-size:clamp(10px,.58vw,13px)}
-  .tanggang-scene .l1-compass {width:clamp(86px,4.9vw,103px);height:clamp(93px,5.3vw,112px)}
-  .tanggang-scene .l1-compass-dial {width:clamp(58px,3.2vw,67px);height:clamp(58px,3.2vw,67px)}
-  .tanggang-scene .l1-selection {width:clamp(300px,16vw,350px)}
+  .tanggang-home .screen-stage .l1-hud h2 {font-size:clamp(20px,1.15vw,26px)}
+  .tanggang-home .screen-stage .l1-hud p {font-size:clamp(10px,.56vw,13px)}
+  .tanggang-home .screen-stage .l1-eyebrow {font-size:clamp(10px,.52vw,12px)}
+  .tanggang-home .screen-stage .l1-eyebrow span {font-size:clamp(9px,.48vw,11px)}
+  .tanggang-home .screen-stage .l1-actions :is(button,a) {font-size:clamp(10px,.56vw,13px);min-height:clamp(28px,1.65vw,36px);padding:6px clamp(8px,.5vw,12px)}
+  .tanggang-home .screen-stage .l1-filter {height:clamp(28px,1.7vw,36px);font-size:clamp(10px,.56vw,13px);padding:0 clamp(10px,.62vw,14px)}
+  .tanggang-home .screen-stage .l1-filters {top:clamp(83px,4.8vw,104px)}
+  .tanggang-home .screen-stage .l1-site-legend>span {font-size:clamp(9px,.48vw,11px);padding:4px clamp(7px,.42vw,10px)}
+  .tanggang-home .screen-stage .l1-float-label {font-size:clamp(10px,.58vw,13px)}
+  .tanggang-home .screen-stage .l1-compass {width:clamp(86px,4.9vw,103px);height:clamp(93px,5.3vw,112px)}
+  .tanggang-home .screen-stage .l1-compass-dial {width:clamp(58px,3.2vw,67px);height:clamp(58px,3.2vw,67px)}
+  .tanggang-home .screen-stage .l1-selection {width:clamp(300px,16vw,350px)}
+}
+
+/* ≥2200 大屏：同比例继续放大，避免 2660 下 UI 缩成一小撮。 */
+@media (min-width:2200px) {
+  .tanggang-home .screen-stage .l1-hud h2 {font-size:clamp(24px,1.05vw,31px)}
+  .tanggang-home .screen-stage .l1-hud p {font-size:clamp(12px,.52vw,15px)}
+  .tanggang-home .screen-stage .l1-eyebrow {font-size:clamp(11px,.46vw,14px)}
+  .tanggang-home .screen-stage .l1-eyebrow span {font-size:clamp(10px,.42vw,12px)}
+  .tanggang-home .screen-stage .l1-actions :is(button,a) {font-size:clamp(12px,.52vw,15px);min-height:clamp(34px,1.5vw,42px);padding:7px clamp(10px,.5vw,16px)}
+  .tanggang-home .screen-stage .l1-filter {height:clamp(34px,1.55vw,42px);font-size:clamp(12px,.52vw,15px);padding:0 clamp(12px,.6vw,18px)}
+  .tanggang-home .screen-stage .l1-filters {top:clamp(104px,4.4vw,124px)}
+  .tanggang-home .screen-stage .l1-site-legend>span {font-size:clamp(11px,.45vw,13px);padding:5px clamp(9px,.4vw,13px)}
+  .tanggang-home .screen-stage .l1-float-label {font-size:clamp(12px,.54vw,15px)}
+  .tanggang-home .screen-stage .l1-compass {width:clamp(103px,4.4vw,130px);height:clamp(112px,4.8vw,140px)}
+  .tanggang-home .screen-stage .l1-compass-dial {width:clamp(67px,2.9vw,84px);height:clamp(67px,2.9vw,84px)}
+  .tanggang-home .screen-stage .l1-selection {width:clamp(350px,14vw,420px)}
 }
 </style>
