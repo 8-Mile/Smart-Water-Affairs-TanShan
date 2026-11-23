@@ -5,6 +5,11 @@ import {loadTanggangCatalog,type TanggangCatalog,type TanggangDevice} from '../m
 import {buildProcessSchematic} from './processSchematic'
 import {mockProcessDevice,type ProcessMockDevice} from './processMock'
 import {processWorkflow,processMonitorRelevant} from './processWorkflow'
+import {
+  applySpecialistCase,getSpecialistCase,isSpecialistSystem,specialistAffectsDevice,
+} from './processSpecialist'
+import {useProcessSpecialistStore} from './processSpecialistStore'
+import PortSpecialistExercise from './PortSpecialistExercise.vue'
 import PortProcessSchematic from './PortProcessSchematic.vue'
 import PortObjectBindingDialog from './PortObjectBindingDialog.vue'
 import {usePermissions} from '@/utils/permissions'
@@ -17,11 +22,18 @@ import './business.css'
 import './scenario-pages.css'
 
 const route=useRoute(),router=useRouter(),sim=useScenarioStore()
+const specialist=useProcessSpecialistStore()
 const {hasPerm}=usePermissions()
 const canBind=computed(()=>hasPerm('eq:update'))
 const catalog=ref<TanggangCatalog|null>(null)
 const error=ref('')
 const sysId=computed(()=>String(route.params.systemId||''))
+const specialistSystem=computed(()=>isSpecialistSystem(sysId.value)?sysId.value:null)
+const specialistCase=computed(()=>{
+  const systemId=specialistSystem.value
+  if(!systemId||sim.running)return null
+  return getSpecialistCase(specialist.selected[systemId],systemId)
+})
 const system=computed(()=>catalog.value?.systemMap.get(sysId.value))
 const displayName=computed(()=>sysId.value==='domestic'
   ?'生活污水提升与外送':system.value?.name||'专业工艺监测')
@@ -29,7 +41,9 @@ const schematic=computed(()=>system.value&&catalog.value
   ?buildProcessSchematic(system.value,catalog.value):null)
 const unique=computed(()=>schematic.value?.devices||[])
 const mockByFacility=computed<ReadonlyMap<string,ProcessMockDevice>>(()=>new Map(
-  unique.value.map(device=>[device.id,mockProcessDevice(device,sim.effectiveScenario)]),
+  unique.value.map(device=>[device.id,applySpecialistCase(
+    sysId.value,mockProcessDevice(device,sim.effectiveScenario),specialistCase.value,
+  )]),
 ))
 const selectedId=computed(()=>{
   const requested=route.query.facility
@@ -39,6 +53,9 @@ const selectedId=computed(()=>{
 const selectedDevice=computed(()=>unique.value.find(d=>d.id===selectedId.value)||null)
 const detailPanel=ref<HTMLElement|null>(null)
 const selectedMock=computed(()=>selectedId.value?mockByFacility.value.get(selectedId.value):null)
+const specialistSelected=computed(()=>!!(selectedId.value&&specialistAffectsDevice(
+  sysId.value,selectedId.value,specialistCase.value,
+)))
 const nodeNote=ref('')
 const nodeReviewError=ref('')
 const selectedCheck=computed(()=>sim.processChecks.find(x=>
@@ -193,16 +210,20 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
         <el-button link @click="sim.openConsole()">查看统一情景</el-button>
       </div>
       <div class="tg-process-grid">
-        <PortProcessSchematic :sections="schematic?.sections||[]"
-          :selected-facility-id="selectedId"
-          :linked-facility-ids="linkedFacilityIds"
-          :reviewed-facility-ids="reviewedFacilityIds"
-          :mock-by-facility="mockByFacility"
-          :sim-running="sim.running"
-          :source-layers="system.focusPipeLayers"
-          @select="selectFacility"
-          @focus-attention="focusNext('attention')"
-          @focus-reviewed="focusNext('reviewed')"/>
+        <div class="tg-process-main">
+          <PortSpecialistExercise v-if="specialistSystem" :system-id="specialistSystem"
+            :global-sim-running="sim.running" @select-facility="selectFacility"/>
+          <PortProcessSchematic :sections="schematic?.sections||[]"
+            :selected-facility-id="selectedId"
+            :linked-facility-ids="linkedFacilityIds"
+            :reviewed-facility-ids="reviewedFacilityIds"
+            :mock-by-facility="mockByFacility"
+            :sim-running="sim.running"
+            :source-layers="system.focusPipeLayers"
+            @select="selectFacility"
+            @focus-attention="focusNext('attention')"
+            @focus-reviewed="focusNext('reviewed')"/>
+        </div>
 
         <section ref="detailPanel" class="tg-biz-card tg-process-detail" aria-label="当前选中设施">
           <template v-if="selectedDevice">
@@ -218,7 +239,8 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
               <div class="tg-biz-card-head">
                 <h3>模拟运行状态</h3>
                 <span class="tg-biz-chip" :class="{warn:selectedMock.state==='fault'||selectedMock.state==='attention'}">
-                  {{selectedMock.context==='ACTIVE_SCENARIO'?'SIM情景':'Mock基线'}}
+                  {{specialistSelected?'专业Mock演练':
+                    selectedMock.context==='ACTIVE_SCENARIO'?'SIM情景':'Mock基线'}}
                 </span>
               </div>
               <div class="tg-process-mock-state" :class="selectedMock.state">
@@ -362,6 +384,7 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
 
 <style scoped>
 .tg-process-page{min-width:0}
+.tg-process-main{min-width:0;display:grid;gap:13px}
 .tg-process-grid{display:grid;grid-template-columns:minmax(0,1.92fr) minmax(310px,.88fr);
   gap:14px;align-items:start}
 .tg-process-detail{position:sticky;top:14px;display:grid;gap:14px}
