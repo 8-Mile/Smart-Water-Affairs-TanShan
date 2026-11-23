@@ -2712,3 +2712,22 @@ defineExpose({
 </style>
 
 <style src="./styles/scene-shell.css"></style>
+
+<style>
+/* 1600–2199 大屏：三维总览 HUD 按视口轻度放大，1920 下与顶栏字号保持一致；
+   ≥2200 由 scene-shell 的大屏规则接管，≤1599 保持原有紧凑尺寸。 */
+@media (min-width:1600px) and (max-width:2199px) {
+  .tanggang-scene .l1-hud h2 {font-size:clamp(20px,1.15vw,26px)}
+  .tanggang-scene .l1-hud p {font-size:clamp(10px,.56vw,13px)}
+  .tanggang-scene .l1-eyebrow {font-size:clamp(10px,.52vw,12px)}
+  .tanggang-scene .l1-eyebrow span {font-size:clamp(9px,.48vw,11px)}
+  .tanggang-scene .l1-actions :is(button,a) {font-size:clamp(10px,.56vw,13px);min-height:clamp(28px,1.65vw,36px);padding:6px clamp(8px,.5vw,12px)}
+  .tanggang-scene .l1-filter {height:clamp(28px,1.7vw,36px);font-size:clamp(10px,.56vw,13px);padding:0 clamp(10px,.62vw,14px)}
+  .tanggang-scene .l1-filters {top:clamp(83px,4.8vw,104px)}
+  .tanggang-scene .l1-site-legend>span {font-size:clamp(9px,.48vw,11px);padding:4px clamp(7px,.42vw,10px)}
+  .tanggang-scene .l1-float-label {font-size:clamp(10px,.58vw,13px)}
+  .tanggang-scene .l1-compass {width:clamp(86px,4.9vw,103px);height:clamp(93px,5.3vw,112px)}
+  .tanggang-scene .l1-compass-dial {width:clamp(58px,3.2vw,67px);height:clamp(58px,3.2vw,67px)}
+  .tanggang-scene .l1-selection {width:clamp(300px,16vw,350px)}
+}
+</style>
