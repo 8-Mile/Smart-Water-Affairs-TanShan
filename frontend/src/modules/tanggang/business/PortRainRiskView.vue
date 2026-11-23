@@ -3,6 +3,7 @@ import {computed} from 'vue'
 import {useRouter} from 'vue-router'
 import {useScenarioStore} from '../simulation/store'
 import PortOperationsCaseBoard from './PortOperationsCaseBoard.vue'
+import PortOperatingInputs from './PortOperatingInputs.vue'
 import './business.css'
 import './scenario-pages.css'
 const router=useRouter(),store=useScenarioStore()
@@ -16,6 +17,7 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
         <span class="tg-datamode" :class="{sim:store.running}" data-testid="rain-source-status">
           {{store.autoEnabled?'SIM · 自动':store.running?'SIM · 分析':'数据未接入'}}
         </span>
+        <PortOperatingInputs context="rain"/>
         <el-button data-testid="rain-process-button"
           @click="router.push('/port/process/rain?facility=EQ-Y-DRAIN')">
           雨水收集工艺

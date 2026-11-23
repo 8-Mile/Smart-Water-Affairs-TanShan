@@ -6,17 +6,16 @@ import {computed,ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useScenarioStore} from '../simulation/store'
 import {
-  WATER_PROCESSES,WATER_RELATIONSHIPS,processName,
-  DEFAULT_WATER_POLICY, type ProcessId,
+  processName,DEFAULT_WATER_POLICY, type ProcessId,
 } from '../simulation/waterOperations'
 import PortOperationsCaseBoard from './PortOperationsCaseBoard.vue'
+import PortCadWaterNetwork from './PortCadWaterNetwork.vue'
+import PortSupplyCoverage from './PortSupplyCoverage.vue'
 const router=useRouter()
 const store=useScenarioStore()
 const econ=computed(()=>store.waterEconomics)
 const output=computed(()=>store.result)
-const selectedEdge=ref<string>('clean-reuse')
 const expandedAssumptions=ref(false)
-const selectedRelation=computed(()=>WATER_RELATIONSHIPS.find(x=>x.id===selectedEdge.value))
 const impactMap=computed(()=>new Map(store.processImpacts.map(x=>[x.systemId,x])))
 const fmt=(v:number|null|undefined,precision=1)=>
   v===null||v===undefined?'—':
@@ -25,33 +24,6 @@ const metricSign=(v:number|null|undefined,unit:string)=>{
   if(v===null||v===undefined)return '不可比'
   if(Math.abs(v)<.0001)return '0 '+unit
   return (v>0?'减少 ':'增加 ')+fmt(Math.abs(v),1)+' '+unit
-}
-const color=(id:ProcessId)=>{
-  const level=impactMap.value.get(id)?.level
-  return level==='critical'?'critical':level==='attention'?'attention':
-    level==='independent'?'independent':'normal'
-}
-const diagramNodes={
-  rain:{x:42,y:105,w:224,h:103},
-  mineral:{x:337,y:105,w:225,h:103},
-  pool:{x:634,y:105,w:225,h:103},
-  middle:{x:987,y:35,w:235,h:106},
-  fog:{x:987,y:251,w:235,h:106},
-  domestic:{x:337,y:410,w:236,h:96},
-} satisfies Record<ProcessId,{x:number;y:number;w:number;h:number}>
-const linkPaths:Record<string,string>={
-  'collect-treatment':'M266 155 H337',
-  'clean-reuse':'M562 155 H634',
-  'pool-middle':'M859 155 H924 V88 H987',
-  'pool-fog':'M859 177 H924 V304 H987',
-  'return-wash':'M1222 87 H1274 V382 H154 V208',
-}
-const edgeLabels:Record<string,{x:number;y:number;text:string}>={
-  'collect-treatment':{x:301,y:131,text:'提升'},
-  'clean-reuse':{x:600,y:132,text:'达标回用'},
-  'pool-middle':{x:932,y:67,text:'供水'},
-  'pool-fog':{x:927,y:279,text:'供水'},
-  'return-wash':{x:724,y:375,text:'洗车后回收（间接、条件路径）'},
 }
 function go(id:ProcessId){void router.push('/port/process/'+id)}
 const trend=computed(()=>{
@@ -103,101 +75,8 @@ const shownAssumptions=computed(()=>DEFAULT_WATER_POLICY.source)
         </div>
       </div>
 
-      <section class="tg-biz-card tg-ops-map-card" data-testid="water-network-graph">
-        <div class="tg-biz-card-head">
-          <h2>六系统业务关联</h2>
-          <span class="tg-biz-chip">CAD设计关系</span>
-        </div>
-        <div class="tg-ops-map-scroll">
-          <svg viewBox="0 0 1316 547" class="tg-ops-map-svg"
-            role="img" aria-label="六套子系统的设计业务关系：雨水收集→含矿污水处理→水池供水→中压与射雾；生活污水独立。">
-            <defs>
-              <marker id="tg-ops-link-arrow" markerWidth="8" markerHeight="8"
-                refX="7.2" refY="4" orient="auto">
-                <path d="M0 0 L8 4 L0 8 Z" fill="#72a9c4"/>
-              </marker>
-              <marker id="tg-ops-conditional-arrow" markerWidth="8" markerHeight="8"
-                refX="7.2" refY="4" orient="auto">
-                <path d="M0 0 L8 4 L0 8 Z" fill="#b1a180"/>
-              </marker>
-            </defs>
-            <rect width="1316" height="547" rx="14" fill="#f6fafc"/>
-            <path d="M18 248 H1296 M18 399 H1296" stroke="#e2edf2" stroke-width="1"/>
-            <text x="35" y="45" fill="#94a9b5" font-size="14">水流与资源回用链</text>
-            <text x="35" y="435" fill="#94a9b5" font-size="14">独立生活污水链（不并入含矿处理）</text>
-            <g v-for="edge in WATER_RELATIONSHIPS" :key="edge.id"
-              tabindex="0" role="button" :aria-label="edge.label"
-              :data-relation-id="edge.id"
-              @click="selectedEdge=edge.id"
-              @keydown.enter.prevent="selectedEdge=edge.id">
-              <path :d="linkPaths[edge.id]" stroke="transparent"
-                stroke-width="23" fill="none" class="tg-ops-link-hit"/>
-              <path :d="linkPaths[edge.id]" fill="none"
-                :stroke="selectedEdge===edge.id?'#358cb1':
-                  edge.relation==='conditional'?'#b1a180':'#8db8cc'"
-                :stroke-width="selectedEdge===edge.id?4.5:3"
-                :stroke-dasharray="edge.relation==='conditional'?'8 7':'none'"
-                :marker-end="edge.relation==='conditional'?
-                  'url(#tg-ops-conditional-arrow)':'url(#tg-ops-link-arrow)'"/>
-              <rect :x="edgeLabels[edge.id].x-4"
-                :y="edgeLabels[edge.id].y-14"
-                :width="edgeLabels[edge.id].text.length*11+8" height="19"
-                rx="4" fill="#f8fbfc" opacity=".95"/>
-              <text :x="edgeLabels[edge.id].x" :y="edgeLabels[edge.id].y"
-                fill="#638da0" font-size="12">{{edgeLabels[edge.id].text}}</text>
-            </g>
-            <g v-for="process in WATER_PROCESSES" :key="process.id"
-              tabindex="0" role="button"
-              :data-system-node="process.id"
-              :aria-label="'查看'+process.label"
-              class="tg-ops-diagram-node"
-              :transform="'translate('+diagramNodes[process.id].x+','+
-                diagramNodes[process.id].y+')'"
-              @click="go(process.id)"
-              @keydown.enter.prevent="go(process.id)">
-              <rect :width="diagramNodes[process.id].w"
-                :height="diagramNodes[process.id].h"
-                rx="12" fill="#fff"
-                :stroke="color(process.id)==='critical'?'#d59f82':
-                  color(process.id)==='attention'?'#deb987':
-                  color(process.id)==='independent'?'#b9cbd3':'#afd2e2'"
-                stroke-width="2.3"/>
-              <rect x="0" y="0" width="5"
-                :height="diagramNodes[process.id].h" rx="2.5"
-                :fill="color(process.id)==='critical'?'#d78e67':
-                  color(process.id)==='attention'?'#d2aa70':
-                  color(process.id)==='independent'?'#9db5c1':'#65a2c0'"/>
-              <text x="18" y="31" font-size="17" fill="#345f77" font-weight="700">
-                {{process.label}}
-              </text>
-              <text x="18" y="66" font-size="12" fill="#67889b">
-                {{impactMap.get(process.id)?.level==='critical'?'SIM风险':
-                  impactMap.get(process.id)?.level==='attention'?'SIM关注':
-                  process.id==='domestic'?'独立管理':'SIM正常'}}
-              </text>
-            </g>
-            <text x="620" y="465" fill="#849dab" font-size="13">
-              办公给水计量与生活污水独立展示，不参与回用节能计算
-            </text>
-            <text x="45" y="525" fill="#a0b0b9" font-size="12">
-              实线：设计业务关系　·　虚线：条件/间接路径　·　未确认物理连通与阀门启闭
-            </text>
-          </svg>
-        </div>
-        <div v-if="selectedRelation" class="tg-ops-relation-detail"
-          data-testid="water-relation-detail">
-          <div>
-            <strong>{{processName(selectedRelation.from)}} → {{processName(selectedRelation.to)}}</strong>
-            <p>{{selectedRelation.label}}：{{selectedRelation.reason}}</p>
-            <small>依据 V2.3 区域水路关系 ·
-              {{selectedRelation.relation==='conditional'?'设计条件/未核实':'设计关系/未核实'}} · 非实测管线</small>
-          </div>
-          <div class="tg-ops-relation-actions">
-            <el-button size="small" plain @click="go(selectedRelation.from)">上游工艺</el-button>
-            <el-button size="small" plain @click="go(selectedRelation.to)">下游工艺</el-button>
-          </div>
-        </div>
-      </section>
+      <PortSupplyCoverage />
+      <PortCadWaterNetwork />
 
       <div class="tg-ops-grid">
         <section class="tg-biz-card tg-ops-analysis" data-testid="water-source-economics">

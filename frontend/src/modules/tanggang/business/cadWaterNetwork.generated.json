@@ -1,0 +1,517 @@
+{
+  "source": "frontend/public/tanggang/audit/cad-review/v2/manifest-v2.json",
+  "sourceVersion": "V2.0",
+  "sourceDWG": "原始DWG 51 52陆域平面 管综260917(2)(2).dwg",
+  "sourceSHA256": "de51fe02e029c880f9cee8e9ff0bc060e449603f4c213aef485ad161f3accd47",
+  "allConnectionsVerified": false,
+  "designRelationships": [
+    {
+      "id": "L01",
+      "from": "yard",
+      "to": "ditch",
+      "label": "雨污水经排水沟收集",
+      "status": "design",
+      "sources": [
+        "A01",
+        "A03"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L02",
+      "from": "ditch",
+      "to": "north",
+      "label": "北侧排水沟收集入池",
+      "status": "design",
+      "sources": [
+        "A03",
+        "A08"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L03",
+      "from": "ditch",
+      "to": "south",
+      "label": "南侧排水沟收集入池",
+      "status": "design",
+      "sources": [
+        "A06",
+        "A07"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L04",
+      "from": "wash",
+      "to": "washsed",
+      "label": "清洗污水 → 三级沉淀",
+      "status": "design",
+      "sources": [
+        "A20",
+        "A32"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L05",
+      "from": "washsed",
+      "to": "south",
+      "label": "沉淀后污水池提升至南侧池",
+      "status": "design",
+      "sources": [
+        "A20",
+        "A07"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L06",
+      "from": "north",
+      "to": "sewage",
+      "label": "北侧集水池提升至含矿站",
+      "status": "design",
+      "sources": [
+        "A02",
+        "A08",
+        "D01"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L07",
+      "from": "south",
+      "to": "north",
+      "label": "备选：南池压力提升至北池",
+      "status": "alternative",
+      "sources": [
+        "A06",
+        "A08",
+        "D03"
+      ],
+      "view": "collection",
+      "note": "设计允许接北池或污水站，实际阀位/启用路线待核"
+    },
+    {
+      "id": "L08",
+      "from": "south",
+      "to": "sewage",
+      "label": "备选：南池直接到污水站",
+      "status": "alternative",
+      "sources": [
+        "A06",
+        "A08",
+        "D03"
+      ],
+      "view": "collection",
+      "note": "设计中属于可选择路线，不可同时声称均常开"
+    },
+    {
+      "id": "L09",
+      "from": "sewage",
+      "to": "purifier",
+      "label": "絮凝沉淀/过滤",
+      "status": "design",
+      "sources": [
+        "A04"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L10",
+      "from": "sewage",
+      "to": "sludge",
+      "label": "沉淀污泥 → 脱水",
+      "status": "design",
+      "sources": [
+        "A05"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L11",
+      "from": "purifier",
+      "to": "clear",
+      "label": "处理上清液进入清水池",
+      "status": "design",
+      "sources": [
+        "A27"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L12",
+      "from": "clear",
+      "to": "dusttank",
+      "label": "达标清水优先回用除尘水池",
+      "status": "design",
+      "sources": [
+        "A10",
+        "A28"
+      ],
+      "view": "collection",
+      "note": ""
+    },
+    {
+      "id": "L13",
+      "from": "clear",
+      "to": "eco",
+      "label": "过量达标水送生态空间储存",
+      "status": "conditional",
+      "sources": [
+        "A10"
+      ],
+      "view": "collection",
+      "note": "超过除尘需求、水质达标且路径可用时"
+    },
+    {
+      "id": "L14",
+      "from": "eco",
+      "to": "dusttank",
+      "label": "生态空间水条件回输除尘水池",
+      "status": "conditional",
+      "sources": [
+        "A12",
+        "A26",
+        "D06"
+      ],
+      "view": "collection",
+      "note": "双向管路、阀门控制、水质要求均需工程校核"
+    },
+    {
+      "id": "S01",
+      "from": "municipal",
+      "to": "dusttank",
+      "label": "市政自来水补给除尘池",
+      "status": "design",
+      "sources": [
+        "A15"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S02",
+      "from": "reclaimed",
+      "to": "dusttank",
+      "label": "市政中水补给除尘池",
+      "status": "design",
+      "sources": [
+        "A15"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S03",
+      "from": "clear",
+      "to": "dusttank",
+      "label": "含矿处理回用水进入除尘池",
+      "status": "design",
+      "sources": [
+        "A15",
+        "A28"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S04",
+      "from": "dusttank",
+      "to": "midpump",
+      "label": "水池供给中压泵组",
+      "status": "design",
+      "sources": [
+        "A13",
+        "A17"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S05",
+      "from": "dusttank",
+      "to": "fogpump",
+      "label": "水池供给射雾泵组",
+      "status": "design",
+      "sources": [
+        "A13",
+        "A16"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S06",
+      "from": "dusttank",
+      "to": "firepump",
+      "label": "水池保障消防泵组",
+      "status": "design",
+      "sources": [
+        "A14",
+        "A18",
+        "A19"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S07",
+      "from": "midpump",
+      "to": "wash",
+      "label": "中压供水用于洗车台冲洗",
+      "status": "design",
+      "sources": [
+        "A17",
+        "A21",
+        "A32"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S08",
+      "from": "midpump",
+      "to": "machine",
+      "label": "中压水用于装卸机械和场地冲洗",
+      "status": "design",
+      "sources": [
+        "A17"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S09",
+      "from": "fogpump",
+      "to": "fog",
+      "label": "射雾器专项供水",
+      "status": "design",
+      "sources": [
+        "A16"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "S10",
+      "from": "firepump",
+      "to": "fire",
+      "label": "室内外消防供水",
+      "status": "design",
+      "sources": [
+        "A18",
+        "A19"
+      ],
+      "view": "supply",
+      "note": ""
+    },
+    {
+      "id": "X01",
+      "from": "life",
+      "to": "lifetreat",
+      "label": "生活污水独立处理去向需确认",
+      "status": "cad_note",
+      "sources": [
+        "D13",
+        "D14",
+        "D15"
+      ],
+      "view": "separate",
+      "note": "CAD有既有设施接入与一体化设施两种注记，不能凭文字选择实施版本"
+    }
+  ],
+  "cadAnchors": {
+    "TG-CAD-01": {
+      "id": "TG-CAD-01",
+      "name": "1#堆场",
+      "sourceHandle": "10B795",
+      "sourceLayer": "$pm单体",
+      "status": "文字定位已核；单堆场边界未确认"
+    },
+    "TG-CAD-02": {
+      "id": "TG-CAD-02",
+      "name": "2#堆场",
+      "sourceHandle": "10B796",
+      "sourceLayer": "$pm单体",
+      "status": "文字定位已核；单堆场边界未确认"
+    },
+    "TG-CAD-03": {
+      "id": "TG-CAD-03",
+      "name": "3#堆场",
+      "sourceHandle": "10B6F2",
+      "sourceLayer": "$pm单体",
+      "status": "文字定位已核；单堆场边界未确认"
+    },
+    "TG-CAD-04": {
+      "id": "TG-CAD-04",
+      "name": "4#堆场",
+      "sourceHandle": "10B6F3",
+      "sourceLayer": "$pm单体",
+      "status": "文字定位已核；单堆场边界未确认"
+    },
+    "TG-CAD-05": {
+      "id": "TG-CAD-05",
+      "name": "5#堆场",
+      "sourceHandle": "10B64F",
+      "sourceLayer": "$pm单体",
+      "status": "文字定位已核；单堆场边界未确认"
+    },
+    "TG-CAD-06": {
+      "id": "TG-CAD-06",
+      "name": "6#堆场",
+      "sourceHandle": "10B650",
+      "sourceLayer": "$pm单体",
+      "status": "文字定位已核；单堆场边界未确认"
+    },
+    "TG-CAD-07": {
+      "id": "TG-CAD-07",
+      "name": "7#堆场",
+      "sourceHandle": "E4FD1",
+      "sourceLayer": "$pm单体",
+      "status": "文字定位已核；单堆场边界未确认"
+    },
+    "TG-CAD-08": {
+      "id": "TG-CAD-08",
+      "name": "8#堆场",
+      "sourceHandle": "E4FD2",
+      "sourceLayer": "$pm单体",
+      "status": "文字定位已核；单堆场边界未确认"
+    },
+    "TG-CAD-09": {
+      "id": "TG-CAD-09",
+      "name": "北部集水池（原图“集水池”）",
+      "sourceHandle": "FAC60",
+      "sourceLayer": "$pm单体",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-10": {
+      "id": "TG-CAD-10",
+      "name": "南部集水池（原图“集水池”）",
+      "sourceHandle": "10AE0B",
+      "sourceLayer": "$管综-雨水",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-11": {
+      "id": "TG-CAD-11",
+      "name": "污水处理场",
+      "sourceHandle": "FAC62",
+      "sourceLayer": "$pm单体",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-12": {
+      "id": "TG-CAD-12",
+      "name": "除尘泵房",
+      "sourceHandle": "116712",
+      "sourceLayer": "$pm单体",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-13": {
+      "id": "TG-CAD-13",
+      "name": "洗车台区",
+      "sourceHandle": "FAE1D",
+      "sourceLayer": "$pm单体",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-14": {
+      "id": "TG-CAD-14",
+      "name": "生态蓄水池",
+      "sourceHandle": "10340E",
+      "sourceLayer": "$pm单体",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-15": {
+      "id": "TG-CAD-15",
+      "name": "生态空间提升泵站",
+      "sourceHandle": "1AFB89",
+      "sourceLayer": "$管综-雨水",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-16": {
+      "id": "TG-CAD-16",
+      "name": "一体化生活污水处理设施",
+      "sourceHandle": "139AAA",
+      "sourceLayer": "$管综-生活污水",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-17": {
+      "id": "TG-CAD-17",
+      "name": "生活污水接入既有处理场",
+      "sourceHandle": "139AA4",
+      "sourceLayer": "$管综-生活污水",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-18": {
+      "id": "TG-CAD-18",
+      "name": "生态空间补水接口",
+      "sourceHandle": "13993C",
+      "sourceLayer": "$管综-市政中水",
+      "status": "CAD文字锚点已定位；单体轮廓未全部核验"
+    },
+    "TG-CAD-19": {
+      "id": "TG-CAD-19",
+      "name": "51#泊位",
+      "sourceHandle": "A148B",
+      "sourceLayer": "00-码头布置（东侧）",
+      "status": "泊位文字已核；泊位边界另需图元关联"
+    },
+    "TG-CAD-20": {
+      "id": "TG-CAD-20",
+      "name": "52#泊位",
+      "sourceHandle": "A148D",
+      "sourceLayer": "00-码头布置（东侧）",
+      "status": "泊位文字已核；泊位边界另需图元关联"
+    },
+    "TG-CAD-21": {
+      "id": "TG-CAD-21",
+      "name": "北侧集水池排泥管 DN100",
+      "sourceHandle": "33710E",
+      "sourceLayer": "$管综-污泥管",
+      "status": "仅文字插入点，不是实体位置"
+    },
+    "TG-CAD-22": {
+      "id": "TG-CAD-22",
+      "name": "南侧集水池排泥管 DN100",
+      "sourceHandle": "33710A",
+      "sourceLayer": "$管综-污泥管",
+      "status": "仅文字插入点，不是实体位置"
+    },
+    "TG-CAD-23": {
+      "id": "TG-CAD-23",
+      "name": "市政水源关联说明",
+      "sourceHandle": "139716",
+      "sourceLayer": "$管综-室内消防",
+      "status": "仅文字插入点，不是实体位置"
+    },
+    "TG-CAD-24": {
+      "id": "TG-CAD-24",
+      "name": "消防水池补水管 DN200",
+      "sourceHandle": "344AD8",
+      "sourceLayer": "$管综-雨水",
+      "status": "仅文字插入点，不是实体位置"
+    },
+    "TG-CAD-25": {
+      "id": "TG-CAD-25",
+      "name": "污水站设备间补水管 DN65",
+      "sourceHandle": "344AD0",
+      "sourceLayer": "$管综-雨水",
+      "status": "仅文字插入点，不是实体位置"
+    },
+    "TG-CAD-26": {
+      "id": "TG-CAD-26",
+      "name": "清水池补水管 DN100",
+      "sourceHandle": "344AD1",
+      "sourceLayer": "$管综-雨水",
+      "status": "仅文字插入点，不是实体位置"
+    }
+  }
+}

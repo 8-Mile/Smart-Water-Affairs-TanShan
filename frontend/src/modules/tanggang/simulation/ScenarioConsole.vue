@@ -11,6 +11,8 @@ const route=useRoute()
 // a manual simulation launcher over the production-style workspace.
 const showLauncher=computed(()=>
   route.path!=='/port/water/supply'&&route.path!=='/port/water/rain-risk'&&
+  route.path!=='/port/operations/monitor'&&
+  route.path!=='/port/operations/decision'&&
   !route.path.startsWith('/port/process/'))
 const store=useScenarioStore()
 let feedTimer:ReturnType<typeof setInterval>|null=null

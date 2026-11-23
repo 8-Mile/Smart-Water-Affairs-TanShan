@@ -1,405 +1,189 @@
 <script setup lang="ts">
-import {computed,onMounted,ref,watch} from 'vue'
-import {useRoute,useRouter} from 'vue-router'
-import {ElMessage,ElMessageBox} from 'element-plus'
+import {computed,ref,watch} from 'vue'
+import {useRouter} from 'vue-router'
 import {useScenarioStore} from '../simulation/store'
-import {simContext} from '../simulation/mockContext'
-import {
-  analyzeSimDecision,fetchSimDecisions,createSimDecision,reviewSimDecision,
-  fetchSimEvidence,recordSimEvidence,
-  type AiSimDecisionAnalysis,type AiSimDecision,type SimPlanId,
-  type AiSimEvidence,type AiSimEvidenceItem,type SimEvidenceStatus,
-} from '@/api/ai'
-import {simNodeOrigin,simNodeReturnPath} from './processReviewNavigation'
+import type {SupplyPlan} from '../simulation/supplyPlans'
+import {processName} from '../simulation/waterOperations'
+import PortOperatingInputs from './PortOperatingInputs.vue'
 import './business.css'
-import './scenario-pages.css'
 
 const router=useRouter()
-const route=useRoute()
-const scenario=useScenarioStore()
-const linkedNode=computed(()=>simNodeOrigin(route.query,scenario.processChecks,scenario.runUid))
-const context=computed(()=>simContext(scenario))
-const analysis=ref<AiSimDecisionAnalysis|null>(null)
-const allCases=ref<AiSimDecision[]>([])
-const caseId=ref<number|null>(null)
-const currentCase=computed(()=>allCases.value.find(x=>x.id===caseId.value)||null)
-const planId=ref<SimPlanId|null>(null)
-const rationale=ref('')
-const reviewNote=ref('')
-const loading=ref(false)
-const saving=ref(false)
-const error=ref('')
-const evidence=ref<AiSimEvidence|null>(null)
-const evidenceBusy=ref(false)
-const evidenceKey=ref<string|null>(null)
-const evidenceStatus=ref<SimEvidenceStatus>('pending')
-const evidenceNote=ref('')
-const sourceReference=ref('')
-const evidenceItem=computed(()=>evidence.value?.items.find(i=>i.key===evidenceKey.value)||null)
-const currentPlan=computed(()=>analysis.value?.plans.find(x=>x.id===planId.value)||null)
-const reviewAvailable=computed(()=>!!currentCase.value
-  &&currentCase.value.status==='selected'&&!!context.value
-  &&context.value.scenario_id===currentCase.value.scenario_id
-  &&context.value.run_number>currentCase.value.baseline_run)
-const fmt=(n:number)=>n.toLocaleString('zh-CN',{maximumFractionDigits:1})
-
-function errorText(e:unknown){
-  const v=e as {response?:{data?:{detail?:string;message?:string}};message?:string}
-  return v?.response?.data?.detail||v?.response?.data?.message||v?.message||'模拟操作失败'
-}
-async function refresh(){
-  try{
-    const {data}=await fetchSimDecisions()
-    allCases.value=data.data||[]
-    if(!allCases.value.some(x=>x.id===caseId.value)){
-      const requested=Number(route.query.decision)
-      caseId.value=Number.isSafeInteger(requested)&&requested>0&&
-        allCases.value.some(x=>x.id===requested)
-          ? requested : allCases.value[0]?.id||null
-    }
-  }catch(e){error.value=errorText(e)}
-}
-async function refreshEvidence(){
-  const id=caseId.value
-  evidence.value=null
-  evidenceKey.value=null
-  if(!id)return
-  evidenceBusy.value=true
-  try{
-    const {data}=await fetchSimEvidence(id)
-    if(caseId.value===id)evidence.value=data.data
-  }catch(e){
-    if(caseId.value===id)error.value=errorText(e)
-  }finally{evidenceBusy.value=false}
-}
-function chooseEvidence(item:AiSimEvidenceItem){
-  evidenceKey.value=item.key
-  evidenceStatus.value=item.status
-  evidenceNote.value=item.note||''
-  sourceReference.value=item.source_reference||''
-}
-async function saveEvidence(){
-  const id=caseId.value
-  const item=evidenceItem.value
-  if(!id||!item||saving.value||evidenceNote.value.trim().length<8)return
-  try{
-    await ElMessageBox.confirm(
-      '本操作只保留资料核对线索，不把资料标记为已验证现场数据。确认记录？',
-      '保存SIM资料核查意见',{type:'warning',confirmButtonText:'确认保存'},
-    )
-  }catch{return}
-  saving.value=true
-  error.value=''
-  try{
-    const {data}=await recordSimEvidence(id,{
-      item_key:item.key,status:evidenceStatus.value,
-      note:evidenceNote.value.trim(),
-      source_reference:sourceReference.value.trim(),
-    })
-    if(caseId.value===id){
-      evidence.value=data.data
-      const changed=data.data.items.find(x=>x.key===item.key)
-      if(changed){
-        evidenceStatus.value=changed.status
-        evidenceNote.value=changed.note
-      }
-    }
-    ElMessage.success('核查意见已留痕；仍属于待核实资料')
-  }catch(e){error.value=errorText(e)}
-  finally{saving.value=false}
-}
-
-async function analyze(){
-  analysis.value=null
-  planId.value=null
-  const data=context.value
-  if(!data)return
-  loading.value=true
-  error.value=''
-  try{
-    const response=await analyzeSimDecision(data)
-    // If a new SIM run started while the request was in flight, discard
-    // the older analysis instead of mixing two run numbers.
-    if(scenario.runNumber===data.run_number&&scenario.activeId===data.scenario_id)
-      analysis.value=response.data.data
-  }catch(e){error.value=errorText(e)}
-  finally{loading.value=false}
-}
-async function choose(){
-  const plan=currentPlan.value
-  const data=context.value
-  if(!plan||!data||!analysis.value||rationale.value.trim().length<8)return
-  if(data.run_number!==analysis.value.run_number){
-    ElMessage.warning('情景已变化，请重新研判')
-    return
-  }
-  const desc=plan.constraint==='CONSTRAINT_FAIL'
-    ?'该方案在简化模型内未通过储量约束，只能保存为待核实的演示研究选择。'
-    :'该方案在简化模型内未越过所列储量约束，但全部工程前提尚未现场核实。'
-  try{
-    await ElMessageBox.confirm(
-      desc+'确认只保存研究选择，不向泵阀下发指令，也不创建工单？',
-      '记录SIM研判',{type:'warning',confirmButtonText:'确认记录',cancelButtonText:'取消'},
-    )
-  }catch{return}
-  saving.value=true
-  error.value=''
-  try{
-    const {data:response}=await createSimDecision(data,plan.id,rationale.value.trim())
-    await refresh()
-    caseId.value=response.data.id
-    rationale.value=''
-    ElMessage.success('已记录SIM方案选择，未执行现场调度')
-  }catch(e){error.value=errorText(e)}
-  finally{saving.value=false}
-}
-async function review(){
-  const c=currentCase.value
-  const data=context.value
-  if(!c||!data||!reviewAvailable.value||reviewNote.value.trim().length<8)return
-  try{
-    await ElMessageBox.confirm(
-      '复核只比较新旧SIM输入及计算结果，不能证明该方案已实际实施。确定记录本轮模拟复核吗？',
-      '确认SIM复核',{type:'warning',confirmButtonText:'保存复核'},
-    )
-  }catch{return}
-  saving.value=true
-  error.value=''
-  try{
-    await reviewSimDecision(c.id,data,reviewNote.value.trim())
-    await refresh()
-    reviewNote.value=''
-    ElMessage.success('SIM复核完成，记录已归档')
-  }catch(e){error.value=errorText(e)}
-  finally{saving.value=false}
-}
-watch(()=>[scenario.activeId,scenario.runNumber],()=>{void analyze()})
-watch(caseId,()=>{void refreshEvidence()})
-onMounted(async()=>{await Promise.all([refresh(),analyze()])})
+const store=useScenarioStore()
+const selectedId=ref('as-is')
+const plans=computed(()=>store.supplyPlans)
+const current=computed(()=>plans.value.find(p=>p.id===selectedId.value)||plans.value[0]||null)
+const r=computed(()=>store.result)
+const fmt=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
+const constraints=(p:SupplyPlan)=>
+  p.constraint==='CONSTRAINT_FAIL'?'储量约束未满足':'条件待核实'
+watch(()=>plans.value.map(p=>p.id).join('|'),()=>{
+  if(!plans.value.some(p=>p.id===selectedId.value))selectedId.value='as-is'
+})
 </script>
 
 <template>
-  <main class="tg-biz tg-analysis-page page-fill tg-sim-decisions">
-    <div class="tg-biz-head">
-      <div><h1>模拟处置研判</h1></div>
-      <div class="tg-biz-actions">
-        <span class="tg-datamode" :class="{sim:scenario.running}">
-          {{scenario.running?'SIM · 第'+scenario.runNumber+'轮':'尚未运行情景'}}
-        </span>
-        <el-button @click="router.push('/port/operations/monitor')">主动智能监护</el-button>
-        <el-button plain @click="scenario.openConsole()">情景推演</el-button>
+  <main class="tg-biz tg-decision-v2 page-fill" data-testid="tg-decision-main">
+    <header class="tg-decision-toolbar">
+      <span class="tg-decision-status" :class="{manual:!store.autoEnabled}">
+        {{store.autoEnabled?'自动分析':store.running?'人工参数':'暂无数据'}}
+      </span>
+      <div class="tg-decision-actions">
+        <PortOperatingInputs context="supply"/>
+        <el-button plain @click="router.push('/port/operations/monitor')">运行监护</el-button>
       </div>
-    </div>
+    </header>
 
-    <section v-if="linkedNode" class="tg-biz-card art-card tg-decision-origin"
-      data-testid="decision-node-origin">
-      <div>
-        <strong>关联SIM工艺节点：{{linkedNode.facility_name}}</strong>
-        <p>{{linkedNode.note}}</p>
-        <small>仅该轮浏览器核查 · 研判结论不是现场设备处置指令</small>
+    <template v-if="r&&plans.length">
+      <div class="tg-decision-summary">
+        <div class="tg-biz-card"><small>用水需求</small><strong>{{fmt(r.demandedM3h)}} <em>m³/h</em></strong></div>
+        <div class="tg-biz-card"><small>可分配能力</small><strong>{{fmt(r.usableCapacityM3h)}} <em>m³/h</em></strong></div>
+        <div class="tg-biz-card"><small>当前供水缺口</small><strong :class="{warn:r.shortageM3h>0}">{{fmt(r.shortageM3h)}} <em>m³/h</em></strong></div>
+        <div class="tg-biz-card"><small>预测末储量</small><strong>{{fmt(r.forecastPoolM3)}} <em>m³</em></strong></div>
       </div>
-      <el-button size="small" plain
-        @click="router.push(simNodeReturnPath(linkedNode))">返回原工艺节点</el-button>
-    </section>
-    <div class="tg-biz-note">
-      <b>数据说明：</b>全部为同一浏览器情景计算。三个分析角色为可追溯的Mock规则，不是真实自主Agent；不会批准或执行泵阀调度。
-    </div>
-    <p v-if="error" class="tg-biz-sub" role="alert">{{error}}</p>
-    <div v-if="!context" class="tg-analysis-empty">
-      <h2>尚无SIM研判数据</h2>
-      <p>请先在统一情景推演中运行一次供水或监护场景，再查看同一轮的方案约束和研判证据。</p>
-      <el-button type="primary" plain @click="scenario.openConsole()">打开统一推演</el-button>
-    </div>
 
-    <template v-if="context">
-      <section class="tg-biz-card art-card" v-loading="loading">
+      <div v-if="r.events.length" class="tg-decision-findings"
+        data-testid="decision-current-findings">
+        <strong v-for="event in r.events" :key="event.id">{{event.title}}</strong>
+      </div>
+
+      <section class="tg-biz-card tg-decision-plan-section" data-testid="decision-plan-comparison">
         <div class="tg-biz-card-head">
-          <h2>多角色规则研判</h2>
-          <el-button size="small" plain @click="analyze">重新分析</el-button>
+          <h2>供水保障方案</h2>
+          <el-button link @click="router.push('/port/water/supply')">查看供水分配</el-button>
         </div>
-        <div v-if="analysis" class="tg-decision-roles">
-          <div v-for="(step,i) in analysis.roles" :key="step.id" class="tg-decision-role">
-            <div class="tg-decision-role-title"><span>{{i+1}}. {{step.name}}</span></div>
-            <strong>{{step.finding}}</strong>
-            <p>{{step.evidence}}</p>
-            <p class="tg-mini-note">{{step.limitation}}</p>
-          </div>
+        <div class="tg-decision-plans">
+          <button v-for="p in plans" :key="p.id" class="tg-decision-plan"
+            :class="{active:selectedId===p.id,risk:p.constraint==='CONSTRAINT_FAIL'}"
+            :data-plan-id="p.id" type="button" @click="selectedId=p.id">
+            <span class="tg-decision-plan-top">
+              <strong>{{p.title}}</strong>
+              <small>{{constraints(p)}}</small>
+            </span>
+            <span class="tg-decision-plan-number">{{fmt(p.result.shortageM3h)}}
+              <em>m³/h 缺口</em></span>
+            <span class="tg-decision-plan-bottom">
+              预测余量 {{fmt(p.safetyMarginM3)}} m³
+              <span v-if="p.deferredDemandM3h>0">· 顺延 {{fmt(p.deferredDemandM3h)}} m³/h</span>
+            </span>
+          </button>
         </div>
-        <p v-if="analysis" class="tg-mini-note">{{analysis.notice}}</p>
       </section>
-    </template>
 
-      <div class="tg-biz-grid two tg-decision-workflow"
-        :class="{'tg-decision-history-only':!context}">
-        <section v-if="context" class="tg-biz-card art-card">
-          <div class="tg-biz-card-head"><h2>四种方案的SIM比选</h2></div>
-          <el-table v-if="analysis" :data="analysis.plans" size="small" stripe row-key="id">
-            <el-table-column label="方案" min-width="150">
-              <template #default="{row}"><strong>{{row.title}}</strong></template>
-            </el-table-column>
-            <el-table-column label="缺口 m³/h" min-width="95" align="right">
-              <template #default="{row}">{{fmt(row.shortage_m3h)}}</template>
-            </el-table-column>
-            <el-table-column label="期末储量 m³" min-width="110" align="right">
-              <template #default="{row}">{{fmt(row.raw_end_storage_m3)}}</template>
-            </el-table-column>
-            <el-table-column label="约束" min-width="115">
-              <template #default="{row}">
-                {{row.constraint==='CONSTRAINT_FAIL'?'模型约束未通过':'待现场核实'}}
-              </template>
-            </el-table-column>
-            <el-table-column label="选择" width="92">
-              <template #default="{row}">
-                <el-button size="small" :type="planId===row.id?'primary':'default'"
-                  :disabled="saving" @click="planId=row.id">
-                  {{planId===row.id?'已选择':'选择'}}
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-          <p class="tg-mini-note">错峰需求没有消失；假设备用能力不代表现场有备用泵，全部方案均未完成水力、设备及生产审批核实。</p>
-          <template v-if="currentPlan">
-            <el-descriptions :column="1" border size="small">
-              <el-descriptions-item label="研究方案">{{currentPlan.title}}</el-descriptions-item>
-              <el-descriptions-item label="模拟顺延需求">{{currentPlan.deferred_m3h}} m³/h</el-descriptions-item>
-              <el-descriptions-item label="安全储量余量">{{currentPlan.safety_margin_m3}} m³</el-descriptions-item>
-              <el-descriptions-item label="实施前提">
-                <div v-for="(reason,i) in currentPlan.blockers" :key="i">{{reason}}</div>
-                <span v-if="!currentPlan.blockers.length">模型内尚无列明阻断项，但不代表现场可执行</span>
-              </el-descriptions-item>
-            </el-descriptions>
-            <el-input v-model="rationale" type="textarea" :rows="3" maxlength="1000"
-              show-word-limit placeholder="填写选择该演示方案的研究依据（至少8字）"/>
-            <el-button type="primary" class="tg-decision-submit" :loading="saving"
-              :disabled="rationale.trim().length<8" @click="choose">
-              记录SIM研究选择
-            </el-button>
-          </template>
+      <div class="tg-decision-grid">
+        <section v-if="current" class="tg-biz-card tg-decision-details"
+          data-testid="decision-plan-detail">
+          <div class="tg-biz-card-head">
+            <h2>{{current.title}}</h2>
+            <span class="tg-decision-valid" :class="{warn:current.constraint==='CONSTRAINT_FAIL'}">
+              {{constraints(current)}}
+            </span>
+          </div>
+          <div class="tg-decision-comparison">
+            <div><small>计划分配</small><strong>{{fmt(current.result.deliveredM3h)}} <em>m³/h</em></strong></div>
+            <div><small>剩余需求</small><strong>{{fmt(current.result.shortageM3h)}} <em>m³/h</em></strong></div>
+            <div><small>顺延需求</small><strong>{{fmt(current.deferredDemandM3h)}} <em>m³/h</em></strong></div>
+            <div><small>期末安全余量</small><strong>{{fmt(current.safetyMarginM3)}} <em>m³</em></strong></div>
+          </div>
+          <div class="tg-decision-constraints">
+            <strong>方案条件</strong>
+            <div v-for="line in current.blockers" :key="line">{{line}}</div>
+            <span v-if="!current.blockers.length">暂无模型阻断项</span>
+          </div>
+          <div class="tg-decision-detail-actions">
+            <el-button plain size="small" @click="router.push('/port/process/middle')">中压供水工艺</el-button>
+            <el-button plain size="small" @click="router.push('/port/process/pool')">水池供水工艺</el-button>
+          </div>
         </section>
 
-        <section class="tg-biz-card art-card">
-          <div class="tg-biz-card-head"><h2>选择记录与模拟复核</h2><el-button link @click="refresh">刷新</el-button></div>
-          <el-table :data="allCases" size="small" stripe highlight-current-row
-            @row-click="(row:AiSimDecision)=>caseId=row.id">
-            <el-table-column prop="id" label="编号" width="70"/>
-            <el-table-column label="情景/轮次" min-width="115">
-              <template #default="{row}">{{row.scenario_id}} / {{row.baseline_run}}</template>
-            </el-table-column>
-            <el-table-column label="方案" min-width="110">
-              <template #default="{row}">{{row.selected_plan.title}}</template>
-            </el-table-column>
-            <el-table-column label="状态" min-width="85">
-              <template #default="{row}">{{row.status==='reviewed'?'已复核':'待复核'}}</template>
-            </el-table-column>
-            <template #empty>尚无SIM研究选择。可在左侧选中方案并填写依据。</template>
-          </el-table>
-          <template v-if="currentCase">
-            <div class="tg-decision-review">
-              <el-descriptions :column="1" border size="small">
-                <el-descriptions-item label="已记录选择">{{currentCase.selected_plan.title}}</el-descriptions-item>
-                <el-descriptions-item label="人工研究依据">{{currentCase.rationale}}</el-descriptions-item>
-                <el-descriptions-item label="原轮次模拟缺口">{{currentCase.baseline.shortage_m3h}} m³/h</el-descriptions-item>
-                <el-descriptions-item label="生产控制">未执行</el-descriptions-item>
-              </el-descriptions>
-              <template v-if="currentCase.review">
-                <el-descriptions :column="1" border size="small">
-                  <el-descriptions-item label="复核轮次">第{{currentCase.review.run_number}}轮</el-descriptions-item>
-                  <el-descriptions-item label="数值变化">
-                    {{currentCase.review.before_shortage_m3h}} → {{currentCase.review.after_shortage_m3h}} m³/h
-                    （Δ{{currentCase.review.shortage_delta_m3h}}）
-                  </el-descriptions-item>
-                  <el-descriptions-item label="复核结果">{{currentCase.review.finding}}</el-descriptions-item>
-                  <el-descriptions-item label="复核意见">{{currentCase.review.human_note}}</el-descriptions-item>
-                </el-descriptions>
-                <p class="tg-mini-note">{{currentCase.review.warning}}</p>
-                <el-button plain @click="router.push('/port/analysis/reports')">运行复盘</el-button>
-              </template>
-              <template v-else>
-                <p class="tg-mini-note" v-if="!reviewAvailable">
-                  请在统一推演中对同一情景重新运行一轮（可调整经允许的模拟参数），之后记录数值复核；不会自动宣称方案实施成功。
-                </p>
-                <template v-else>
-                  <p>新SIM轮次：第{{context?.run_number}}轮；模拟供水缺口 {{context?.shortage_m3h}} m³/h。</p>
-                  <el-input v-model="reviewNote" type="textarea" :rows="3"
-                    maxlength="1000" show-word-limit
-                    placeholder="填写复核依据、模拟变化及仍未核实事项（至少8字）"/>
-                  <el-button type="primary" class="tg-decision-submit" :loading="saving"
-                    :disabled="reviewNote.trim().length<8" @click="review">保存本轮SIM复核</el-button>
-                </template>
-              </template>
+        <section class="tg-biz-card tg-decision-events">
+          <div class="tg-biz-card-head">
+            <h2>关联运行事件</h2>
+            <el-button link @click="router.push('/port/operations/monitor')">处理事件</el-button>
+          </div>
+          <template v-if="store.activeCases.length">
+            <div v-for="c in store.activeCases.slice(-6).reverse()" :key="c.id"
+              class="tg-decision-event">
+              <span :class="{critical:c.level==='critical'}"/>
+              <div><strong>{{c.title}}</strong>
+                <small>{{processName(c.sourceProcess)}} · {{c.status==='new'?'待确认':'处理中'}}</small>
+              </div>
+              <el-button link size="small"
+                @click="router.push('/port/operations/monitor?case='+c.id)">查看</el-button>
             </div>
           </template>
-          <section v-if="currentCase" class="tg-decision-evidence">
-            <div class="tg-biz-card-head">
-              <h2>待核实资料</h2>
-              <span v-if="evidence" class="tg-mini-note">
-                {{evidence.total}}项 · 已取得现场核验证据0项
-              </span>
-            </div>
-            <el-table v-loading="evidenceBusy" :data="evidence?.items||[]"
-              size="small" stripe highlight-current-row
-              @row-click="chooseEvidence">
-              <el-table-column label="事项" min-width="200">
-                <template #default="{row}">{{row.label}}</template>
-              </el-table-column>
-              <el-table-column label="核对进度" min-width="100">
-                <template #default="{row}">
-                  {{row.status==='material-requested'?'资料待提供':
-                    row.status==='under-review'?'资料核对中':'尚未核对'}}
-                </template>
-              </el-table-column>
-              <el-table-column label="记录" width="64" align="right">
-                <template #default="{row}">{{row.note_count}}</template>
-              </el-table-column>
-              <template #empty>当前没有可以记录的资料核查事项</template>
-            </el-table>
-            <div v-if="evidenceItem" class="tg-decision-evidence-form">
-              <strong>{{evidenceItem.label}}</strong>
-              <el-select v-model="evidenceStatus" style="width:100%">
-                <el-option label="尚未核对" value="pending"/>
-                <el-option label="资料待提供" value="material-requested"/>
-                <el-option label="资料核对中" value="under-review"/>
-              </el-select>
-              <el-input v-model="sourceReference" maxlength="160" show-word-limit
-                placeholder="资料线索或已上传文件的名称、页码（非已验证证据）"/>
-              <el-input v-model="evidenceNote" type="textarea" :rows="3"
-                maxlength="1000" show-word-limit
-                placeholder="记录需核实的字段、责任接口或下一步取证建议"/>
-              <el-button type="primary" plain :loading="saving"
-                :disabled="evidenceNote.trim().length<8" @click="saveEvidence">
-                保存核查意见
-              </el-button>
-            </div>
-          </section>
-          <div class="tg-biz-actions tg-decision-bottom-links">
-            <el-button plain @click="router.push('/port/water/supply')">供水方案比选</el-button>
-            <el-button plain @click="router.push('/port/analysis/reports')">运行复盘</el-button>
-          </div>
+          <div v-else class="tg-decision-empty">当前没有待处理事件</div>
+          <details class="tg-decision-source-details">
+            <summary>方案计算依据</summary>
+            <p>统一供水能力与负荷输入、用水点优先级、库容安全约束。</p>
+            <p>当前为SIM模型计算；真实泵曲线、管网连通和许可尚需工程核验。</p>
+          </details>
         </section>
       </div>
+    </template>
+    <section v-else class="tg-biz-card tg-decision-empty">
+      <strong>当前无运行数据</strong>
+      <el-button size="small" @click="store.resumeAuto()">启动自动数据</el-button>
+    </section>
   </main>
 </template>
 
 <style scoped>
-.tg-decision-origin{display:flex;align-items:center;justify-content:space-between;
-  gap:8px 20px;flex-wrap:wrap;margin-bottom:14px}
-.tg-decision-origin strong{font-size:12px;font-weight:650;color:#365d75}
-.tg-decision-origin p{margin:6px 0;font-size:12px;color:#6c899b}
-.tg-decision-origin small{font-size:11px;color:#8a9fac}
-
-.tg-decision-roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.tg-decision-role{border:1px solid var(--el-border-color-light);border-radius:7px;padding:13px;min-width:0}
-.tg-decision-role-title{font-size:13px;font-weight:600;margin-bottom:8px}
-.tg-decision-role strong{font-weight:600;font-size:12px;line-height:1.6}
-.tg-decision-role p{font-size:12px;line-height:1.55;margin:8px 0 0}
-.tg-decision-workflow{margin-top:14px}
-.tg-decision-history-only{grid-template-columns:minmax(0,1fr)}
-.tg-decision-review{display:grid;gap:12px;margin-top:16px}
-.tg-decision-submit{margin-top:10px}
-.tg-decision-bottom-links{margin-top:15px;flex-wrap:wrap}
-.tg-decision-evidence{display:grid;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--el-border-color-light)}
-.tg-decision-evidence-form{display:grid;gap:9px}
-.tg-decision-evidence-form strong{font-size:12px;font-weight:600}
-@media(max-width:1000px){.tg-decision-roles{grid-template-columns:1fr}}
-@media(max-width:760px){.tg-decision-workflow{grid-template-columns:1fr}.tg-decision-workflow :deep(.el-table__body-wrapper){overflow-x:auto}}
+.tg-decision-v2{display:flex;flex-direction:column;gap:13px;min-width:0}
+.tg-decision-toolbar{display:flex;justify-content:flex-end;align-items:center;
+  flex-wrap:wrap;min-height:46px;gap:10px}
+.tg-decision-status{font-size:11px;color:#4b9282;margin-right:auto}
+.tg-decision-status.manual{color:#bc8b56}
+.tg-decision-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tg-decision-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.tg-decision-summary .tg-biz-card{padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.tg-decision-summary small{font-size:11px;color:#879ead}
+.tg-decision-summary strong{font-size:23px;color:#327f9c}
+.tg-decision-summary strong.warn{color:#bc8350}
+.tg-decision-summary em,.tg-decision-comparison em{font-size:11px;font-weight:400;font-style:normal}
+.tg-decision-findings{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tg-decision-findings strong{font-size:11px;color:#aa784c;border:1px solid #ead3b6;
+  border-radius:5px;padding:7px 10px;background:rgba(255,247,234,.92)}
+.tg-decision-plan-section,.tg-decision-details,.tg-decision-events{padding:16px 18px}
+.tg-decision-plans{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tg-decision-plan{border:1px solid #dfebf1;border-radius:9px;padding:14px;
+  background:rgba(248,252,254,.85);text-align:left;display:flex;
+  flex-direction:column;gap:10px;cursor:pointer;color:#517a91;font:inherit;min-width:0}
+.tg-decision-plan.active{border-color:#6daccc;background:#eaf5fa}
+.tg-decision-plan.risk{border-color:#e9c8a5}
+.tg-decision-plan-top{display:flex;gap:7px;justify-content:space-between;
+  flex-wrap:wrap;align-items:center}
+.tg-decision-plan-top strong{font-size:12px}
+.tg-decision-plan-top small{font-size:10px;color:#9c9885}
+.tg-decision-plan-number{font-size:24px;color:#317f9e;font-weight:700}
+.tg-decision-plan-number em{font-style:normal;font-size:10px;font-weight:400}
+.tg-decision-plan-bottom{font-size:10px;color:#879eab}
+.tg-decision-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(310px,.85fr);
+  gap:13px;align-items:start}
+.tg-decision-valid{font-size:10px;color:#5f927b}
+.tg-decision-valid.warn{color:#bd8955}
+.tg-decision-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tg-decision-comparison>div{background:#f6fafc;border:1px solid #e0ebf1;
+  border-radius:7px;padding:12px}
+.tg-decision-comparison small{font-size:10px;color:#879cab;display:block;margin-bottom:5px}
+.tg-decision-comparison strong{font-size:20px;color:#357e9d}
+.tg-decision-constraints{margin-top:15px;font-size:11px;color:#7c95a3;line-height:1.8}
+.tg-decision-constraints strong{display:block;color:#58778a;margin-bottom:4px}
+.tg-decision-detail-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.tg-decision-event{display:flex;align-items:center;gap:9px;padding:11px 0;
+  border-bottom:1px solid #e0ebf1}
+.tg-decision-event>span{width:7px;height:7px;border-radius:50%;background:#d5ae72}
+.tg-decision-event>span.critical{background:#cf8067}
+.tg-decision-event>div{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tg-decision-event strong{font-size:11px;color:#537990}
+.tg-decision-event small{font-size:10px;color:#8aa1ae}
+.tg-decision-source-details{margin-top:13px;padding-top:10px;border-top:1px solid #e1edf1}
+.tg-decision-source-details summary{font-size:11px;color:#7593a3;cursor:pointer}
+.tg-decision-source-details p{font-size:10px;color:#8ba0ac}
+.tg-decision-empty{padding:23px;color:#8ba0ad;font-size:12px}
+@media(max-width:1200px){.tg-decision-plans{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .tg-decision-grid{grid-template-columns:1fr}}
+@media(max-width:650px){.tg-decision-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .tg-decision-v2 .tg-biz-card{padding:12px}
+ .tg-decision-actions{width:100%}
+}
 </style>

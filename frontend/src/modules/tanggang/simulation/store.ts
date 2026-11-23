@@ -282,6 +282,41 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
       detail:{scenarioId:id,runNumber:runNumber.value,dataMode:'SIM',simulationOnly:true},
     }))
   }
+  /** Apply a validated, temporary operator-input snapshot to the SAME model.
+   * No backend, control, or formal alarm writes; auto feed pauses until resumed.
+   */
+  function applyOperatorInputs(inputs:ScenarioInputs,scenarioId:ScenarioId){
+    if(!SCENARIOS[scenarioId])throw Error('工况模板无效')
+    if(!['running','fault'].includes(inputs.pumpState))throw Error('泵状态无效')
+    if(!Array.isArray(inputs.terminals)||inputs.terminals.length<1||
+      inputs.terminals.length>24)throw Error('用水点数量无效')
+    const proposed:ScenarioInputs={
+      ...inputs,
+      terminals:inputs.terminals.map(t=>({...t})),
+    }
+    const next={...SCENARIOS[scenarioId],inputs:proposed}
+    calculateScenario(next)
+    compareSupplyPlans(next)
+    // The manual snapshot and the automatic telemetry stream are mutually
+    // exclusive. Human decisions never write to PLC or production records.
+    autoEnabled.value=false
+    autoTelemetryFrame.value=null
+    activeId.value=scenarioId
+    activeInputs.value=proposed
+    runNumber.value+=1
+    monitorReview.value=null
+    processChecks.value=[]
+    runUid.value=crypto.randomUUID()
+    startedAt.value=new Date().toISOString()
+    window.dispatchEvent(new CustomEvent('tanggang:scenario-visual',{
+      detail:{scenarioId,runNumber:runNumber.value,dataMode:'SIM',
+        simulationOnly:true,manualInput:true},
+    }))
+  }
+  function resumeAuto(){
+    stop()
+    startAuto()
+  }
   function stop(){
     autoEnabled.value=false
     activeId.value=null
@@ -303,7 +338,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   return {activeId,activeInputs,runNumber,runUid,startedAt,consoleOpen,activeScenario,
     effectiveScenario,result,supplyPlans,impactAnalysis,monitorEvidence,monitorReview,
     processChecks,recordProcessCheck,beginMonitorReview,recordMonitorReview,
-    running,start,stop,startAuto,advanceAuto,autoEnabled,autoFrame,
+    running,start,stop,startAuto,advanceAuto,applyOperatorInputs,resumeAuto,autoEnabled,autoFrame,
     autoHistory,autoLastUpdated,autoTelemetryFrame,telemetryAssessment,
     waterEconomics,processImpacts,
     operatingCases,simulatedEventViews,activeCases,newCaseCount,pendingCaseCount,

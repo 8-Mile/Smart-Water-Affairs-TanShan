@@ -5,6 +5,7 @@ import {useScenarioStore} from '../simulation/store'
 import SupplyPlanComparison from './SupplyPlanComparison.vue'
 import PublishedBoards from './PublishedBoards.vue'
 import PortWaterOperationsPanel from './PortWaterOperationsPanel.vue'
+import PortOperatingInputs from './PortOperatingInputs.vue'
 import './business.css'
 import './scenario-pages.css'
 const router=useRouter(),store=useScenarioStore()
@@ -24,8 +25,13 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
 <template>
   <main class="tg-biz tg-analysis-page page-fill">
     <div class="tg-biz-head">
-      <div class="tg-biz-actions"><span class="tg-datamode" :class="{sim:store.running}" data-testid="water-automatic-mode">{{store.autoEnabled?'SIM · 自动':store.running?'SIM · 分析':'数据未接入'}}</span>
-        <el-button @click="router.push('/port/process/middle?facility=EQ-P-MID')">中压供水工艺</el-button></div>
+      <div class="tg-biz-actions">
+        <span class="tg-datamode" :class="{sim:store.running}" data-testid="water-automatic-mode">
+          {{store.autoEnabled?'自动更新':store.running?'人工参数':'数据未接入'}}
+        </span>
+        <PortOperatingInputs context="supply"/>
+        <el-button @click="router.push('/port/process/middle?facility=EQ-P-MID')">中压供水工艺</el-button>
+      </div>
     </div>
     <PortWaterOperationsPanel />
     <details class="tg-ops-advanced-supply">
@@ -84,7 +90,7 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
         </div>
         <div class="tg-biz-actions">
           <el-button plain @click="router.push('/port/operations/monitor')">查看监护证据</el-button>
-          <el-button type="primary" plain @click="router.push('/port/operations/decision')">模拟处置研判</el-button>
+          <el-button type="primary" plain @click="router.push('/port/operations/decision')">处置方案</el-button>
         </div>
       </section>
     </template>

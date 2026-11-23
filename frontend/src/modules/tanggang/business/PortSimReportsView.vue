@@ -215,7 +215,7 @@ onMounted(refresh)
             <p class="tg-biz-sub">{{report.next_action}}</p>
             <div class="tg-biz-actions">
               <el-button plain @click="router.push('/port/water/supply')">供水保障</el-button>
-              <el-button plain @click="router.push('/port/operations/decision')">模拟处置研判</el-button>
+              <el-button plain @click="router.push('/port/operations/decision')">处置方案</el-button>
               <el-button plain @click="router.push('/port/operations/monitor')">主动监护</el-button>
             </div>
           </section>
