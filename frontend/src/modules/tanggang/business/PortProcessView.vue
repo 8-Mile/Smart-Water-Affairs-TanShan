@@ -234,7 +234,8 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
             :sim-running="sim.running"
             @select-facility="selectFacility"
             @editing-change="diagramEditing=$event"/>
-          <PortProcessEffect v-else :sections="schematic?.sections||[]"
+          <PortProcessEffect v-else :system-id="sysId as EditableProcessSystemId"
+            :system-name="displayName" :sections="schematic?.sections||[]"
             :selected-facility-id="selectedId"
             :mock-by-facility="mockByFacility"
             :source-layers="system.focusPipeLayers"

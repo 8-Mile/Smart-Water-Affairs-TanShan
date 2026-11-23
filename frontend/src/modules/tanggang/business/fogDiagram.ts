@@ -4,8 +4,7 @@ import type {
 } from '@/api/tanggangProcessDiagrams'
 import type {TanggangDevice} from '../mapping/tanggangCatalog'
 import type {ProcessSchematicSection} from './processSchematic'
-import {layoutProcessRegions} from './processDiagramLayout'
-import {processDeviceKind} from './processMock'
+import {buildProcessFlowDiagram} from './processFlow'
 
 export const FOG_SYMBOLS:Readonly<Record<FogSymbolId,{
   name:string;width:number;height:number;asset:string|null
@@ -198,46 +197,14 @@ export function fogTelemetryPlacement(
 
 
 /**
- * Reuse the fog editor's proven node/connection schema for the other five
- * systems. Initial canvas positions are UI-only CAD region groupings.
- * No pipe topology, device installations or telemetry are inferred.
+ * Common 5144 editor schema now uses five CAD-derived process-flow templates.
+ * Only the original fog system retains its independently reviewed baseline.
+ * Logical arcs remain illustrative until DWG endpoints are verified.
  */
 export function defaultProcessDiagram(
   systemId:EditableProcessSystemId,systemName:string,
   sections:ProcessSchematicSection[],
 ):ProcessDiagramDocument{
-  if(systemId==='fog')return defaultFogDiagram()
-  const layout=layoutProcessRegions(sections)
-  const pickSymbol=(d:TanggangDevice):FogSymbolId=>{
-    const kind=processDeviceKind(d)
-    if(kind==='pump')return 'centrifugal_pump'
-    if(kind==='pool')return 'water_tank'
-    if(kind==='valve'||kind==='gate')return 'butterfly_valve'
-    if(kind==='meter')return 'flow_meter'
-    if(kind==='pipe')return 'pipe_straight'
-    if(kind==='treatment')return 'y_strainer'
-    return 'generic_equipment'
-  }
-  const width=layout.width
-  const height=Math.max(330,layout.height+24)
-  const nodes:ProcessDiagramNode[]=layout.regions.flatMap(region=>
-    region.nodes.map(({device,x,y},i)=>{
-      const symbol_id=pickSymbol(device)
-      const spec=FOG_SYMBOLS[symbol_id]
-      const w=Math.min(spec.width,154)
-      const h=Math.min(spec.height,88)
-      return {
-        id:'cad-'+device.id.replace(/[^A-Za-z0-9_-]/g,'-'),
-        symbol_id,facility_id:device.id,label:device.name,
-        position:{x:x+Math.max(0,(175-w)/2),y:y+6},
-        size:{width:w,height:h},point_keys:[],
-        visible:true,locked:false,
-      }
-    }),
-  )
-  return {
-    system_id:systemId,name:systemName+' · 工艺组态图',
-    view_box:{width,height},background:'light-grid',
-    nodes,connections:[],
-  }
+  return systemId==='fog'?defaultFogDiagram():
+    buildProcessFlowDiagram(systemId,systemName,sections)
 }

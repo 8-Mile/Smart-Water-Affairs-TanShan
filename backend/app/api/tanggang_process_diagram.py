@@ -92,7 +92,9 @@ class DiagramConnection(BaseModel):
     id: str = Field(min_length=2, max_length=60, pattern=r"^[a-zA-Z0-9_-]+$")
     source_node_id: str
     target_node_id: str
-    medium: Literal["water", "signal"] = "water"
+    medium: Literal["water", "signal", "sludge", "chemical"] = "water"
+    relation: Literal["design", "conditional"] = "design"
+    label: str | None = Field(default=None, max_length=50)
     verification: Literal["illustrative"] = "illustrative"
 
 

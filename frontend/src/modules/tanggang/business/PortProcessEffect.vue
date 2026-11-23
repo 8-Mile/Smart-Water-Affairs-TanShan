@@ -4,11 +4,17 @@
  * It must never claim field geometry, hydraulic connections or telemetry.
  * Each illustrated symbol resolves to the same catalog facility as SCADA.
  */
-import {computed} from 'vue'
+import {computed,onMounted,ref} from 'vue'
+import {fetchProcessDiagram,type EditableProcessSystemId,
+  type ProcessDiagramRecord,type ProcessDiagramConnection} from '@/api/tanggangProcessDiagrams'
+import {defaultProcessDiagram,sourceImage,schematicRoute} from './fogDiagram'
+import {isLegacyUnconnectedTemplate,processFlowZones} from './processFlow'
 import type {ProcessSchematicSection} from './processSchematic'
 import type {ProcessMockDevice,ProcessDeviceKind} from './processMock'
 
 const props=defineProps<{
+  systemId:EditableProcessSystemId
+  systemName:string
   sections:ProcessSchematicSection[]
   selectedFacilityId:string|null
   mockByFacility:ReadonlyMap<string,ProcessMockDevice>
@@ -16,6 +22,41 @@ const props=defineProps<{
 }>()
 const emit=defineEmits<{select:[id:string]}>()
 const total=computed(()=>props.sections.reduce((n,s)=>n+s.devices.length,0))
+const remote=ref<ProcessDiagramRecord|null>(null)
+const flowViewport=ref<HTMLDivElement|null>(null)
+const flow=documentFlow()
+function documentFlow(){
+  return computed(()=>{
+    if(props.systemId==='fog')return null
+    const fallback=defaultProcessDiagram(props.systemId,props.systemName,props.sections)
+    const published=remote.value?.published
+    return published&&!isLegacyUnconnectedTemplate(props.systemId,published)?
+      published:fallback
+  })
+}
+const flowZones=computed(()=>processFlowZones(props.systemId))
+onMounted(async()=>{
+  if(props.systemId==='fog')return
+  try{remote.value=(await fetchProcessDiagram(props.systemId)).data.data}catch{
+    // Remain on evidence-tagged design flow template when backend is unavailable.
+  }
+})
+function flowColor(line:ProcessDiagramConnection):string{
+  return line.medium==='sludge'?'#a9764b':
+    line.medium==='chemical'?'#c69861':
+    line.medium==='signal'?'#90aebc':'#579bbc'
+}
+function selectFlowNode(id:string|null){
+  if(id)emit('select',id)
+}
+function goToFlowStage(x:number){
+  const root=flowViewport.value
+  if(!root||!flow.value)return
+  const svg=root.querySelector('svg')
+  if(!svg)return
+  root.scrollLeft=Math.max(0,Math.round(
+    x/flow.value.view_box.width*svg.getBoundingClientRect().width)-18)
+}
 const symbols:Partial<Record<ProcessDeviceKind,string>>={
   pump:'centrifugal_pump',pool:'water_tank',
   valve:'butterfly_valve',meter:'flow_meter',
@@ -35,12 +76,116 @@ function stateFor(id:string){
   <section class="tg-biz-card tg-effect-sheet" data-testid="process-effect-sheet">
     <div class="tg-effect-head">
       <div>
-        <h2>工艺设施效果示意</h2>
-        <p>依据CAD设计设施与分区关系重新绘制，展示设备类别和业务位置关系</p>
+        <h2>{{systemId==='fog'?'工艺设施效果示意':'工艺流程效果示意'}}</h2>
+        <p>{{systemId==='fog'?'依据CAD设计设施与分区关系绘制':
+          '沿用CAD设计流程关系，按设备与工艺分支绘制效果预览；不是现场实景'}}</p>
       </div>
       <span class="tg-effect-count">{{sections.length}} 个区域 · {{total}} 处设计设施</span>
     </div>
-    <div class="tg-effect-landscape" :class="{'is-single':sections.length===1}">
+    <nav v-if="systemId!=='fog'" class="tg-effect-flow-nav"
+      data-testid="effect-flow-stage-nav" aria-label="效果图工艺阶段定位">
+      <button v-for="(zone,i) in flowZones" :key="zone.key" type="button"
+        @click="goToFlowStage(zone.x)">
+        {{String(i+1).padStart(2,'0')}} · {{zone.title}}
+      </button>
+      <span>点击流程阶段定位</span>
+    </nav>
+    <div v-if="systemId!=='fog'&&flow" ref="flowViewport"
+      class="tg-effect-flow-viewport" data-testid="process-effect-flow">
+      <svg class="tg-effect-flow-svg"
+        :viewBox="'0 0 '+flow.view_box.width+' '+flow.view_box.height"
+        role="group" :aria-label="systemName+'CAD工艺流程效果示意'">
+        <defs>
+          <linearGradient id="tg-effect-flow-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e8f5fb"/>
+            <stop offset="0.62" stop-color="#f6fbfd"/>
+            <stop offset="1" stop-color="#e5f4f5"/>
+          </linearGradient>
+          <pattern id="tg-effect-flow-pattern" width="35" height="35"
+            patternUnits="userSpaceOnUse">
+            <path d="M35 0H0V35" fill="none" stroke="#b9d9e6" stroke-width=".6"/>
+          </pattern>
+          <marker id="tg-effect-flow-arrow" viewBox="0 0 10 10"
+            markerWidth="5" markerHeight="5" refX="8" refY="5" orient="auto">
+            <path d="M1 1 L9 5 L1 9 Z" fill="#579bbc"/>
+          </marker>
+        </defs>
+        <rect :width="flow.view_box.width" :height="flow.view_box.height"
+          fill="url(#tg-effect-flow-grad)"/>
+        <rect :width="flow.view_box.width" :height="flow.view_box.height"
+          fill="url(#tg-effect-flow-pattern)" opacity=".6"/>
+        <g v-for="(zone,i) in flowZones" :key="zone.key" pointer-events="none">
+          <rect :x="zone.x" y="25" :width="zone.width"
+            :height="flow.view_box.height-112" rx="16"
+            :fill="i%2?'#e4f2f9':'#fff'" fill-opacity=".67"
+            stroke="#c8e0eb" stroke-width="1.5"/>
+          <text :x="zone.x+28" y="68" font-size="22"
+            font-weight="750" fill="#3e7893">{{String(i+1).padStart(2,'0')}}</text>
+          <text :x="zone.x+75" y="67" font-size="20"
+            fill="#356e88" font-weight="700">{{zone.title}}</text>
+          <text :x="zone.x+28" y="96" font-size="12"
+            fill="#7795a5">{{zone.subtitle}}</text>
+        </g>
+        <g v-for="line in flow.connections" :key="line.id"
+          :data-effect-flow-medium="line.medium" pointer-events="none">
+          <path :d="schematicRoute(line,flow)" fill="none"
+            stroke="#fff" stroke-width="13"
+            stroke-linecap="round" stroke-linejoin="round"/>
+          <path :d="schematicRoute(line,flow)" fill="none"
+            :stroke="flowColor(line)" :stroke-width="line.medium==='signal'?3:7"
+            stroke-linecap="round" stroke-linejoin="round"
+            :stroke-dasharray="line.relation==='conditional'?'6 12':
+              line.medium==='signal'?'4 8':'18 8'"
+            :marker-end="line.medium==='signal'?undefined:'url(#tg-effect-flow-arrow)'"/>
+        </g>
+        <g v-for="node in flow.nodes" :key="node.id"
+          :class="{'tg-effect-flow-selected':node.facility_id===selectedFacilityId}"
+          :transform="'translate('+node.position.x+','+node.position.y+')'"
+          :data-facility-id="node.facility_id||undefined"
+          :role="node.facility_id?'button':'group'"
+          :tabindex="node.facility_id?0:-1"
+          :aria-label="node.facility_id?'查看'+node.label+'详情':node.label"
+          :aria-pressed="node.facility_id?
+            node.facility_id===selectedFacilityId:undefined"
+          @click="selectFlowNode(node.facility_id)"
+          @keydown.enter.prevent="selectFlowNode(node.facility_id)">
+          <rect class="tg-effect-flow-frame" x="-9" y="-10"
+            :width="node.size.width+18" :height="node.size.height+44"
+            rx="10" fill="#fff" fill-opacity=".80"
+            stroke="#c9e1ec" stroke-width="1.6"/>
+          <ellipse :cx="node.size.width/2" :cy="node.size.height-3"
+            :rx="node.size.width*.37" ry="10"
+            fill="#8ab8c8" opacity=".16"/>
+          <image v-if="sourceImage(node.symbol_id)"
+            :href="sourceImage(node.symbol_id)!"
+            :width="node.size.width" :height="node.size.height"
+            preserveAspectRatio="xMidYMid meet"/>
+          <g v-else-if="node.symbol_id==='generic_equipment'">
+            <rect :width="node.size.width" :height="node.size.height"
+              rx="9" fill="#dbeaf2" stroke="#83b6cc" stroke-width="2.5"/>
+            <rect x="9" y="10" :width="node.size.width-18"
+              :height="node.size.height-20" rx="5"
+              fill="#f7fcfd" stroke="#b6d4e2"/>
+            <circle cx="21" cy="25" r="4" fill="#66b1a2"/>
+            <path :d="'M18 48H'+(node.size.width-18)"
+              stroke="#94b9ca" stroke-width="3" stroke-dasharray="7 6"/>
+          </g>
+          <rect v-if="node.symbol_id==='label'" :width="node.size.width"
+            :height="node.size.height" rx="7" fill="#e4f0f6" stroke="#a8cbdc"/>
+          <text v-if="node.symbol_id==='label'" :x="node.size.width/2"
+            :y="node.size.height/2+5" text-anchor="middle"
+            fill="#537e92" font-size="14">{{node.label.slice(0,15)}}</text>
+          <text v-else :x="node.size.width/2"
+            :y="node.size.height+27" text-anchor="middle"
+            fill="#356a82" font-size="14" font-weight="650">
+            {{node.label.slice(0,13)}}
+          </text>
+        </g>
+        <text x="30" :y="flow.view_box.height-28" fill="#7c98a7"
+          font-size="13">CAD设计流程逻辑 · 所有箭线均未核验DWG端点及现场流向</text>
+      </svg>
+    </div>
+    <div v-else class="tg-effect-landscape" :class="{'is-single':sections.length===1}">
       <div class="tg-effect-ground" aria-hidden="true"/>
       <section v-for="(section,i) in sections" :key="section.id"
         class="tg-effect-sector" :data-region-id="section.id">
@@ -81,13 +226,28 @@ function stateFor(id:string){
       </p>
     </div>
     <div class="tg-effect-foot">
-      <span>仅为效果概念预览 · 图示位置与尺寸不是实测坐标 · 不暗示设备间水力连接</span>
+      <span>仅为设计效果概念预览 · 图示位置和尺寸不是实测坐标 · 流程连接未通过DWG端点核验</span>
       <span v-if="sourceLayers.length">原图层：{{sourceLayers.join('、')}}</span>
     </div>
   </section>
 </template>
 
 <style scoped>
+.tg-effect-flow-nav{display:flex;gap:7px;flex-wrap:wrap;align-items:center;
+  padding:0 0 11px}
+.tg-effect-flow-nav button{border:1px solid #d3e5ec;background:#edf7fb;
+  border-radius:6px;padding:6px 10px;font:inherit;font-size:11px;
+  color:#4b819a;cursor:pointer}
+.tg-effect-flow-nav button:hover{background:#d9eff8;border-color:#80b8cd}
+.tg-effect-flow-nav span{font-size:10px;color:#91a7b3;margin-left:auto}
+.tg-effect-flow-viewport{border:1px solid #d3e5ed;border-radius:9px;
+  min-width:0;overflow:auto;background:#edf8fb}
+.tg-effect-flow-svg{display:block;width:100%;min-width:1150px;height:auto}
+.tg-effect-flow-svg [role="button"]{cursor:pointer;outline:none}
+.tg-effect-flow-svg .tg-effect-flow-selected .tg-effect-flow-frame,
+.tg-effect-flow-svg [role="button"]:hover .tg-effect-flow-frame,
+.tg-effect-flow-svg [role="button"]:focus-visible .tg-effect-flow-frame{
+  stroke:#4d9ab9;stroke-width:3;fill:#e4f5fa}
 .tg-effect-sheet{padding:17px 18px;min-width:0}
 .tg-effect-head{display:flex;align-items:center;justify-content:space-between;
   flex-wrap:wrap;gap:10px;margin-bottom:13px}

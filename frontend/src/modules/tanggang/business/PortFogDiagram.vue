@@ -22,7 +22,7 @@ import {
 import type {ProcessMockDevice} from './processMock'
 import type {TanggangDevice} from '../mapping/tanggangCatalog'
 import type {ProcessSchematicSection} from './processSchematic'
-import {layoutProcessRegions} from './processDiagramLayout'
+import {isLegacyUnconnectedTemplate,processFlowZones,processFlowSummary} from './processFlow'
 import {usePermissions} from '@/utils/permissions'
 
 const props=defineProps<{
@@ -54,9 +54,28 @@ const showWater=ref(true)
 const showSignal=ref(true)
 const showTelemetry=ref(props.systemId==='fog')
 const connectTarget=ref('')
+const connectMedium=ref<ProcessDiagramConnection['medium']>('water')
+const connectRelation=ref<NonNullable<ProcessDiagramConnection['relation']>>('design')
+const mediumChoices=[
+  {value:'water',label:'水路'},
+  {value:'signal',label:'控制信号'},
+  {value:'sludge',label:'污泥'},
+  {value:'chemical',label:'加药'},
+] as const
+function mediumTitle(value:ProcessDiagramConnection['medium']):string{
+  return mediumChoices.find(x=>x.value===value)?.label||value
+}
 const history=ref<ProcessDiagramRevision[]>([])
 const historyVersion=ref<number|null>(null)
 const canvas=ref<SVGSVGElement|null>(null)
+const processViewport=ref<HTMLDivElement|null>(null)
+function focusStage(x:number){
+  if(!processViewport.value||!canvas.value)return
+  const svgWidth=canvas.value.getBoundingClientRect().width
+  processViewport.value.scrollLeft=Math.max(
+    0,Math.round(x/stage.value.view_box.width*svgWidth)-18,
+  )
+}
 const drag=ref<{
   id:string;dx:number;dy:number;pointerId:number;moved:boolean
 }|null>(null)
@@ -66,14 +85,34 @@ const symbols=computed(()=>Object.entries(FOG_SYMBOLS).filter(([,v])=>
 ) as Array<[FogSymbolId,(typeof FOG_SYMBOLS)[FogSymbolId]]>)
 const initialDiagram=computed(()=>defaultProcessDiagram(
   props.systemId,props.systemName,props.sections))
+const oldNoFlow=computed(()=>isLegacyUnconnectedTemplate(
+  props.systemId,remote.value?.published))
 const stage=computed(()=>editing.value&&draft.value?draft.value:
+  oldNoFlow.value?initialDiagram.value:
   remote.value?.published||initialDiagram.value)
 const zones=computed(()=>fogZones(stage.value.view_box.width))
-const regionZones=computed(()=>props.systemId==='fog'?[]:
-  layoutProcessRegions(props.sections).regions)
+const flowZones=computed(()=>processFlowZones(props.systemId))
 const visibleConnections=computed(()=>stage.value.connections.filter(c=>
-  c.medium==='water'?showWater.value:showSignal.value,
+  c.medium==='signal'?showSignal.value:showWater.value,
 ))
+function routeColor(c:ProcessDiagramConnection):string{
+  return c.medium==='sludge'?'#ac7b4e':
+    c.medium==='chemical'?'#c39452':
+    c.medium==='signal'?'#8fa5ba':'#60a9cf'
+}
+function routeDash(c:ProcessDiagramConnection):string{
+  return c.medium==='signal'?'5 8':
+    c.relation==='conditional'?'5 12':'17 8'
+}
+function labelPosition(c:ProcessDiagramConnection):{x:number;y:number}{
+  const a=stage.value.nodes.find(n=>n.id===c.source_node_id)
+  const b=stage.value.nodes.find(n=>n.id===c.target_node_id)
+  if(!a||!b)return {x:0,y:0}
+  return {
+    x:Math.round((a.position.x+a.size.width/2+b.position.x+b.size.width/2)/2),
+    y:Math.round((a.position.y+a.size.height/2+b.position.y+b.size.height/2)/2)-8,
+  }
+}
 function telemetryPlacement(node:ProcessDiagramNode){
   return fogTelemetryPlacement(node,stage.value.view_box)
 }
@@ -127,8 +166,21 @@ function snapshot(){
 }
 async function beginEdit(){
   if(!canEdit.value||!remote.value)return
+  // Old five-system drafts contained only CAD icons and no process connections.
+  // Show a coherent flow preview immediately, but require explicit approval
+  // before replacing a previously published unconnected legacy canvas.
+  if(oldNoFlow.value&&!remote.value.draft){
+    try{
+      await ElMessageBox.confirm(
+        '检测到旧版仅摆放设备、没有流程连线的已发布组态。现在载入按CAD设计关系整理的工艺流程底稿编辑吗？旧发布版本保留在历史中，保存和发布前不会修改它。',
+        '载入CAD工艺流程底稿',
+        {type:'info',confirmButtonText:'载入新流程',cancelButtonText:'继续保留旧版'},
+      )
+    }catch{return}
+  }
   draft.value=copyFogDiagram(remote.value.draft||
-    remote.value.published||initialDiagram.value)
+    (oldNoFlow.value?initialDiagram.value:remote.value.published)||
+    initialDiagram.value)
   selectedNodeId.value=''
   undoStack.value=[]
   redoStack.value=[]
@@ -161,6 +213,19 @@ function redo(){
   if(!d)return
   undoStack.value.push(copyFogDiagram(draft.value))
   draft.value=d;dirty.value=true
+}
+async function loadFlowTemplate(){
+  if(!canChange.value||props.systemId==='fog')return
+  try{
+    await ElMessageBox.confirm(
+      '将以CAD设计资料整理的主流程与分支替换当前编辑草稿中的无连接布局。已发布历史版本不会被覆盖，仍需人工保存并发布。',
+      '载入设计流程',{type:'warning',confirmButtonText:'载入流程',cancelButtonText:'取消'},
+    )
+  }catch{return}
+  snapshot()
+  draft.value=copyFogDiagram(initialDiagram.value)
+  selectedNodeId.value=''
+  ElMessage.success('已载入工艺流程底稿，可编辑和校验后发布')
 }
 function addNode(symbolId:FogSymbolId){
   if(!draft.value||!canChange.value)return
@@ -254,7 +319,8 @@ function addConnection(){
   const c:ProcessDiagramConnection={
     id:'line-'+crypto.randomUUID().replace(/-/g,'').slice(0,14),
     source_node_id:selectedNodeId.value,target_node_id:connectTarget.value,
-    medium:'water',verification:'illustrative',
+    medium:connectMedium.value,relation:connectRelation.value,
+    verification:'illustrative',
   }
   draft.value.connections.push(c);connectTarget.value=''
 }
@@ -263,10 +329,20 @@ function removeConnection(id:string){
   snapshot()
   draft.value.connections=draft.value.connections.filter(x=>x.id!==id)
 }
-function changeConnectionMedium(id:string,medium:'water'|'signal'){
+function changeConnectionMedium(id:string,medium:ProcessDiagramConnection['medium']){
   const line=draft.value?.connections.find(x=>x.id===id)
-  if(!line)return
+  if(!line||line.medium===medium)return
   snapshot();line.medium=medium
+}
+function changeConnectionRelation(id:string,relation:'design'|'conditional'){
+  const line=draft.value?.connections.find(x=>x.id===id)
+  if(!line||line.relation===relation)return
+  snapshot();line.relation=relation
+}
+function changeConnectionLabel(id:string,label:string){
+  const line=draft.value?.connections.find(x=>x.id===id)
+  if(!line||line.label===label)return
+  snapshot();line.label=label.slice(0,50)
 }
 function pickNode(node:ProcessDiagramNode){
   if(editing.value){selectedNodeId.value=node.id;return}
@@ -397,7 +473,9 @@ const iconLabel=(id:string|null)=>id?
     <div class="tg-biz-card-head tg-diagram-top">
       <div>
         <h2>{{systemName}} · 组态图</h2>
-        <small>二维SCADA设计示意 · 已绑定图元点击查看右侧详情</small>
+        <small>{{systemId==='fog'
+          ?'二维SCADA设计示意 · 图元点击显示右侧详情':
+          processFlowSummary(systemId)+' · CAD设计关系示意，未做管线端点核验'}}</small>
       </div>
       <div class="tg-diagram-toolbar">
         <span class="tg-diagram-version">
@@ -424,11 +502,19 @@ const iconLabel=(id:string|null)=>id?
       </div>
     </div>
 
+    <p v-if="oldNoFlow&&!editing" class="tg-diagram-preview-note"
+      data-testid="process-flow-legacy-notice">
+      当前显示的是根据CAD设计关系生成的新流程预览。原已发布版本尚无连线；点击“编辑组态”确认载入流程底稿，保存并发布后方正式替换运行组态。
+    </p>
     <div v-if="loadError" class="tg-diagram-error" role="status">{{loadError}}</div>
     <div v-else-if="!loaded" class="tg-diagram-helper">正在读取组态版本…</div>
     <div class="tg-diagram-quickbar">
       <span>{{editing?(dirty?'已修改 · 请保存草稿':'编辑模式 · 当前无未保存修改'):
-        'CAD设施与Mock状态叠加 · 非现场实测'}}</span>
+        'CAD设施与演示状态叠加 · 非现场实测'}}</span>
+      <template v-if="editing&&systemId!=='fog'&&draft&&draft.connections.length===0">
+        <el-button size="small" plain data-testid="load-process-flow-base"
+          :disabled="busy" @click="loadFlowTemplate">载入CAD设计流程</el-button>
+      </template>
       <template v-if="!editing">
         <el-button text size="small" :disabled="!activeCount" @click="focusNext('attention')">
           定位SIM关注/异常（{{activeCount}}）
@@ -441,11 +527,21 @@ const iconLabel=(id:string|null)=>id?
     <div class="tg-diagram-layers" data-testid="fog-diagram-layers"
       aria-label="工艺图显示图层">
       <span>图层显示</span>
-      <el-checkbox v-model="showWater" size="small" label="水路示意"/>
+      <el-checkbox v-model="showWater" size="small"
+        :label="systemId==='fog'?'水路示意':'水路 / 污泥 / 加药'"/>
       <el-checkbox v-model="showSignal" size="small" label="控制信号"/>
-      <el-checkbox v-model="showTelemetry" size="small" label="Mock数据"/>
+      <el-checkbox v-model="showTelemetry" size="small" label="演示数据"/>
       <span class="tg-diagram-layers-hint">图层开关只影响显示，不改变已保存组态</span>
     </div>
+    <nav v-if="systemId!=='fog'" class="tg-flow-stages-nav"
+      aria-label="工艺流程阶段快速定位" data-testid="process-flow-stage-nav">
+      <strong>工艺流程</strong>
+      <button v-for="(zone,i) in flowZones" :key="zone.key" type="button"
+        :data-stage-key="zone.key" @click="focusStage(zone.x)">
+        <span>{{String(i+1).padStart(2,'0')}}</span> {{zone.title}}
+      </button>
+      <small>点击阶段定位 · 图内可横向滚动</small>
+    </nav>
     <div class="tg-diagram-workspace" :class="{'is-editing':editing}">
       <div v-if="editing" class="tg-diagram-symbols">
         <strong>工业图元库</strong>
@@ -460,7 +556,8 @@ const iconLabel=(id:string|null)=>id?
         </div>
       </div>
 
-      <div class="tg-diagram-viewport">
+      <div ref="processViewport" class="tg-diagram-viewport"
+        :class="{'is-process-flow':systemId!=='fog'}">
         <p class="tg-diagram-mobile-hint">横向滑动查看完整工艺图，点击设备查看详情</p>
         <svg ref="canvas" class="tg-diagram-svg"
           :viewBox="'0 0 '+stage.view_box.width+' '+stage.view_box.height"
@@ -482,6 +579,14 @@ const iconLabel=(id:string|null)=>id?
             <marker id="tg-fog-water-arrow" viewBox="0 0 10 10"
               refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
               <path d="M 1 1 L 9 5 L 1 9 Z" fill="#6ea6c8"/>
+            </marker>
+            <marker id="tg-flow-sludge-arrow" viewBox="0 0 10 10"
+              refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M 1 1 L 9 5 L 1 9 Z" fill="#ac7b4e"/>
+            </marker>
+            <marker id="tg-flow-chemical-arrow" viewBox="0 0 10 10"
+              refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M 1 1 L 9 5 L 1 9 Z" fill="#c39452"/>
             </marker>
           </defs>
           <rect :width="stage.view_box.width" :height="stage.view_box.height"
@@ -510,30 +615,59 @@ const iconLabel=(id:string|null)=>id?
             <text :x="stage.view_box.width-138" y="38" text-anchor="middle"
               font-size="12" fill="#557f95">结构参考 / 非实际管网拓扑</text>
           </g>
-          <g v-else pointer-events="none" data-testid="process-diagram-regions">
-            <g v-for="(region,index) in regionZones" :key="region.id">
-              <rect x="16" :y="region.y" :width="stage.view_box.width-32"
-                :height="region.height" rx="12" fill="#fff" fill-opacity=".5"
-                stroke="#cedfe8" stroke-width="1.5" stroke-dasharray="6 8"/>
-              <text x="34" :y="region.y+29" font-size="15" fill="#39728c"
-                font-weight="650">{{String(index+1).padStart(2,'0')}} / {{region.title}}</text>
+          <g v-else pointer-events="none" data-testid="process-flow-stages">
+            <g v-for="(zone,index) in flowZones" :key="zone.key">
+              <rect :x="zone.x" y="23" :width="zone.width"
+                :height="stage.view_box.height-118" rx="13"
+                :fill="index%2?'#e7f3f9':'#ffffff'" fill-opacity=".65"
+                stroke="#cedfe8" stroke-width="1.5" stroke-dasharray="7 8"/>
+              <rect :x="zone.x+15" y="48" width="38" height="29" rx="7"
+                fill="#deedf5"/>
+              <text :x="zone.x+34" y="68" font-size="15"
+                fill="#4b91b8" font-weight="700" text-anchor="middle">
+                {{String(index+1).padStart(2,'0')}}
+              </text>
+              <text :x="zone.x+65" y="66" font-size="18"
+                fill="#355f76" font-weight="700">{{zone.title}}</text>
+              <text :x="zone.x+18" y="98" font-size="13"
+                fill="#7899ab">{{zone.subtitle}}</text>
             </g>
-            <text x="22" :y="stage.view_box.height-51" fill="#829baa" font-size="13">
-              CAD设计区域示意 · 图元可编辑 · 未核实水力连接
+            <rect :x="stage.view_box.width-328" y="20" width="308" height="26"
+              rx="7" fill="#e6f2f8" stroke="#bdd8e6"/>
+            <text :x="stage.view_box.width-174" y="38" text-anchor="middle"
+              font-size="12" fill="#507c92">
+              设计工艺关系 · 非DWG端点核验
             </text>
           </g>
           <g v-for="line in visibleConnections" :key="line.id"
-            class="tg-diagram-pipe" pointer-events="none">
+            class="tg-diagram-pipe" :data-flow-connection="line.id"
+            :data-flow-medium="line.medium" :data-flow-relation="line.relation||'design'"
+            pointer-events="none">
             <path :d="schematicRoute(line,stage)" fill="none"
-              stroke="#fff" :stroke-width="line.medium==='water'?12:7"
-              stroke-linecap="round" stroke-linejoin="round" opacity=".94"/>
+              stroke="#fff" :stroke-width="line.medium==='signal'?7:11"
+              stroke-linecap="round" stroke-linejoin="round" opacity=".96"/>
             <path :d="schematicRoute(line,stage)" fill="none"
-              :stroke="line.medium==='signal'?'#9aafbf':'#73b5dc'"
-              :stroke-width="line.medium==='signal'?3.2:7" stroke-linecap="round"
+              :stroke="routeColor(line)"
+              :stroke-width="line.medium==='signal'?3:6" stroke-linecap="round"
               stroke-linejoin="round"
-              :stroke-dasharray="line.medium==='signal'?'6 9':'13 9'"
-              :marker-end="line.medium==='water'?'url(#tg-fog-water-arrow)':undefined"
-              opacity=".97"/>
+              :stroke-dasharray="routeDash(line)"
+              :marker-end="line.medium==='signal'?undefined:
+                line.medium==='sludge'?'url(#tg-flow-sludge-arrow)':
+                line.medium==='chemical'?'url(#tg-flow-chemical-arrow)':
+                'url(#tg-fog-water-arrow)'"
+              opacity=".96"/>
+            <g v-if="line.label&&systemId!=='fog'"
+              :transform="'translate('+labelPosition(line).x+','+
+                labelPosition(line).y+')'">
+              <rect :x="-Math.max(48,line.label.length*6+12)/2"
+                y="-14" :width="Math.max(48,line.label.length*6+12)"
+                height="20" rx="5" fill="#f8fcfe" fill-opacity=".94"
+                stroke="#d4e5ed" stroke-width=".8"/>
+              <text text-anchor="middle" y="0" font-size="11"
+                :fill="line.relation==='conditional'?'#b18a50':'#658b9d'">
+                {{line.label.slice(0,24)}}
+              </text>
+            </g>
           </g>
           <g v-for="node in stage.nodes" :key="node.id"
             v-show="node.visible||editing"
@@ -647,16 +781,16 @@ const iconLabel=(id:string|null)=>id?
             rx="7" fill="#f6fbfe" stroke="#d6e7ef"/>
           <circle cx="37" :cy="stage.view_box.height-28" r="4" fill="#74b3d8"/>
           <text x="49" :y="stage.view_box.height-23" font-size="12" fill="#6f8fa1">
-            蓝色虚线：水路设计示意
+            蓝色：水路设计关系
           </text>
           <path d="M 277,569 H 307" stroke="#98aebd" stroke-width="3"
             stroke-dasharray="5 5"/>
           <text x="319" :y="stage.view_box.height-23" font-size="12" fill="#6f8fa1">
-            灰色虚线：控制信号示意
+            灰色：控制参考 · 棕色：污泥 · 黄色：加药
           </text>
           <text :x="stage.view_box.width-20" :y="stage.view_box.height-23"
             text-anchor="end" font-size="12" fill="#8b9eaa">
-            CAD设计设施 / 非实测管网
+            虚线：设计关系；疏虚线：条件路径，均未经DWG端点核验
           </text>
         </svg>
         <div class="tg-diagram-foot">
@@ -711,16 +845,43 @@ const iconLabel=(id:string|null)=>id?
             <el-option v-for="item in draft?.nodes.filter(x=>x.id!==selectedNodeId)"
               :key="item.id" :label="item.label" :value="item.id"/>
           </el-select>
+          <div class="tg-diagram-line-fields">
+            <el-select v-model="connectMedium" size="small"
+              aria-label="新建连接介质">
+              <el-option v-for="item in mediumChoices.filter(x=>
+                systemId!=='fog'||['water','signal'].includes(x.value))"
+                :key="item.value" :value="item.value" :label="item.label"/>
+            </el-select>
+            <el-select v-model="connectRelation" size="small"
+              aria-label="新建连接依据">
+              <el-option value="design" label="设计关系"/>
+              <el-option value="conditional" label="条件/备选"/>
+            </el-select>
+          </div>
           <el-button size="small" plain :disabled="!connectTarget"
             @click="addConnection">添加示意连接</el-button>
           <div v-for="line in draft?.connections.filter(x=>
             x.source_node_id===selectedNodeId||x.target_node_id===selectedNodeId)"
             :key="line.id" class="tg-diagram-line-item">
-            <span>{{line.medium==='water'?'设计水管':'示意信号'}} · 未核实</span>
+            <span>{{mediumTitle(line.medium)}} · {{line.relation==='conditional'?'条件路径':'设计关系'}} · 未核实</span>
+            <div class="tg-diagram-line-fields">
+              <el-select size="small" :model-value="line.medium"
+                @change="changeConnectionMedium(line.id,$event)">
+                <el-option v-for="item in mediumChoices.filter(x=>
+                  systemId!=='fog'||['water','signal'].includes(x.value))"
+                  :key="item.value" :value="item.value" :label="item.label"/>
+              </el-select>
+              <el-select size="small" :model-value="line.relation||'design'"
+                @change="changeConnectionRelation(line.id,$event)">
+                <el-option value="design" label="设计关系"/>
+                <el-option value="conditional" label="条件/备选"/>
+              </el-select>
+            </div>
+            <el-input size="small" :model-value="line.label||''"
+              maxlength="50" placeholder="连接说明（可选）"
+              @change="changeConnectionLabel(line.id,String($event))"/>
             <el-button link size="small" type="danger"
-              @click="removeConnection(line.id)">移除</el-button>
-            <el-button link size="small" @click="changeConnectionMedium(line.id,
-              line.medium==='water'?'signal':'water')">切换类型</el-button>
+              @click="removeConnection(line.id)">移除连接</el-button>
           </div>
         </template>
         <p v-else class="tg-diagram-editor-note">在画布上选择图元，可编辑属性、位置与连接</p>
@@ -768,10 +929,24 @@ const iconLabel=(id:string|null)=>id?
 .tg-diagram-workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .tg-diagram-workspace.is-editing{grid-template-columns:145px minmax(0,1fr) 225px}
 .tg-diagram-viewport{min-width:0;border:1px solid #d9e8ee;border-radius:8px;
-  overflow:hidden;background:#f4fafc}
+  overflow:auto;background:#f4fafc}
 .tg-diagram-mobile-hint{display:none;font-size:11px;color:#7191a5;
   padding:9px 11px 0;margin:0}
 .tg-diagram-svg{display:block;width:100%;height:auto}
+.is-process-flow .tg-diagram-svg{min-width:1150px}
+.tg-flow-stages-nav{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  padding:8px 0 11px;margin-top:0}
+.tg-flow-stages-nav strong{font-size:11px;color:#577b92;margin-right:6px}
+.tg-flow-stages-nav button{display:flex;align-items:center;gap:5px;
+  border:1px solid #d2e2eb;background:#f4fafc;cursor:pointer;
+  padding:6px 10px;border-radius:6px;font:inherit;font-size:11px;color:#50778a}
+.tg-flow-stages-nav button:hover,.tg-flow-stages-nav button:focus-visible{
+  background:#e2f3fa;border-color:#83b8d0}
+.tg-flow-stages-nav button span{color:#458cb0;font-size:10px;font-weight:700}
+.tg-flow-stages-nav small{margin-left:auto;color:#8ca6b4;font-size:10px}
+.tg-diagram-preview-note{font-size:11px;color:#637f90;background:#eff7fb;
+  border:1px solid #cfe4ed;border-radius:6px;padding:8px 11px;line-height:1.6;
+  margin:9px 0}
 .tg-diagram-node{cursor:pointer;outline:none}
 .tg-diagram-node:focus-visible .tg-diagram-node-frame,
 .tg-diagram-node.is-selected .tg-diagram-node-frame{
@@ -818,8 +993,12 @@ const iconLabel=(id:string|null)=>id?
 .tg-diagram-flags :deep(.el-checkbox){margin-right:4px}
 .tg-diagram-field-list{display:flex;flex-direction:column;max-height:170px;overflow:auto}
 .tg-diagram-field-list :deep(.el-checkbox){margin-right:0}
-.tg-diagram-line-item{display:flex;align-items:center;flex-wrap:wrap;
-  gap:3px;font-size:11px;color:#8b9ba8}
+.tg-diagram-line-item{display:flex;align-items:stretch;flex-direction:column;
+  flex-wrap:wrap;gap:6px;padding:8px 0;border-bottom:1px solid #e3edf2;
+  font-size:11px;color:#8b9ba8}
+.tg-diagram-line-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  min-width:0;width:100%}
+.tg-diagram-line-fields :deep(.el-select){min-width:0;width:100%}
 .tg-diagram-editor-note{color:#889eac;font-size:10px;margin:0;line-height:1.5}
 .tg-diagram-versions{display:flex;flex-direction:column;gap:9px;
   padding-top:10px;border-top:1px solid #dfe9f0}

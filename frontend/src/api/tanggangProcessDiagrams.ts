@@ -25,7 +25,10 @@ export interface ProcessDiagramConnection {
   id:string
   source_node_id:string
   target_node_id:string
-  medium:'water'|'signal'
+  medium:'water'|'signal'|'sludge'|'chemical'
+  /** Design-functional or conditional option; never field-confirmed. */
+  relation?:'design'|'conditional'
+  label?:string|null
   verification:'illustrative'
 }
 export type EditableProcessSystemId='fog'|'middle'|'mineral'|'rain'|'pool'|'domestic'
