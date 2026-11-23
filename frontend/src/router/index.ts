@@ -68,7 +68,7 @@ const router = createRouter({
         {
           path:'port/water/supply',name:'tg-water-supply',
           component:()=>import('@/modules/tanggang/business/PortSupplyAssuranceView.vue'),
-          meta:{title:'大机供水保障'},
+          meta:{title:'港区水务协同与能效'},
         },
         {
           path:'port/water/rain-risk',name:'tg-rain-risk',

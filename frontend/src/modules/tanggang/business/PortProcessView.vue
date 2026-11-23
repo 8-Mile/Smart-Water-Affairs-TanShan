@@ -5,6 +5,7 @@ import {loadTanggangCatalog,type TanggangCatalog,type TanggangDevice} from '../m
 import {buildProcessSchematic} from './processSchematic'
 import {mockProcessDevice,type ProcessMockDevice} from './processMock'
 import {processWorkflow,processMonitorRelevant} from './processWorkflow'
+import {systemNeighbors,processName,type ProcessId} from '../simulation/waterOperations'
 import {
   applySpecialistCase,getSpecialistCase,isSpecialistSystem,specialistAffectsDevice,
 } from './processSpecialist'
@@ -91,6 +92,7 @@ const linksByFacility=computed(()=>{
 const linkedFacilityIds=computed<ReadonlySet<string>>(()=>new Set(linksByFacility.value.keys()))
 const selectedLinks=computed(()=>selectedId.value?linksByFacility.value.get(selectedId.value)||[]:[])
 const workflow=computed(()=>processWorkflow(sysId.value,sim.result))
+const connections=computed(()=>systemNeighbors(sysId.value as ProcessId))
 const simSummary=computed(()=>workflow.value.simSummary)
 /** Cycle through current system facilities, never invent a new asset or route. */
 function focusNext(kind:'attention'|'reviewed'){
@@ -214,6 +216,34 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
     <div v-else-if="!system" class="tg-biz-empty">该专业系统不存在，请从运行监测菜单选择六个系统之一。</div>
 
     <template v-else>
+      <section v-if="!diagramEditing" class="tg-biz-card tg-process-neighbors"
+        data-testid="process-cross-system-links" aria-label="跨系统业务关系">
+        <div>
+          <strong>跨系统业务关联</strong>
+          <span v-if="connections.independent">
+            本系统属于独立生活污水处理链，不接入含矿污水回用链
+          </span>
+          <template v-else>
+            <span v-for="link in connections.upstream" :key="link.id">
+              上游 <button type="button" @click="router.push('/port/process/'+link.from)">
+                {{processName(link.from)}}
+              </button>
+              <small v-if="link.relation==='conditional'">条件关联</small>
+            </span>
+            <span v-for="link in connections.downstream" :key="link.id">
+              下游 <button type="button" @click="router.push('/port/process/'+link.to)">
+                {{processName(link.to)}}
+              </button>
+              <small v-if="link.relation==='conditional'">条件关联</small>
+            </span>
+          </template>
+        </div>
+        <el-button size="small" plain
+          data-testid="process-open-coordination"
+          @click="router.push('/port/water/supply')">
+          全港协同与能效
+        </el-button>
+      </section>
       <div v-if="simSummary" class="tg-process-sim">
         <strong>SIM · {{simSummary}}</strong>
         <el-button v-if="workflow.primary" link type="primary"
@@ -245,9 +275,13 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
             :key="sysId+'-cad-audit'" :system-id="sysId"
             :system-name="displayName" :sections="schematic?.sections||[]"
             :source-layers="system.focusPipeLayers"/>
-          <PortSpecialistExercise v-if="specialistSystem&&!diagramEditing"
-            :system-id="specialistSystem"
-            :global-sim-running="sim.running" @select-facility="selectFacility"/>
+          <details v-if="specialistSystem&&!diagramEditing"
+            class="tg-process-debug-tools" data-testid="process-advanced-sim">
+            <summary>内部专业工况调试（高级功能，日常自动监测无需操作）</summary>
+            <PortSpecialistExercise
+              :system-id="specialistSystem"
+              :global-sim-running="sim.running" @select-facility="selectFacility"/>
+          </details>
         </div>
 
         <section v-if="!diagramEditing" ref="detailPanel"
@@ -291,6 +325,8 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
                 <el-button size="small" plain @click="sim.openConsole()">统一情景控制台</el-button>
               </div>
             </div>
+            <details class="tg-process-review-advanced" data-testid="process-review-controls">
+              <summary>人工复核与进一步处置（仅在异常或需要确认时展开）</summary>
             <div class="tg-process-action" data-testid="process-node-actions">
               <div class="tg-biz-card-head">
                 <h3>SIM节点核查与后续处置</h3>
@@ -342,6 +378,7 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
                 不会为该节点自动创建、关联或关闭任何生产事件。
               </p>
             </div>
+            </details>
             <div class="tg-process-fields">
               <h3>设计建议测点</h3>
               <div v-if="selectedDevice.dataFields?.length" class="tg-process-field-items">
@@ -490,4 +527,24 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
 .tg-process-inline-error{color:#ac6d3c;font-size:12px;padding:11px 2px}
 @media(max-width:1250px){.tg-process-grid{grid-template-columns:minmax(0,1.4fr) minmax(290px,1fr)}}
 @media(max-width:900px){.tg-process-grid{grid-template-columns:minmax(0,1fr)}.tg-process-detail{position:static}}
+</style>
+
+<style scoped>
+.tg-process-neighbors{display:flex;justify-content:space-between;align-items:center;
+ gap:12px;flex-wrap:wrap;padding:10px 14px;margin:8px 0 12px}
+.tg-process-neighbors>div{display:flex;align-items:center;gap:9px 15px;
+ flex-wrap:wrap;flex:1}
+.tg-process-neighbors strong{font-size:12px;color:#4e768c}
+.tg-process-neighbors span{font-size:11px;color:#829aa9}
+.tg-process-neighbors button:not(.el-button){border:0;background:transparent;
+ padding:0 3px;color:#3583a5;cursor:pointer;font:inherit;font-size:11px}
+.tg-process-neighbors small{font-size:9px;color:#ae956c}
+</style>
+
+<style scoped>
+.tg-process-debug-tools,.tg-process-review-advanced{border:1px solid #dbe8ed;
+ border-radius:7px;background:rgba(247,251,253,.63);padding:9px 12px;margin:11px 0}
+.tg-process-debug-tools summary,.tg-process-review-advanced summary{cursor:pointer;
+ font-size:11px;font-weight:600;color:#647f90;padding:5px}
+.tg-process-debug-tools[open] summary,.tg-process-review-advanced[open] summary{margin-bottom:9px}
 </style>

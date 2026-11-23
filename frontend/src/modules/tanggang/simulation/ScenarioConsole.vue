@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import {computed,reactive,ref,watch} from 'vue'
+import {computed,reactive,ref,watch,onMounted,onUnmounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {ElMessage,ElMessageBox} from 'element-plus'
 import {SCENARIOS,SCENARIO_IDS,type ScenarioId,type ScenarioInputs} from './engine'
 import {useScenarioStore} from './store'
+import {AUTO_FRAME_INTERVAL_MS} from './autoWaterFeed'
 const router=useRouter()
 const store=useScenarioStore()
+let feedTimer:ReturnType<typeof setInterval>|null=null
+onMounted(()=>{
+  store.startAuto()
+  feedTimer=setInterval(()=>{if(store.autoEnabled)store.advanceAuto()},AUTO_FRAME_INTERVAL_MS)
+})
+onUnmounted(()=>{
+  if(feedTimer!==null){clearInterval(feedTimer);feedTimer=null}
+})
 const selected=ref<ScenarioId>('peak')
 watch(()=>store.consoleOpen,(open)=>{if(open&&store.activeId)selected.value=store.activeId})
 const definition=computed(()=>SCENARIOS[selected.value])
@@ -72,17 +81,25 @@ const nav=[
       :aria-label="store.running?'情景推演运行中，打开统一控制台':'打开统一情景推演控制台'"
       @click="store.openConsole()">
       <span class="tg-sim-launch-icon">◇</span>
-      <span v-if="store.running"><strong>SIM 推演中</strong><small>{{store.activeScenario?.title}} · {{store.result?.events.length||0}}条模拟线索</small></span>
-      <span v-else><strong>情景推演</strong><small>统一入口 · 跨页面联动</small></span>
+      <span v-if="store.running"><strong>{{store.autoEnabled?'SIM自动运行':'SIM手动分析'}}</strong><small>{{store.activeScenario?.title}} · {{store.result?.events.length||0}}条模拟线索</small></span>
+      <span v-else><strong>运行分析</strong><small>统一数据 · 自动监护</small></span>
     </button>
     <el-drawer v-model="store.consoleOpen" size="min(580px, 94vw)" direction="rtl"
       title="全系统情景推演控制台" append-to-body custom-class="tg-sim-drawer" :with-header="true">
       <div class="tg-sim-console">
         <div class="tg-sim-warning">
           <strong>SIM · 独立演示环境</strong>
-          <p>所有数字为规则化演示假设，非唐港实时测量、实际库容或实际管网能力。只影响当前浏览器的视图，不写设备、告警、工单和PLC。</p>
+          <p>默认持续运行规则化Mock数据流，模型自动计算供水、风险和经营比选；不是唐港现场采集，不写设备、告警、工单或PLC。</p>
+          <div class="tg-sim-auto-label" data-testid="auto-monitoring-status">
+            {{store.autoEnabled?'自动监护已运行 · 数据每8秒更新 · 无需手动设置':
+              store.running?'正在进行人工选择的SIM分析':'未运行'}}
+            <el-button v-if="!store.autoEnabled" size="small" plain
+              data-testid="resume-auto-operations" @click="store.stop();store.startAuto()">
+              恢复自动运行
+            </el-button>
+          </div>
         </div>
-        <div class="tg-sim-title"><b>① 选择统一推演情景</b><span>业务页面不再单独调整用水量</span></div>
+        <div class="tg-sim-title"><b>① 高级分析：人工切换情景</b><span>日常使用无需操作</span></div>
         <div class="tg-sim-presets" role="group" aria-label="预置模拟情景">
           <button v-for="id in SCENARIO_IDS" :key="id" type="button" class="tg-sim-preset"
             :class="{picked:selected===id,live:store.activeId===id}" :aria-pressed="selected===id"
@@ -118,7 +135,7 @@ const nav=[
           </div>
         </div>
         <div class="tg-sim-actions">
-          <el-button type="primary" @click="run">{{store.running?'应用选定情景':'启动情景推演'}}</el-button>
+          <el-button type="primary" @click="run">{{store.running?'改为手动分析情景':'启动手动情景分析'}}</el-button>
           <el-button v-if="store.running" plain @click="reset">退出模拟</el-button>
         </div>
         <div class="tg-sim-title"><b>② 本轮联动结果</b>
@@ -139,7 +156,7 @@ const nav=[
           </div>
           <p v-else class="tg-sim-clean">当前演示假设下未触发已定义的风险规则，不代表现场安全。</p>
         </template>
-        <div v-else class="tg-sim-empty">请选择情景并点击“启动情景推演”。其他页面不会显示模拟结果。</div>
+        <div v-else class="tg-sim-empty">自动监护未运行。可恢复自动运行，无需手动选择工况。</div>
         <div class="tg-sim-title"><b>③ 查看跨页面联动</b><span>统一数据 · 不重复填写</span></div>
         <div class="tg-sim-links">
           <button v-for="item in nav" :key="item.path" type="button" @click="go(item.path)">
@@ -233,4 +250,9 @@ const nav=[
  margin-top:12px;flex-wrap:wrap}
 .tg-assumption-buttons>span{font-size:10px;color:#91a3ae;line-height:1.4}
 @media(max-width:380px){.tg-assumption-fields{grid-template-columns:1fr}}
+</style>
+
+<style scoped>
+.tg-sim-auto-label{display:flex;align-items:center;justify-content:space-between;
+  gap:8px;margin-top:9px;font-size:11px;color:#725e3f}
 </style>

@@ -18,7 +18,7 @@ export const tanggangMenus: TanggangNavItem[] = [
     {id:'domestic',title:'生活污水提升与外送',icon:'ri:flow-chart',path:'/port/process/domestic'},
   ]},
   { id:'water',title:'水资源管理',icon:'ri:water-flash-line',path:'/port/water/supply',children:[
-    {id:'supply',title:'大机供水保障',icon:'ri:water-flash-line',path:'/port/water/supply'},
+    {id:'supply',title:'水务协同与能效',icon:'ri:water-flash-line',path:'/port/water/supply'},
     {id:'rain-risk',title:'雨水调蓄风险',icon:'ri:rainy-line',path:'/port/water/rain-risk'},
     {id:'water-stats',title:'供水统计',icon:'ri:bar-chart-line',path:'/water/stats',permission:'water:stats'},
     {id:'energy-stats',title:'能耗分析',icon:'ri:line-chart-line',path:'/energy/stats',permission:'energy:stats'},

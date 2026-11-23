@@ -4,6 +4,8 @@ import { SCENARIOS, calculateScenario, type ScenarioId, type ScenarioInputs } fr
 import { compareSupplyPlans } from './supplyPlans'
 import {assessSimMonitor} from './monitorEvidence'
 import {analyzeSimOperationalImpact} from './impactAnalysis'
+import {AUTO_FEED_VERSION,autoScenarioAt} from './autoWaterFeed'
+import {calculateWaterEconomics,calculateProcessImpacts} from './waterOperations'
 export type SimProcessState='running'|'available'|'attention'|'fault'
 export type SimProcessSystem='fog'|'middle'|'mineral'|'rain'|'pool'|'domestic'
 export interface SimProcessCheck {
@@ -31,6 +33,31 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   const activeInputs=ref<ScenarioInputs|null>(null)
   const runNumber=ref(0)
   const startedAt=ref('')
+  const autoEnabled=ref(false)
+  const autoFrame=ref(0)
+  interface AutoSample {
+    frame:number;at:string;scenarioId:ScenarioId
+    demandM3h:number;deliveredM3h:number;shortageM3h:number
+    energyKwhH:number|null;costYuanH:number|null
+    eventCount:number;dataMode:'SIM';feedVersion:typeof AUTO_FEED_VERSION
+  }
+  const autoHistory=ref<AutoSample[]>([])
+  const autoLastUpdated=ref('')
+  function appendAutoSample(frame:number,scenario:ReturnType<typeof autoScenarioAt>){
+    const snapshot=calculateScenario(scenario)
+    const economics=calculateWaterEconomics(snapshot)
+    const record:AutoSample={
+      frame,at:new Date().toISOString(),scenarioId:scenario.id,
+      demandM3h:snapshot.demandedM3h,deliveredM3h:snapshot.deliveredM3h,
+      shortageM3h:snapshot.shortageM3h,
+      energyKwhH:economics.optimized.energyKwhH,
+      costYuanH:economics.optimized.costYuanH,
+      eventCount:snapshot.events.length,
+      dataMode:'SIM',feedVersion:AUTO_FEED_VERSION,
+    }
+    autoHistory.value=[...autoHistory.value.slice(-23),record]
+    autoLastUpdated.value=record.at
+  }
   // Unique to a single in-memory SIM run, even after refresh/relogin resets runNumber.
   const runUid=ref('')
   const consoleOpen=ref(false)
@@ -40,6 +67,9 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   const result=computed(()=>effectiveScenario.value?calculateScenario(effectiveScenario.value):null)
   const supplyPlans=computed(()=>effectiveScenario.value?compareSupplyPlans(effectiveScenario.value):[])
   const running=computed(()=>activeId.value!==null)
+  const waterEconomics=computed(()=>result.value?calculateWaterEconomics(result.value):null)
+  const processImpacts=computed(()=>effectiveScenario.value&&result.value
+    ?calculateProcessImpacts(effectiveScenario.value,result.value):[])
   const monitorEvidence=computed(()=>effectiveScenario.value
     ?assessSimMonitor(effectiveScenario.value):null)
   const impactAnalysis=computed(()=>{
@@ -125,7 +155,53 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   /** Only this global console may change a predefined *SIM* input snapshot. */
   const EDITABLE_KEYS=['capacityM3h','reservedM3h','poolInitialM3',
     'poolSafetyM3','poolInflowM3h','horizonHours'] as const
+  function startAuto(){
+    // The global console calls this after login. Manual analysis explicitly
+    // chosen by an operator is never overwritten by the automatic feed.
+    if(running.value&&!autoEnabled.value)return
+    if(autoEnabled.value)return
+    const scenario=autoScenarioAt(0)
+    calculateScenario(scenario)
+    compareSupplyPlans(scenario)
+    activeId.value=scenario.id
+    activeInputs.value=scenario.inputs
+    autoFrame.value=0
+    autoEnabled.value=true
+    autoHistory.value=[]
+    runNumber.value+=1
+    monitorReview.value=null
+    processChecks.value=[]
+    runUid.value=crypto.randomUUID()
+    startedAt.value=new Date().toISOString()
+    appendAutoSample(0,scenario)
+  }
+  function advanceAuto(){
+    if(!autoEnabled.value)return
+    const nextFrame=autoFrame.value+1
+    const scenario=autoScenarioAt(nextFrame)
+    calculateScenario(scenario)
+    compareSupplyPlans(scenario)
+    const previous=activeId.value
+    activeId.value=scenario.id
+    activeInputs.value=scenario.inputs
+    autoFrame.value=nextFrame
+    if(previous!==scenario.id){
+      runNumber.value+=1
+      monitorReview.value=null
+      processChecks.value=[]
+      runUid.value=crypto.randomUUID()
+      startedAt.value=new Date().toISOString()
+    }
+    appendAutoSample(nextFrame,scenario)
+    window.dispatchEvent(new CustomEvent('tanggang:scenario-visual',{
+      detail:{scenarioId:scenario.id,frame:nextFrame,
+        dataMode:'SIM',simulationOnly:true,automatic:true},
+    }))
+  }
   function start(id:ScenarioId, overrides:Partial<Pick<ScenarioInputs,typeof EDITABLE_KEYS[number]>>={}){
+    // Manual scenario is an advanced analysis override; the product defaults
+    // to unattended Mock monitoring and resumes only on explicit request.
+
     if(!SCENARIOS[id])throw Error('未授权的演示情景')
     for(const key of Object.keys(overrides)){
       if(!EDITABLE_KEYS.includes(key as typeof EDITABLE_KEYS[number])){
@@ -142,6 +218,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     // business pages or leave behind a partially updated scene state.
     calculateScenario({...def,inputs:proposed})
     compareSupplyPlans({...def,inputs:proposed})
+    autoEnabled.value=false
     activeInputs.value=proposed
     activeId.value=id
     runNumber.value+=1
@@ -155,6 +232,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
     }))
   }
   function stop(){
+    autoEnabled.value=false
     activeId.value=null
     activeInputs.value=null
     monitorReview.value=null
@@ -170,5 +248,7 @@ export const useScenarioStore=defineStore('tanggang-scenario',()=>{
   return {activeId,activeInputs,runNumber,runUid,startedAt,consoleOpen,activeScenario,
     effectiveScenario,result,supplyPlans,impactAnalysis,monitorEvidence,monitorReview,
     processChecks,recordProcessCheck,beginMonitorReview,recordMonitorReview,
-    running,start,stop,openConsole,closeConsole}
+    running,start,stop,startAuto,advanceAuto,autoEnabled,autoFrame,
+    autoHistory,autoLastUpdated,waterEconomics,processImpacts,
+    openConsole,closeConsole}
 })

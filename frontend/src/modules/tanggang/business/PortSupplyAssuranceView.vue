@@ -4,6 +4,7 @@ import {useRouter} from 'vue-router'
 import {useScenarioStore} from '../simulation/store'
 import SupplyPlanComparison from './SupplyPlanComparison.vue'
 import PublishedBoards from './PublishedBoards.vue'
+import PortWaterOperationsPanel from './PortWaterOperationsPanel.vue'
 import './business.css'
 import './scenario-pages.css'
 const router=useRouter(),store=useScenarioStore()
@@ -23,12 +24,15 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
 <template>
   <main class="tg-biz tg-analysis-page page-fill">
     <div class="tg-biz-head">
-      <div><div class="tg-page-eyebrow">水资源管理 / 生产供水保障</div><h1>大机供水保障</h1>
-        <p class="tg-biz-sub">用水负荷 → 中压供水能力 → 优先级分配 → 供水缺口 → 水池安全储量</p></div>
-      <div class="tg-biz-actions"><span class="tg-datamode" :class="{sim:store.running}">{{store.running?'SIM · 情景联动':'现场数据未接入'}}</span>
+      <div><div class="tg-page-eyebrow">水资源管理 / 生产供水保障</div><h1>港区水务协同与能效</h1>
+        <p class="tg-biz-sub">跨系统资源闭环 → 自动供需核算 → 水源组合 → 电耗和成本模型比选</p></div>
+      <div class="tg-biz-actions"><span class="tg-datamode" :class="{sim:store.running}">{{store.autoEnabled?'SIM · 自动分析':store.running?'SIM · 人工分析':'现场数据未接入'}}</span>
         <el-button @click="router.push('/port/process/middle?facility=EQ-P-MID')">中压供水工艺</el-button></div>
     </div>
-    <div class="tg-biz-note"><b>数据说明：</b>{{store.running?'以下全部来自统一推演控制台，是演示假设而非实际用水量、管网输水能力。':'现场大机负荷与泵组能力尚未接入；本页没有模拟参数调整入口，只接收全局“情景推演”结果。'}}</div>
+    <div class="tg-biz-note"><b>数据说明：</b>当前为持续更新的Mock业务数据；业务模型按统一输入实时计算。设计工艺关系未经管线端点核实，水价、能耗和泵效尚未接入现场或合同。</div>
+    <PortWaterOperationsPanel />
+    <details class="tg-ops-advanced-supply">
+      <summary>展开原有供水专项计算、终端分配及方案比选</summary>
     <PublishedBoards target="/port/water/supply" />
     <div v-if="!r" class="tg-analysis-empty">
       <div class="tg-empty-icon">◇</div><h2>尚未运行统一情景</h2>
@@ -87,5 +91,13 @@ const n=(v:number)=>v.toLocaleString('zh-CN',{maximumFractionDigits:1})
         </div>
       </section>
     </template>
+    </details>
   </main>
 </template>
+<style scoped>
+.tg-ops-advanced-supply{margin-top:18px;border:1px solid #d7e5ed;
+  border-radius:8px;padding:10px 14px;background:rgba(255,255,255,.52)}
+.tg-ops-advanced-supply>summary{font-size:12px;font-weight:650;color:#557f96;
+  cursor:pointer;padding:8px 0}
+.tg-ops-advanced-supply[open]>summary{margin-bottom:14px}
+</style>
