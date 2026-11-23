@@ -384,9 +384,42 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
     return [kind,m]
   })) as Record<PileKind,T.MeshStandardMaterial>
   // CC0 PBR 地面：混凝土场坪、草地。UV 已按世界单位生成（prism）。
-  // 场坪道路用浅色混凝土面层：设计图里堆间通道是灰色地坪，
-  // 早期套用深色沥青照片贴图，远看会把整条通道压成黑条。
-  const roadPbr=palette('#a7aca4',.94,0)
+  // 黑色沥青与混凝土场坪分开：细骨料、修补色差和轻微起伏由程序贴图表达，
+  // 不再把浅色混凝土贴图叠到车行道上。
+  function asphaltMap(){
+    const size=256,cv=document.createElement('canvas');cv.width=cv.height=size
+    const c2=cv.getContext('2d')
+    if(c2){
+      let state=618033
+      const rand=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296}
+      const image=c2.createImageData(size,size)
+      for(let i=0;i<size*size;i++){
+        const aggregate=rand()>.982?22:0
+        const v=Math.max(38,Math.min(88,57+(rand()-.5)*23+aggregate))
+        image.data[i*4]=v;image.data[i*4+1]=v+2;image.data[i*4+2]=v+3;image.data[i*4+3]=255
+      }
+      c2.putImageData(image,0,0)
+      // 低频修补色差很弱，只打破纯色塑料感，不在远景形成重复斑块。
+      for(let i=0;i<18;i++){
+        const x=rand()*size,y=rand()*size,r=16+rand()*38
+        const g=c2.createRadialGradient(x,y,0,x,y,r)
+        g.addColorStop(0,rand()>.5?'rgba(18,22,24,.13)':'rgba(135,140,138,.08)')
+        g.addColorStop(1,'rgba(60,64,65,0)');c2.fillStyle=g;c2.fillRect(x-r,y-r,r*2,r*2)
+      }
+      // 少量不规则细裂纹，近景可见、远景不读成规则网格。
+      c2.strokeStyle='rgba(18,21,22,.22)';c2.lineWidth=.65
+      for(let i=0;i<5;i++){
+        let x=rand()*size,y=rand()*size;c2.beginPath();c2.moveTo(x,y)
+        for(let k=0;k<7;k++){x+=(rand()-.35)*12;y+=5+rand()*10;c2.lineTo(x,y)}
+        c2.stroke()
+      }
+    }
+    const t=new T.CanvasTexture(cv);t.wrapS=t.wrapT=T.RepeatWrapping;t.colorSpace=T.SRGBColorSpace
+    textures.push(t);return t
+  }
+  const asphaltTex=asphaltMap()
+  const roadPbr=palette('#ffffff',.93,0)
+  roadPbr.map=asphaltTex;roadPbr.bumpMap=asphaltTex;roadPbr.bumpScale=.022
   roadPbr.polygonOffset=true;roadPbr.polygonOffsetFactor=-3;roadPbr.polygonOffsetUnits=-6
   const concreteMap=mineralMap('pbr/concrete/color.jpg',true)
   const concreteN=mineralMap('pbr/concrete/normal.jpg')
@@ -394,8 +427,6 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   deck.map=concreteMap;deck.normalMap=concreteN;deck.roughnessMap=concreteR
   deck.color.set('#7e857c')
   concreteMap.repeat.set(.30,.30);concreteN.repeat.set(.30,.30);concreteR.repeat.set(.30,.30)
-  roadPbr.map=concreteMap;roadPbr.normalMap=concreteN;roadPbr.roughnessMap=concreteR
-  roadPbr.normalScale.set(.4,.4)
   const grassMap=mineralMap('pbr/grass/color.jpg',true)
   const grassN=mineralMap('pbr/grass/normal.jpg')
   const grassR=mineralMap('pbr/grass/rough.jpg')
@@ -454,28 +485,59 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   function add(g:T.BufferGeometry,m:T.Material){
     const batch=batches.get(m)||[];batch.push(g);batches.set(m,batch)
   }
-  // 道路网：CAD「00-总图01推荐 道路中心线」按 7m 车行道生成，补路缘与中心虚线。
+  // 道路网严格沿 CAD 中心线铺设；短连接段也保留，避免路口出现断头路。
+  // 7m 车行道统一为黑色沥青，不再叠加一套窄浅灰路面。
   const buildRoads=()=>{
     for(const line of data.lines){
       if(line.layer!=='00-总图01推荐 道路中心线')continue
       const p=line.displayPoints
       for(let i=0;i<p.length-1;i++){
         const a=p[i],b=p[i+1],len=distance(a,b)
-        if(len<5)continue
-        add(strip(a,b,7,.05,.02),road)
+        if(len<.3)continue
+        add(worldUv(strip(a,b,7,.055,.018),2.8),roadPbr)
+        add(stripUv(strip(a,b,6.10,.002,.0738),6.5),tyreMat)
         const dx=(b[0]-a[0])/len,dz=(b[1]-a[1])/len
+        const nx=-dz,nz=dx
+        const lerp=(f:number):XY=>[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]
         for(const side of [-1,1]){
-          const ox=-dz*side*3.62,oz=dx*side*3.62
-          add(strip([a[0]+ox,a[1]+oz],[b[0]+ox,b[1]+oz],.3,.12,.02),coping)
+          const ox=nx*side*3.62,oz=nz*side*3.62
+          add(strip([a[0]+ox,a[1]+oz],[b[0]+ox,b[1]+oz],.30,.12,.02),coping)
+          const lx=nx*side*3.28,lz=nz*side*3.28
+          add(strip([a[0]+lx,a[1]+lz],[b[0]+lx,b[1]+lz],.085,.010,.078),stripe)
+          // 路缘雨水篦子与路面同向，近景有排水设施尺度。
+          for(let d=1.6;d<len-1;d+=6.4){
+            const p0=lerp(d/len),p1=lerp((d+.55)/len),gx=nx*side*3.43,gz=nz*side*3.43
+            add(strip([p0[0]+gx,p0[1]+gz],[p1[0]+gx,p1[1]+gz],.18,.012,.078),grating)
+          }
         }
-        const n=Math.max(1,Math.floor(len/6))
+        const n=Math.max(1,Math.floor(len/5.2))
         for(let k=0;k<n;k++){
-          const t0=(k+.12)/n,t1=(k+.62)/n
-          add(strip([a[0]+(b[0]-a[0])*t0,a[1]+(b[1]-a[1])*t0],
-                    [a[0]+(b[0]-a[0])*t1,a[1]+(b[1]-a[1])*t1],.12,.02,.075),stripe)
+          const t0=(k+.16)/n,t1=Math.min(1,(k+.56)/n)
+          add(strip(lerp(t0),lerp(t1),.12,.012,.078),stripe)
         }
       }
     }
+  }
+  // 主要路口与厂前出入口的人行横道。位置为表现层，不反推 CAD 未提供的交通组织。
+  const crossingPaint=palette('#f4f1e8',.86,0)
+  crossingPaint.polygonOffset=true;crossingPaint.polygonOffsetFactor=-5;crossingPaint.polygonOffsetUnits=-10
+  const buildCrossings=()=>{
+    const crossing=(x:number,z:number,axis:'x'|'z')=>{
+      const span=5.75,halfLength=1.32
+      for(let d=-span/2+.28;d<=span/2-.18;d+=.64){
+        if(axis==='z')add(strip([x+d,z-halfLength],[x+d,z+halfLength],.34,.012,.116),crossingPaint)
+        else add(strip([x-halfLength,z+d],[x+halfLength,z+d],.34,.012,.116),crossingPaint)
+      }
+      // 停止线与人行横道分离，避免远看似一块白色方板。
+      if(axis==='z')add(strip([x-3.02,z+2.30],[x+3.02,z+2.30],.16,.012,.114),crossingPaint)
+      else add(strip([x+2.30,z-3.02],[x+2.30,z+3.02],.16,.012,.114),crossingPaint)
+    }
+    const spots:[number,number,'x'|'z'][]=[
+      [-47.09,38.2,'z'],[-43.49,-45.8,'z'],[21.31,40.1,'z'],[21.31,-44.8,'z'],
+      [35.26,27.8,'z'],[35.26,18.3,'z'],[43.18,-29.8,'z'],[47.2,4.5,'z'],
+      [29.0,9.67,'x'],[36.8,31.75,'x'],[-22.0,44.63,'x'],[5.0,-53.38,'x'],
+    ]
+    spots.forEach(([x,z,axis])=>crossing(x,z,axis))
   }
   // 异步模型加载完成后追加的静态构件：直接入组，并纳入统一几何释放。
   function addNow(g:T.BufferGeometry,m:T.Material){
@@ -819,27 +881,6 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   for(const l of data.lines){
     const path=l.displayPoints
     if(path.length<2)continue
-    if(l.layer.includes('道路中心线')){
-      for(let i=1;i<path.length;i++){
-        const a=path[i-1],b=path[i],len=distance(a,b)
-        if(len<.3)continue
-        // 沥青路面按世界坐标铺贴，长路段不再被拉成一条均匀色带。
-        add(worldUv(strip(a,b,1.32,.055,.018),2.2),roadPbr)
-        // 车轮磨痕：两条低频深色带，远景读作长期行车的旧沥青。
-        add(stripUv(strip(a,b,1.06,.002,.0734),6.5),tyreMat)
-        const nx=-(b[1]-a[1])/len,nz=(b[0]-a[0])/len
-        // 双侧路缘石与沟槽：深灰窄条压住路面边缘，避免道路浮在场坪上。
-        for(const s of [-.66,.66])
-          add(strip([a[0]+nx*s,a[1]+nz*s],[b[0]+nx*s,b[1]+nz*s],.10,.016,.072),edge)
-        // Crisp white kerb lines define the carriageway as in the reference render.
-        for(const s of [-.5,.5])
-          add(strip([a[0]+nx*s,a[1]+nz*s],[b[0]+nx*s,b[1]+nz*s],.06,.010,.077),stripe)
-        const lerp=(f:number):XY=>[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]
-        for(let d=.5;d+1.0<len;d+=2.6)add(strip(lerp(d/len),lerp((d+1.0)/len),.085,.012,.076),stripe)
-        // 沿沟槽间隔布置雨水篦子，近景能读出“有排水设施”而不是一道灰边。
-        for(let d=1.6;d<len-1;d+=6.4)add(strip(lerp(d/len),lerp((d+.55)/len),.115,.012,.0745),grating)
-      }
-    }
     if(l.layer==='--绿化'&&path.length>=4&&distance(path[0],path[path.length-1])<.009){
       const area=Math.abs(T.ShapeUtils.area(path.map(([x,z])=>new T.Vector2(x,z))))
       if(area>.04)add(prism(path,.13,.04),leaf)
@@ -1939,6 +1980,7 @@ roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
   }
   // Batch static primitives by material. Keep only interactive source features as individual meshes.
   buildRoads()
+  buildCrossings()
   // 码头前沿：护舷与系缆桩，补设计图的岸线细节。
   const buildDockEdge=()=>{
     const fender=palette('#2b3033',.8,.08), bollard=palette('#4e565b',.6,.3)
