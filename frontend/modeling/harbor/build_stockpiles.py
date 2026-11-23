@@ -37,6 +37,24 @@ def hash01(a, b, seed):
     return value - math.floor(value)
 
 
+def vnoise(x, y, seed):
+    """二维值噪声：用于打散正弦条带，得到非周期的滑落/推土纹理。"""
+    xi, yi = math.floor(x), math.floor(y)
+    xf, yf = x - xi, y - yi
+    u = xf * xf * (3.0 - 2.0 * xf)
+    v = yf * yf * (3.0 - 2.0 * yf)
+
+    def h(a, b):
+        n = math.sin(a * 127.1 + b * 311.7 + seed * 74.7) * 43758.5453
+        return n - math.floor(n)
+
+    a = h(xi, yi)
+    b = h(xi + 1, yi)
+    c = h(xi, yi + 1)
+    d = h(xi + 1, yi + 1)
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v
+
+
 def build_mesh(name, left, right, length, height, seed, kind):
     verts, faces, colors = [], [], []
     # 平顶 + 窄折肩 + 直坡脚：真实平堆的断面，而不是两端浑圆的“香肠”。
@@ -87,10 +105,36 @@ def build_mesh(name, left, right, length, height, seed, kind):
             # 顺坡向的滑落痕：低频竖向条带，越靠坡脚越明显，读作推土/塌落纹理。
             scar = 0.0
             if d > crest:
-                scar = 0.06 * (0.5 + 0.5 * math.sin(x * 2.6 + z * 0.17 + seed * 3.1)) * (1.0 - face)
-                scar += 0.03 * (0.5 + 0.5 * math.sin(x * 5.3 - z * 0.31 + seed * 1.7)) * (1.0 - face)
+                # 顺坡向的滑落/推土痕：沿 z 高频、沿 x 低频，用值噪声打散正弦条带。
+                # warp 让纹路随桩号缓慢摆动，避免出现规则斜线。
+                warp = (vnoise(x * 0.32 + seed * 1.7, z * 0.10, seed) - 0.5) * 1.8
+                n = (0.66 * vnoise(x * 0.55 + warp * 0.9, z * 2.05 + seed, seed)
+                     + 0.34 * vnoise(x * 1.45 - warp * 0.7, z * 4.6 + seed * 2.7, seed))
+                scar = max(0.0, n - 0.46) * 0.36 * (1.0 - face)
+                # 车轮/推土机上下坡的成对压痕：4 条车辙，每条两条轮迹。
+                for q in range(4):
+                    zc = (-0.40 + 0.265 * q + 0.075 * hash01(q, seed, 9)) * length
+                    # 两条轮迹保持窄而分开，太宽会糊成一条阴影。
+                    for lane in (-0.38, 0.38):
+                        gap = abs(z - (zc + lane))
+                        if gap < 0.34:
+                            scar += (1.0 - gap / 0.34) * 0.32 * end_f
+            # 端面车辙：默认机位正对堆体南端，两条竖向压痕最容易读出轮胎印。
+            end_track = 0.0
+            if end_f < 0.999:
+                for lane_x in (-0.66, 0.66):
+                    gap = abs(x - lane_x)
+                    if gap < 0.34:
+                        end_track += (1.0 - gap / 0.34) * 0.34 * (1.0 - end_f)
+            # 顶面沿堆脊的行车压痕：近景补充，不抢坡面纹理。
+            top_track = 0.0
+            if d <= crest:
+                for lane_u in (-0.16, 0.16):
+                    gap = abs(u - lane_u)
+                    if gap < 0.10:
+                        top_track += (1.0 - gap / 0.10) * 0.22
             # 顶面浮灰明显亮、坡脚压暗：把“长条平面”读成有厚度的锥形堆体。
-            channel = shade * (0.50 + 0.55 * max(0.0, face)) - scar
+            channel = shade * (0.50 + 0.55 * max(0.0, face)) - scar - end_track - top_track
             colors.append(max(0.06, min(1.0, channel)))
     for j in range(NV):
         for i in range(NU):

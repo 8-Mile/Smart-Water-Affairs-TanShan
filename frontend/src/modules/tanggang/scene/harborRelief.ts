@@ -714,6 +714,8 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
   const splitGap=4.2
   // 程序化堆体先保证首屏可读；Blender GLB 加载完成后隐藏并由精细资产接管。
   const proceduralPiles:T.Mesh[]=[]
+  // 堆脚散落煤块：按煤种收集点位，最后合成 InstancedMesh，避免逐块增加批次。
+  const lumpSpots:Record<PileKind,{x:number;z:number;s:number;rot:number}[]>={coal:[],brown:[],grey:[]}
   // 南北端各留 2 单位道路，避开 CAD 集水池轮廓：北池 z≥38.2，南池 z≤-45.5。
   const poolZ=spatial.poolContourCandidates.flatMap(p=>p.displayXZ.map(v=>v[1]))
   const northPoolEdge=Math.min(...poolZ.filter(z=>z>0))
@@ -759,6 +761,23 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
         }
         for(const z of [cz-length/2-.55,cz+length/2+.55])
           add(stripUv(strip([footX-width/2-.9,z],[footX+width/2+.9,z],1.35,.0016,.1104),3.6),dustMat)
+        // 堆脚散落煤块：沿长边坡脚与端部确定性抛洒，越靠坡脚越密。
+        const rnd=(k:number)=>{const v=Math.sin(k*127.1+seed*311.7)*43758.5453;return v-Math.floor(v)}
+        const spots=lumpSpots[kind]
+        const lumpCount=13+Math.floor(rnd(3)*6)
+        for(let k=0;k<lumpCount;k++){
+          const a=rnd(k*3+1),b=rnd(k*5+7),c2=rnd(k*7+13)
+          let lx:number,lz:number
+          if(b<.62){
+            const side=a<.5?-1:1
+            lx=footX+side*(width/2+.22+c2*.55)
+            lz=cz+(a-.5)*length*.94
+          }else{
+            lx=footX+(a-.5)*width*.84
+            lz=cz+(b<.81?1:-1)*(length/2+.28+c2*1.15)
+          }
+          spots.push({x:lx,z:lz,s:.15+.26*c2,rot:a*Math.PI*2})
+        }
       }
     })
     // 同一堆场带内两列之间铺浅色检修带；带间是道路，不跨带铺。
@@ -767,6 +786,35 @@ export function buildHarborRelief(data:SceneData, spatial:Spatial) {
       if(gap<4.6)continue
       add(new T.BoxGeometry(Math.min(1.6,gap-3.2),.02,zMax-zMin)
         .translate((columns[i].x+columns[i-1].x)/2,.115,-(zMin+zMax)/2),walkway)
+    }
+  }
+  // 堆脚碎煤：按煤种分三组合批，共享十面体几何；暗色小碎块沿堆脚形成脏边。
+  if(pileKinds.some(kind=>lumpSpots[kind].length)){
+    const lumpGeo=new T.IcosahedronGeometry(1,0)
+    lumpGeo.scale(1,.5,.8)
+    geometries.push(lumpGeo)
+    const lumpMats:Record<PileKind,T.MeshStandardMaterial>={
+      coal:palette('#242a30',.94,.03),
+      brown:palette('#463827',.95,.02),
+      grey:palette('#4b5255',.94,.02)
+    }
+    const m4=new T.Matrix4(),q=new T.Quaternion(),upAxis=new T.Vector3(0,1,0)
+    const pos=new T.Vector3(),scl=new T.Vector3()
+    for(const kind of pileKinds){
+      const spots=lumpSpots[kind]
+      if(!spots.length)continue
+      const mesh=new T.InstancedMesh(lumpGeo,lumpMats[kind],spots.length)
+      spots.forEach((spot,index)=>{
+        q.setFromAxisAngle(upAxis,spot.rot)
+        pos.set(spot.x,.112+spot.s*.26,-spot.z)
+        scl.set(spot.s,spot.s,spot.s*.8)
+        m4.compose(pos,q,scl)
+        mesh.setMatrixAt(index,m4)
+      })
+      mesh.instanceMatrix.needsUpdate=true
+      mesh.computeBoundingSphere()
+      mesh.castShadow=true;mesh.receiveShadow=true
+      group.add(mesh)
     }
   }
   for(const l of data.lines){
@@ -1447,7 +1495,7 @@ float pileNoise(vec2 p){
         .replace('#include <color_fragment>',`#include <color_fragment>
 float pileMott=pileNoise(vPileWorld.xz*.55+uPileSeed)*.65
              +pileNoise(vPileWorld.xz*1.9+uPileSeed*2.3)*.35;
-diffuseColor.rgb*=0.72+0.44*pileMott;`)
+diffuseColor.rgb*=0.78+0.38*pileMott;`)
         .replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
 float pileWet=pileNoise(vPileWorld.xz*.33+uPileSeed*.7);
 roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
@@ -1457,7 +1505,7 @@ roughnessFactor=clamp(roughnessFactor+(pileWet-0.5)*0.30,0.35,1.0);`)
   // 16 堆精细资产：Blender 按 CAD 平面生成多峰堆体，几何与顶点色随 GLB 载入；
   // 材质仍复用前端三套 PBR，保证颜色与贴图统一。
   async function loadStockpiles(){
-    const gltf=await new GLTFLoader().loadAsync(import.meta.env.BASE_URL+'tanggang/models/harbor/stockpiles-16.glb?v=17')
+    const gltf=await new GLTFLoader().loadAsync(import.meta.env.BASE_URL+'tanggang/models/harbor/stockpiles-16.glb?v=25')
     if(disposed)return false
     const model=gltf.scene
     const shadows:T.Mesh[]=[]
