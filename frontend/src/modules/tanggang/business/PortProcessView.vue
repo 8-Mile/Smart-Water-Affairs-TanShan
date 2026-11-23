@@ -11,6 +11,7 @@ import {
 import {useProcessSpecialistStore} from './processSpecialistStore'
 import PortSpecialistExercise from './PortSpecialistExercise.vue'
 import PortProcessEffect from './PortProcessEffect.vue'
+import PortCadEvidenceAudit from './PortCadEvidenceAudit.vue'
 import PortFogDiagram from './PortFogDiagram.vue'
 import type {EditableProcessSystemId} from '@/api/tanggangProcessDiagrams'
 import PortObjectBindingDialog from './PortObjectBindingDialog.vue'
@@ -240,6 +241,9 @@ function savedBinding(){void loadObjectLinks(sysId.value)}
             :mock-by-facility="mockByFacility"
             :source-layers="system.focusPipeLayers"
             @select="selectFacility"/>
+          <PortCadEvidenceAudit v-if="sysId!=='fog'&&!diagramEditing"
+            :key="sysId+'-cad-audit'" :system-id="sysId"
+            :source-layers="system.focusPipeLayers"/>
           <PortSpecialistExercise v-if="specialistSystem&&!diagramEditing"
             :system-id="specialistSystem"
             :global-sim-running="sim.running" @select-facility="selectFacility"/>
